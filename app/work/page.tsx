@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     "Selected projects from our portfolio — SaaS platforms, AI agents, RAG systems, workflow automations, and web applications built for businesses that need real technical infrastructure.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function WorkPage() {
   // Fetch only published projects from DB
   let dbProjects: PortfolioProject[] = [];
