@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { TrendingUp, DollarSign, ArrowUpRight, Shield, Zap, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { TrendingUp, DollarSign, ArrowUpRight, Zap, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 
-// ─── 1. Real Revenue Trend Area Chart ──────────────────────────────────────
+// ─── 1. Clean Revenue Trend Area Chart ──────────────────────────────────────
 export interface RevenuePoint {
   month: string;
   revenue: number;
@@ -23,7 +23,6 @@ export function RevenueTrendChart({
   const multiplier = isPKR ? 280 : 1;
   const symbol = isPKR ? "Rs " : "$";
 
-  // Use real data passed from database. If empty, generate zero-filled current months.
   const chartData =
     data.length > 0
       ? data
@@ -45,16 +44,15 @@ export function RevenueTrendChart({
   );
   const maxVal = rawMax * 1.15;
   const width = 600;
-  const height = 200;
-  const paddingX = 40;
-  const paddingY = 25;
+  const height = 180;
+  const paddingX = 35;
+  const paddingY = 20;
 
   const getX = (index: number) =>
     paddingX + (index / (chartData.length - 1 || 1)) * (width - paddingX * 2);
   const getY = (val: number) =>
     height - paddingY - (val / maxVal) * (height - paddingY * 2);
 
-  // Build SVG Path
   const points = chartData.map((d, i) => `${getX(i)},${getY(d.revenue)}`).join(" ");
   const projectedPoints = chartData
     .map((d, i) => `${getX(i)},${getY(d.projected)}`)
@@ -67,64 +65,46 @@ export function RevenueTrendChart({
   const displayTotal = totalRevenue * multiplier;
 
   return (
-    <div className="bg-[#080B12] border border-white/10 rounded-2xl p-6 relative overflow-hidden">
-      {/* Ambient Glow */}
-      <div
-        className="absolute top-0 right-0 w-72 h-40 pointer-events-none"
-        style={{
-          background: "radial-gradient(circle, rgba(245,80,54,0.1) 0%, transparent 70%)",
-          filter: "blur(40px)",
-        }}
-      />
-
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative z-10">
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-[#F55036] animate-pulse" />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#F55036]">
-              REAL-TIME FINANCIAL TELEMETRY // REVENUE STREAM ({currency})
-            </span>
-          </div>
-          <h3 className="text-xl font-bold text-white flex items-baseline gap-2">
+          <span className="text-xs text-white/50 font-medium">
+            Monthly Collected Revenue ({currency})
+          </span>
+          <p className="text-2xl font-bold text-white tracking-tight mt-0.5">
             {symbol}
             {displayTotal.toLocaleString(undefined, {
               minimumFractionDigits: isPKR ? 0 : 2,
               maximumFractionDigits: isPKR ? 0 : 2,
             })}
-            <span className="text-xs font-mono font-normal text-white/50">
-              verified collections
-            </span>
-          </h3>
+          </p>
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 text-xs font-mono">
-          <div className="flex items-center gap-1.5 text-white/70">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#F55036]" />
-            <span>Actual Collected</span>
+        <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-1.5 text-white/80">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#F55036]" />
+            <span>Actual</span>
           </div>
           <div className="flex items-center gap-1.5 text-white/40">
-            <span className="w-2.5 h-0.5 bg-white/40 border-dashed" />
-            <span>Target Velocity</span>
+            <span className="w-3 h-0.5 bg-white/30 border-dashed" />
+            <span>Projected</span>
           </div>
         </div>
       </div>
 
       {/* SVG Chart */}
-      <div className="relative w-full h-[210px]">
+      <div className="relative w-full h-[190px]">
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-full overflow-visible"
           preserveAspectRatio="none"
         >
           <defs>
-            <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#F55036" stopOpacity="0.45" />
-              <stop offset="85%" stopColor="#F55036" stopOpacity="0.0" />
+            <linearGradient id="cleanRevenueGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#F55036" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#F55036" stopOpacity="0.0" />
             </linearGradient>
-            <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#F55036" floodOpacity="0.6" />
-            </filter>
           </defs>
 
           {/* Grid lines */}
@@ -138,19 +118,19 @@ export function RevenueTrendChart({
                 x2={width - paddingX}
                 y2={yPos}
                 stroke="rgba(255,255,255,0.06)"
-                strokeDasharray="4 4"
+                strokeDasharray="3 3"
               />
             );
           })}
 
           {/* Fill Area */}
-          <path d={areaPath} fill="url(#revenueGrad)" />
+          <path d={areaPath} fill="url(#cleanRevenueGrad)" />
 
           {/* Projected Target Line */}
           <polyline
             fill="none"
             stroke="rgba(255,255,255,0.25)"
-            strokeWidth="2"
+            strokeWidth="1.5"
             strokeDasharray="4 4"
             points={projectedPoints}
           />
@@ -159,8 +139,9 @@ export function RevenueTrendChart({
           <polyline
             fill="none"
             stroke="#F55036"
-            strokeWidth="3"
-            filter="url(#neonGlow)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             points={points}
           />
 
@@ -172,7 +153,6 @@ export function RevenueTrendChart({
 
             return (
               <g key={d.month} className="cursor-pointer">
-                {/* Vertical guide line on hover */}
                 {isHovered && (
                   <line
                     x1={cx}
@@ -185,30 +165,29 @@ export function RevenueTrendChart({
                   />
                 )}
 
-                {/* Point circle */}
                 <circle
                   cx={cx}
                   cy={cy}
-                  r={isHovered ? 6 : 4}
+                  r={isHovered ? 5 : 3.5}
                   fill="#080B12"
                   stroke="#F55036"
-                  strokeWidth="2.5"
-                  className="transition-all duration-200"
+                  strokeWidth="2"
+                  className="transition-all duration-150"
                 />
 
                 {/* X Axis Labels */}
                 <text
                   x={cx}
-                  y={height - 5}
+                  y={height - 2}
                   textAnchor="middle"
-                  fill="rgba(255,255,255,0.4)"
-                  fontSize="10"
-                  fontFamily="monospace"
+                  fill="rgba(255,255,255,0.5)"
+                  fontSize="11"
+                  fontWeight="500"
+                  fontFamily="system-ui, -apple-system, sans-serif"
                 >
                   {d.month}
                 </text>
 
-                {/* Invisible hover trigger */}
                 <rect
                   x={cx - 20}
                   y={0}
@@ -226,13 +205,13 @@ export function RevenueTrendChart({
         {/* Floating Tooltip */}
         {hoveredIdx !== null && (
           <div
-            className="absolute -top-3 z-30 pointer-events-none transform -translate-x-1/2 bg-[#05080D]/95 border border-[#F55036]/50 rounded-lg px-3 py-1.5 shadow-xl text-center backdrop-blur-md"
+            className="absolute -top-3 z-30 pointer-events-none transform -translate-x-1/2 bg-[#0C1017] border border-white/15 rounded-lg px-3 py-1.5 shadow-xl text-center backdrop-blur-md"
             style={{ left: `${(getX(hoveredIdx) / width) * 100}%` }}
           >
-            <p className="text-[10px] font-mono text-white/50 uppercase">
+            <p className="text-[11px] text-white/50 font-medium">
               {chartData[hoveredIdx].month}
             </p>
-            <p className="text-sm font-bold text-[#F55036]">
+            <p className="text-sm font-bold text-white">
               {symbol}
               {(chartData[hoveredIdx].revenue * multiplier).toLocaleString(undefined, {
                 maximumFractionDigits: isPKR ? 0 : 2,
@@ -245,12 +224,12 @@ export function RevenueTrendChart({
   );
 }
 
-// ─── 2. Real Financial Breakdown Donut Chart ─────────────────────────────────────────
+// ─── 2. Clean, Fully-Visible Financial Breakdown Donut Chart ────────────────
 interface BreakdownItem {
   label: string;
   amount: number;
   color: string;
-  border: string;
+  dotColor: string;
 }
 
 export function FinancialDonutChart({
@@ -272,44 +251,53 @@ export function FinancialDonutChart({
   const displayTotal = totalUSD * multiplier;
 
   const items: BreakdownItem[] = [
-    { label: "Paid", amount: paid * multiplier, color: "#10B981", border: "rgba(16,185,129,0.3)" },
-    { label: "Pending", amount: pending * multiplier, color: "#F59E0B", border: "rgba(245,158,11,0.3)" },
-    { label: "Overdue", amount: overdue * multiplier, color: "#EF4444", border: "rgba(239,68,68,0.3)" },
+    { label: "Paid", amount: paid * multiplier, color: "#10B981", dotColor: "bg-emerald-500" },
+    { label: "Pending", amount: pending * multiplier, color: "#F59E0B", dotColor: "bg-yellow-500" },
+    { label: "Overdue", amount: overdue * multiplier, color: "#EF4444", dotColor: "bg-red-500" },
   ];
 
+  // SVG Geometry with safe padding
   const size = 160;
-  const strokeWidth = 18;
-  const radius = (size - strokeWidth) / 2;
+  const strokeWidth = 14;
+  const center = size / 2; // 80
+  const radius = 64; // Outer edge is 64 + 7 = 71px, well inside 80px boundary
   const circumference = 2 * Math.PI * radius;
 
   let accumulatedPercent = 0;
-  const collectionRate = totalUSD > 0 ? ((paid / totalUSD) * 100).toFixed(0) : "0";
+  const collectionRate = totalUSD > 0 ? Math.round((paid / totalUSD) * 100) : 0;
 
   return (
-    <div className="bg-[#080B12] border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5 flex flex-col justify-between h-full">
+      {/* Card Header */}
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
         <div className="flex items-center gap-2">
           <DollarSign size={16} className="text-emerald-400" />
           <h3 className="text-sm font-semibold text-white">Invoice Settlement</h3>
         </div>
-        <span className="text-[10px] font-mono text-white/40 uppercase">{currency} LIVE</span>
+        <span className="text-xs text-white/40 font-medium">{currency} Live</span>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-around gap-6 my-2">
-        {/* Donut graphic */}
+      {/* Donut & Stats Row */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-5 my-2">
+        {/* Donut Circle (Zero clipping, perfectly centered) */}
         <div className="relative w-36 h-36 flex items-center justify-center flex-shrink-0">
-          <svg width={size} height={size} className="transform -rotate-90">
-            {/* Background ring */}
+          <svg
+            viewBox={`0 0 ${size} ${size}`}
+            width={size}
+            height={size}
+            className="w-full h-full transform -rotate-90 overflow-visible"
+          >
+            {/* Base Background Track */}
             <circle
-              cx={size / 2}
-              cy={size / 2}
+              cx={center}
+              cy={center}
               r={radius}
-              fill="transparent"
+              fill="none"
               stroke="rgba(255,255,255,0.06)"
               strokeWidth={strokeWidth}
             />
 
-            {/* Segments */}
+            {/* Dynamic Segments */}
             {totalUSD > 0 &&
               items.map((item) => {
                 const percent = item.amount / (displayTotal || 1);
@@ -322,55 +310,60 @@ export function FinancialDonutChart({
                 return (
                   <circle
                     key={item.label}
-                    cx={size / 2}
-                    cy={size / 2}
+                    cx={center}
+                    cy={center}
                     r={radius}
-                    fill="transparent"
+                    fill="none"
                     stroke={item.color}
                     strokeWidth={strokeWidth}
                     strokeDasharray={strokeDasharray}
                     strokeDashoffset={strokeDashoffset}
                     strokeLinecap="round"
-                    className="transition-all duration-700"
+                    className="transition-all duration-500"
                   />
                 );
               })}
           </svg>
 
-          {/* Center stats */}
-          <div className="absolute flex flex-col items-center justify-center text-center px-1">
-            <span className="text-sm font-bold text-white font-[family-name:var(--font-orbitron)] truncate max-w-[100px]">
+          {/* Center Text (Simple, standard typography) */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+            <span className="text-base font-bold text-white tracking-tight">
+              {symbol}
               {totalUSD > 0
-                ? isPKR
-                  ? `${(displayTotal / 1000).toFixed(0)}k`
-                  : `$${displayTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                ? displayTotal.toLocaleString(undefined, { maximumFractionDigits: isPKR ? 0 : 2 })
                 : "0"}
             </span>
-            <span className="text-[9px] font-mono uppercase text-white/40">{currency} Total</span>
+            <span className="text-[10px] text-white/40 uppercase font-medium tracking-wider mt-0.5">
+              Total Invoiced
+            </span>
           </div>
         </div>
 
-        {/* Legend stats */}
-        <div className="flex flex-col gap-3 w-full sm:w-auto">
+        {/* Legend List (Clean Cards) */}
+        <div className="flex flex-col gap-2 w-full sm:w-44">
           {items.map((item) => (
             <div
               key={item.label}
-              className="flex items-center justify-between gap-4 text-xs p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]"
+              className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.03] border border-white/5 text-xs"
             >
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-sm" style={{ background: item.color }} />
-                <span className="text-white/70">{item.label}</span>
+                <span className={`w-2 h-2 rounded-full ${item.dotColor}`} />
+                <span className="text-white/70 font-medium">{item.label}</span>
               </div>
-              <span className="font-mono font-bold text-white">
+              <span className="font-semibold text-white">
                 {symbol}
-                {item.amount.toLocaleString(undefined, { maximumFractionDigits: isPKR ? 0 : 2 })}
+                {item.amount.toLocaleString(undefined, {
+                  minimumFractionDigits: isPKR ? 0 : 2,
+                  maximumFractionDigits: isPKR ? 0 : 2,
+                })}
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-white/40">
+      {/* Footer Settlement Rate */}
+      <div className="pt-3.5 border-t border-white/5 flex items-center justify-between text-xs text-white/50 font-medium">
         <span>Settlement Rate</span>
         <span className="text-emerald-400 font-bold">{collectionRate}%</span>
       </div>
@@ -378,7 +371,7 @@ export function FinancialDonutChart({
   );
 }
 
-// ─── 3. Real 7-Day Inquiries Velocity Bar Chart ───────────────────────────────────
+// ─── 3. Clean 7-Day Inquiries Velocity Bar Chart ───────────────────────────
 export interface DayInquiry {
   day: string;
   date: string;
@@ -407,62 +400,53 @@ export function InquiriesVelocityChart({
   const totalCount = totalThisWeek || chartData.reduce((acc, curr) => acc + curr.count, 0);
 
   return (
-    <div className="bg-[#080B12] border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
-      <div className="flex items-center justify-between mb-6">
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#38BDF8] block mb-1">
-            CLIENT INGESTION // 7-DAY INTAKE
-          </span>
-          <h3 className="text-base font-bold text-white">Inquiry Activity</h3>
+          <span className="text-xs text-white/50 font-medium">Weekly Incoming Inquiries</span>
+          <p className="text-2xl font-bold text-white tracking-tight mt-0.5">
+            {totalCount} <span className="text-sm font-normal text-white/40">briefs logged (7D)</span>
+          </p>
         </div>
-        <div className="px-2.5 py-1 rounded-md bg-[#38BDF8]/10 border border-[#38BDF8]/20 text-[11px] font-mono text-[#38BDF8]">
-          {totalCount} Total (7D)
+        <div className="px-3 py-1 rounded-lg bg-[#38BDF8]/10 border border-[#38BDF8]/20 text-xs font-semibold text-[#38BDF8]">
+          Avg {(totalCount / 7).toFixed(1)} / Day
         </div>
       </div>
 
       {/* Bar Chart */}
-      <div className="flex items-end justify-between gap-2 h-36 pt-4 pb-2 px-1">
+      <div className="flex items-end justify-between gap-3 h-36 pt-4 pb-2">
         {chartData.map((item) => {
-          const heightPercent = item.count > 0 ? (item.count / maxVal) * 100 : 8;
+          const heightPercent = item.count > 0 ? (item.count / maxVal) * 100 : 6;
           const hasCount = item.count > 0;
 
           return (
             <div key={item.day + item.date} className="flex-1 flex flex-col items-center gap-2 group">
               <div className="relative w-full flex items-end justify-center h-28">
-                {/* Bar */}
                 <div
-                  className={`w-full max-w-[28px] rounded-t-lg transition-all duration-300 ${
+                  className={`w-full max-w-[32px] rounded-t-lg transition-all duration-200 ${
                     hasCount
-                      ? "bg-gradient-to-t from-[#38BDF8]/30 to-[#38BDF8] group-hover:to-[#F55036] shadow-[0_0_12px_rgba(56,189,248,0.35)]"
+                      ? "bg-[#38BDF8] group-hover:bg-[#F55036]"
                       : "bg-white/5 group-hover:bg-white/10"
                   }`}
                   style={{ height: `${heightPercent}%` }}
                 />
 
-                {/* Hover count pill */}
-                <span className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[10px] font-mono text-white bg-[#05080D] border border-white/15 px-1.5 py-0.5 rounded shadow-lg whitespace-nowrap pointer-events-none">
+                <span className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-xs font-medium text-white bg-[#0C1017] border border-white/15 px-2 py-0.5 rounded shadow-lg whitespace-nowrap pointer-events-none">
                   {item.count} Briefs
                 </span>
               </div>
-              <span className="text-[11px] font-mono text-white/40 group-hover:text-white transition-colors">
+              <span className="text-xs text-white/50 group-hover:text-white font-medium transition-colors">
                 {item.day}
               </span>
             </div>
           );
         })}
       </div>
-
-      <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-white/40">
-        <span>Intake Frequency</span>
-        <span className="text-[#38BDF8] font-bold">
-          {(totalCount / 7).toFixed(1)} / Day
-        </span>
-      </div>
     </div>
   );
 }
 
-// ─── 4. Real Practice & Tech Stack Distribution Matrix ─────────────────────────────
+// ─── 4. Clean Practice & Tech Stack Distribution Matrix ────────────────────
 export interface StackCapability {
   label: string;
   count: number;
@@ -485,43 +469,35 @@ export function CapabilitiesMatrix({
   const items = data.length > 0 ? data : defaultCapabilities;
 
   return (
-    <div className="bg-[#080B12] border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#A855F7] block mb-1">
-            STACK ARCHITECTURE // LOAD
-          </span>
-          <h3 className="text-base font-bold text-white">Practice Distribution</h3>
+    <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5 flex flex-col justify-between">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <Zap size={16} className="text-[#A855F7]" />
+          <h3 className="text-sm font-semibold text-white">Practice Area Distribution</h3>
         </div>
-        <Zap size={15} className="text-[#A855F7]" />
+        <span className="text-xs text-emerald-400 font-medium">100% Operational</span>
       </div>
 
       <div className="space-y-4 my-auto py-2">
         {items.map((item) => (
           <div key={item.label}>
-            <div className="flex items-center justify-between text-xs font-mono mb-1.5">
-              <span className="text-white/80 truncate max-w-[200px]">{item.label}</span>
-              <span className="font-bold" style={{ color: item.color }}>
+            <div className="flex items-center justify-between text-xs font-medium mb-1.5">
+              <span className="text-white/80">{item.label}</span>
+              <span className="text-white font-semibold">
                 {item.pct}% {item.count > 0 ? `(${item.count})` : ""}
               </span>
             </div>
             <div className="w-full h-2 rounded-full bg-white/[0.05] overflow-hidden">
               <div
-                className="h-full rounded-full transition-all duration-1000"
+                className="h-full rounded-full transition-all duration-700"
                 style={{
                   width: `${item.pct}%`,
                   background: item.color,
-                  boxShadow: `0 0 10px ${item.color}80`,
                 }}
               />
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-white/40">
-        <span>Production Health</span>
-        <span className="text-emerald-400 font-bold">100% Operational</span>
       </div>
     </div>
   );
