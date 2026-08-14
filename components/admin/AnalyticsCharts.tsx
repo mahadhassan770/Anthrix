@@ -267,52 +267,48 @@ export function FinancialDonutChart({
   const collectionRate = totalUSD > 0 ? Math.round((paid / totalUSD) * 100) : 0;
 
   return (
-    <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5 flex flex-col justify-between h-full">
-      {/* Card Header */}
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+    <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <DollarSign size={16} className="text-emerald-400" />
-          <h3 className="text-sm font-semibold text-white">Invoice Settlement</h3>
+          <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+            <DollarSign size={13} className="text-emerald-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-white leading-none">Invoice Settlement</h3>
+            <p className="text-[11px] text-white/40 mt-0.5">{currency} · live</p>
+          </div>
         </div>
-        <span className="text-xs text-white/40 font-medium">{currency} Live</span>
+        <span className="text-xs font-bold text-emerald-400">{collectionRate}%</span>
       </div>
 
-      {/* Donut & Stats Row */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-5 my-2">
-        {/* Donut Circle (Zero clipping, perfectly centered) */}
-        <div className="relative w-36 h-36 flex items-center justify-center flex-shrink-0">
+      {/* Donut + Legend side-by-side */}
+      <div className="flex items-center gap-5">
+        {/* Donut */}
+        <div className="relative w-[100px] h-[100px] flex-shrink-0 flex items-center justify-center">
           <svg
             viewBox={`0 0 ${size} ${size}`}
             width={size}
             height={size}
             className="w-full h-full transform -rotate-90 overflow-visible"
           >
-            {/* Base Background Track */}
             <circle
-              cx={center}
-              cy={center}
-              r={radius}
+              cx={center} cy={center} r={radius}
               fill="none"
               stroke="rgba(255,255,255,0.06)"
               strokeWidth={strokeWidth}
             />
-
-            {/* Dynamic Segments */}
             {totalUSD > 0 &&
               items.map((item) => {
                 const percent = item.amount / (displayTotal || 1);
                 if (percent <= 0) return null;
-
                 const strokeDasharray = `${percent * circumference} ${circumference}`;
                 const strokeDashoffset = -accumulatedPercent * circumference;
                 accumulatedPercent += percent;
-
                 return (
                   <circle
                     key={item.label}
-                    cx={center}
-                    cy={center}
-                    r={radius}
+                    cx={center} cy={center} r={radius}
                     fill="none"
                     stroke={item.color}
                     strokeWidth={strokeWidth}
@@ -324,48 +320,45 @@ export function FinancialDonutChart({
                 );
               })}
           </svg>
-
-          {/* Center Text (Simple, standard typography) */}
+          {/* Center label */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-            <span className="text-base font-bold text-white tracking-tight">
-              {symbol}
-              {totalUSD > 0
-                ? displayTotal.toLocaleString(undefined, { maximumFractionDigits: isPKR ? 0 : 2 })
-                : "0"}
+            <span className="text-sm font-bold text-white leading-none">
+              {collectionRate}%
             </span>
-            <span className="text-[10px] text-white/40 uppercase font-medium tracking-wider mt-0.5">
-              Total Invoiced
-            </span>
+            <span className="text-[9px] text-white/40 uppercase tracking-wide mt-0.5">Paid</span>
           </div>
         </div>
 
-        {/* Legend List (Clean Cards) */}
-        <div className="flex flex-col gap-2 w-full sm:w-44">
+        {/* Legend */}
+        <div className="flex flex-col gap-2 flex-1">
           {items.map((item) => (
-            <div
-              key={item.label}
-              className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.03] border border-white/5 text-xs"
-            >
-              <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${item.dotColor}`} />
-                <span className="text-white/70 font-medium">{item.label}</span>
+            <div key={item.label} className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${item.dotColor}`} />
+                <span className="text-xs text-white/60">{item.label}</span>
               </div>
-              <span className="font-semibold text-white">
-                {symbol}
-                {item.amount.toLocaleString(undefined, {
-                  minimumFractionDigits: isPKR ? 0 : 2,
-                  maximumFractionDigits: isPKR ? 0 : 2,
+              <span className="text-xs font-semibold text-white">
+                {symbol}{item.amount.toLocaleString(undefined, {
+                  minimumFractionDigits: isPKR ? 0 : 0,
+                  maximumFractionDigits: isPKR ? 0 : 0,
                 })}
               </span>
             </div>
           ))}
-        </div>
-      </div>
 
-      {/* Footer Settlement Rate */}
-      <div className="pt-3.5 border-t border-white/5 flex items-center justify-between text-xs text-white/50 font-medium">
-        <span>Settlement Rate</span>
-        <span className="text-emerald-400 font-bold">{collectionRate}%</span>
+          {/* Settlement bar */}
+          <div className="mt-1">
+            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all duration-700"
+                style={{ width: `${collectionRate}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-white/30 mt-1">
+              {symbol}{(paid * multiplier).toLocaleString(undefined, { maximumFractionDigits: 0 })} settled of {symbol}{displayTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

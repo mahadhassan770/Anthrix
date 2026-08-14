@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Mail } from "lucide-react";
-import { WorkGrid } from "@/components/work/project-card";
+import { WorkGrid, type PortfolioProject } from "@/components/work/project-card";
+import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "Work — Anthrix",
@@ -10,7 +11,31 @@ export const metadata: Metadata = {
     "Selected projects from our portfolio — SaaS platforms, AI agents, RAG systems, workflow automations, and web applications built for businesses that need real technical infrastructure.",
 };
 
-export default function WorkPage() {
+export default async function WorkPage() {
+  // Fetch only published projects from DB
+  let dbProjects: PortfolioProject[] = [];
+  try {
+    const projects = await db.project.findMany({
+      where: { published: true },
+      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+    });
+    dbProjects = projects.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      description: p.description,
+      tags: p.tags,
+      coverImage: p.coverImage,
+      featured: p.featured,
+      liveUrl: p.liveUrl,
+      githubUrl: p.githubUrl,
+      isDbProject: true,
+    }));
+  } catch {
+    // If DB is unavailable, fall back to static content only
+    dbProjects = [];
+  }
+
   return (
     <div style={{ background: "#05080D", minHeight: "100vh" }}>
 
@@ -102,7 +127,7 @@ export default function WorkPage() {
         style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
       >
         <div className="container mx-auto px-6 pt-12">
-          <WorkGrid />
+          <WorkGrid dbProjects={dbProjects} />
         </div>
       </section>
 
