@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { TrendingUp, DollarSign, ArrowUpRight, Shield, Zap, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 
-// ─── 1. Futuristic Revenue Trend Area Chart ──────────────────────────────────────
-interface RevenuePoint {
+// ─── 1. Real Revenue Trend Area Chart ──────────────────────────────────────
+export interface RevenuePoint {
   month: string;
   revenue: number;
   projected: number;
 }
 
 export function RevenueTrendChart({
-  data,
+  data = [],
   totalRevenue = 0,
   currency = "USD",
 }: {
@@ -23,27 +23,34 @@ export function RevenueTrendChart({
   const multiplier = isPKR ? 280 : 1;
   const symbol = isPKR ? "Rs " : "$";
 
-  const defaultData: RevenuePoint[] = [
-    { month: "Jan", revenue: 4200, projected: 5000 },
-    { month: "Feb", revenue: 6800, projected: 7500 },
-    { month: "Mar", revenue: 9500, projected: 10000 },
-    { month: "Apr", revenue: 14200, projected: 13500 },
-    { month: "May", revenue: 18900, projected: 18000 },
-    { month: "Jun", revenue: 24500, projected: 22000 },
-    { month: "Jul", revenue: 31200, projected: 28000 },
-  ];
+  // Use real data passed from database. If empty, generate zero-filled current months.
+  const chartData =
+    data.length > 0
+      ? data
+      : Array.from({ length: 6 }).map((_, i) => {
+          const d = new Date();
+          d.setMonth(d.getMonth() - (5 - i));
+          return {
+            month: d.toLocaleString("default", { month: "short" }),
+            revenue: 0,
+            projected: 0,
+          };
+        });
 
-  const chartData = data && data.length > 0 ? data : defaultData;
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
-  const maxVal = Math.max(...chartData.map((d) => Math.max(d.revenue, d.projected))) * 1.15;
+  const rawMax = Math.max(
+    ...chartData.map((d) => Math.max(d.revenue, d.projected)),
+    100
+  );
+  const maxVal = rawMax * 1.15;
   const width = 600;
   const height = 200;
   const paddingX = 40;
   const paddingY = 25;
 
   const getX = (index: number) =>
-    paddingX + (index / (chartData.length - 1)) * (width - paddingX * 2);
+    paddingX + (index / (chartData.length - 1 || 1)) * (width - paddingX * 2);
   const getY = (val: number) =>
     height - paddingY - (val / maxVal) * (height - paddingY * 2);
 
@@ -57,11 +64,11 @@ export function RevenueTrendChart({
     chartData.length - 1
   )},${height - paddingY} Z`;
 
-  const displayTotal = totalRevenue > 0 ? totalRevenue * multiplier : 31200 * multiplier;
+  const displayTotal = totalRevenue * multiplier;
 
   return (
     <div className="bg-[#080B12] border border-white/10 rounded-2xl p-6 relative overflow-hidden">
-      {/* Glow */}
+      {/* Ambient Glow */}
       <div
         className="absolute top-0 right-0 w-72 h-40 pointer-events-none"
         style={{
@@ -75,13 +82,17 @@ export function RevenueTrendChart({
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-[#F55036] animate-pulse" />
             <span className="text-[10px] font-mono uppercase tracking-widest text-[#F55036]">
-              FINANCIAL TELEMETRY // REVENUE VELOCITY ({currency})
+              REAL-TIME FINANCIAL TELEMETRY // REVENUE STREAM ({currency})
             </span>
           </div>
           <h3 className="text-xl font-bold text-white flex items-baseline gap-2">
-            {symbol}{displayTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            <span className="text-xs font-mono font-normal text-emerald-400 flex items-center">
-              <TrendingUp size={13} className="inline mr-0.5" /> +28.4%
+            {symbol}
+            {displayTotal.toLocaleString(undefined, {
+              minimumFractionDigits: isPKR ? 0 : 2,
+              maximumFractionDigits: isPKR ? 0 : 2,
+            })}
+            <span className="text-xs font-mono font-normal text-white/50">
+              verified collections
             </span>
           </h3>
         </div>
@@ -90,11 +101,11 @@ export function RevenueTrendChart({
         <div className="flex items-center gap-4 text-xs font-mono">
           <div className="flex items-center gap-1.5 text-white/70">
             <span className="w-2.5 h-2.5 rounded-sm bg-[#F55036]" />
-            <span>Actual Revenue</span>
+            <span>Actual Collected</span>
           </div>
           <div className="flex items-center gap-1.5 text-white/40">
             <span className="w-2.5 h-0.5 bg-white/40 border-dashed" />
-            <span>Projected</span>
+            <span>Target Velocity</span>
           </div>
         </div>
       </div>
@@ -135,10 +146,10 @@ export function RevenueTrendChart({
           {/* Fill Area */}
           <path d={areaPath} fill="url(#revenueGrad)" />
 
-          {/* Projected Dotted Line */}
+          {/* Projected Target Line */}
           <polyline
             fill="none"
-            stroke="rgba(255,255,255,0.3)"
+            stroke="rgba(255,255,255,0.25)"
             strokeWidth="2"
             strokeDasharray="4 4"
             points={projectedPoints}
@@ -222,7 +233,10 @@ export function RevenueTrendChart({
               {chartData[hoveredIdx].month}
             </p>
             <p className="text-sm font-bold text-[#F55036]">
-              {symbol}{(chartData[hoveredIdx].revenue * multiplier).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {symbol}
+              {(chartData[hoveredIdx].revenue * multiplier).toLocaleString(undefined, {
+                maximumFractionDigits: isPKR ? 0 : 2,
+              })}
             </p>
           </div>
         )}
@@ -231,7 +245,7 @@ export function RevenueTrendChart({
   );
 }
 
-// ─── 2. Financial Breakdown Donut Chart ─────────────────────────────────────────
+// ─── 2. Real Financial Breakdown Donut Chart ─────────────────────────────────────────
 interface BreakdownItem {
   label: string;
   amount: number;
@@ -240,9 +254,9 @@ interface BreakdownItem {
 }
 
 export function FinancialDonutChart({
-  paid = 45000,
-  pending = 12000,
-  overdue = 3500,
+  paid = 0,
+  pending = 0,
+  overdue = 0,
   currency = "USD",
 }: {
   paid?: number;
@@ -254,7 +268,7 @@ export function FinancialDonutChart({
   const multiplier = isPKR ? 280 : 1;
   const symbol = isPKR ? "Rs " : "$";
 
-  const totalUSD = paid + pending + overdue || 1;
+  const totalUSD = paid + pending + overdue;
   const displayTotal = totalUSD * multiplier;
 
   const items: BreakdownItem[] = [
@@ -269,6 +283,7 @@ export function FinancialDonutChart({
   const circumference = 2 * Math.PI * radius;
 
   let accumulatedPercent = 0;
+  const collectionRate = totalUSD > 0 ? ((paid / totalUSD) * 100).toFixed(0) : "0";
 
   return (
     <div className="bg-[#080B12] border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
@@ -277,7 +292,7 @@ export function FinancialDonutChart({
           <DollarSign size={16} className="text-emerald-400" />
           <h3 className="text-sm font-semibold text-white">Invoice Settlement</h3>
         </div>
-        <span className="text-[10px] font-mono text-white/40 uppercase">{currency} VIEW</span>
+        <span className="text-[10px] font-mono text-white/40 uppercase">{currency} LIVE</span>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-around gap-6 my-2">
@@ -295,34 +310,41 @@ export function FinancialDonutChart({
             />
 
             {/* Segments */}
-            {items.map((item) => {
-              const percent = item.amount / (displayTotal || 1);
-              const strokeDasharray = `${percent * circumference} ${circumference}`;
-              const strokeDashoffset = -accumulatedPercent * circumference;
-              accumulatedPercent += percent;
+            {totalUSD > 0 &&
+              items.map((item) => {
+                const percent = item.amount / (displayTotal || 1);
+                if (percent <= 0) return null;
 
-              return (
-                <circle
-                  key={item.label}
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={radius}
-                  fill="transparent"
-                  stroke={item.color}
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={strokeDasharray}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  className="transition-all duration-700"
-                />
-              );
-            })}
+                const strokeDasharray = `${percent * circumference} ${circumference}`;
+                const strokeDashoffset = -accumulatedPercent * circumference;
+                accumulatedPercent += percent;
+
+                return (
+                  <circle
+                    key={item.label}
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    fill="transparent"
+                    stroke={item.color}
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={strokeDasharray}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    className="transition-all duration-700"
+                  />
+                );
+              })}
           </svg>
 
           {/* Center stats */}
-          <div className="absolute flex flex-col items-center justify-center text-center">
-            <span className="text-base font-bold text-white font-[family-name:var(--font-orbitron)] truncate max-w-[100px]">
-              {isPKR ? `${(displayTotal / 1000000).toFixed(1)}M` : `$${(displayTotal / 1000).toFixed(1)}k`}
+          <div className="absolute flex flex-col items-center justify-center text-center px-1">
+            <span className="text-sm font-bold text-white font-[family-name:var(--font-orbitron)] truncate max-w-[100px]">
+              {totalUSD > 0
+                ? isPKR
+                  ? `${(displayTotal / 1000).toFixed(0)}k`
+                  : `$${displayTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                : "0"}
             </span>
             <span className="text-[9px] font-mono uppercase text-white/40">{currency} Total</span>
           </div>
@@ -340,7 +362,8 @@ export function FinancialDonutChart({
                 <span className="text-white/70">{item.label}</span>
               </div>
               <span className="font-mono font-bold text-white">
-                {symbol}{item.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {symbol}
+                {item.amount.toLocaleString(undefined, { maximumFractionDigits: isPKR ? 0 : 2 })}
               </span>
             </div>
           ))}
@@ -348,28 +371,40 @@ export function FinancialDonutChart({
       </div>
 
       <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-white/40">
-        <span>Collection Rate</span>
-        <span className="text-emerald-400 font-bold">
-          {((paid / totalUSD) * 100).toFixed(0)}%
-        </span>
+        <span>Settlement Rate</span>
+        <span className="text-emerald-400 font-bold">{collectionRate}%</span>
       </div>
     </div>
   );
 }
 
-// ─── 3. Inquiries & Client Velocity Bar Chart ───────────────────────────────────
-export function InquiriesVelocityChart() {
-  const days = [
-    { day: "Mon", count: 4, label: "4 Briefs" },
-    { day: "Tue", count: 8, label: "8 Briefs" },
-    { day: "Wed", count: 6, label: "6 Briefs" },
-    { day: "Thu", count: 12, label: "12 Briefs" },
-    { day: "Fri", count: 15, label: "15 Briefs" },
-    { day: "Sat", count: 9, label: "9 Briefs" },
-    { day: "Sun", count: 11, label: "11 Briefs" },
-  ];
+// ─── 3. Real 7-Day Inquiries Velocity Bar Chart ───────────────────────────────────
+export interface DayInquiry {
+  day: string;
+  date: string;
+  count: number;
+}
 
-  const maxVal = Math.max(...days.map((d) => d.count));
+export function InquiriesVelocityChart({
+  data = [],
+  totalThisWeek = 0,
+}: {
+  data?: DayInquiry[];
+  totalThisWeek?: number;
+}) {
+  const defaultDays: DayInquiry[] = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return {
+      day: d.toLocaleString("default", { weekday: "short" }),
+      date: d.toISOString().split("T")[0],
+      count: 0,
+    };
+  });
+
+  const chartData = data.length > 0 ? data : defaultDays;
+  const maxVal = Math.max(...chartData.map((d) => d.count), 1);
+  const totalCount = totalThisWeek || chartData.reduce((acc, curr) => acc + curr.count, 0);
 
   return (
     <div className="bg-[#080B12] border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
@@ -381,26 +416,32 @@ export function InquiriesVelocityChart() {
           <h3 className="text-base font-bold text-white">Inquiry Activity</h3>
         </div>
         <div className="px-2.5 py-1 rounded-md bg-[#38BDF8]/10 border border-[#38BDF8]/20 text-[11px] font-mono text-[#38BDF8]">
-          65 Total This Week
+          {totalCount} Total (7D)
         </div>
       </div>
 
       {/* Bar Chart */}
       <div className="flex items-end justify-between gap-2 h-36 pt-4 pb-2 px-1">
-        {days.map((item) => {
-          const heightPercent = (item.count / maxVal) * 100;
+        {chartData.map((item) => {
+          const heightPercent = item.count > 0 ? (item.count / maxVal) * 100 : 8;
+          const hasCount = item.count > 0;
+
           return (
-            <div key={item.day} className="flex-1 flex flex-col items-center gap-2 group">
+            <div key={item.day + item.date} className="flex-1 flex flex-col items-center gap-2 group">
               <div className="relative w-full flex items-end justify-center h-28">
                 {/* Bar */}
                 <div
-                  className="w-full max-w-[28px] rounded-t-lg bg-gradient-to-t from-[#38BDF8]/20 to-[#38BDF8] group-hover:to-[#F55036] transition-all duration-300 shadow-[0_0_12px_rgba(56,189,248,0.3)] group-hover:shadow-[0_0_15px_rgba(245,80,54,0.5)]"
+                  className={`w-full max-w-[28px] rounded-t-lg transition-all duration-300 ${
+                    hasCount
+                      ? "bg-gradient-to-t from-[#38BDF8]/30 to-[#38BDF8] group-hover:to-[#F55036] shadow-[0_0_12px_rgba(56,189,248,0.35)]"
+                      : "bg-white/5 group-hover:bg-white/10"
+                  }`}
                   style={{ height: `${heightPercent}%` }}
                 />
 
                 {/* Hover count pill */}
                 <span className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[10px] font-mono text-white bg-[#05080D] border border-white/15 px-1.5 py-0.5 rounded shadow-lg whitespace-nowrap pointer-events-none">
-                  {item.count}
+                  {item.count} Briefs
                 </span>
               </div>
               <span className="text-[11px] font-mono text-white/40 group-hover:text-white transition-colors">
@@ -412,21 +453,36 @@ export function InquiriesVelocityChart() {
       </div>
 
       <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-white/40">
-        <span>Average Response</span>
-        <span className="text-[#38BDF8] font-bold">&lt; 2.4 Hours</span>
+        <span>Intake Frequency</span>
+        <span className="text-[#38BDF8] font-bold">
+          {(totalCount / 7).toFixed(1)} / Day
+        </span>
       </div>
     </div>
   );
 }
 
-// ─── 4. Capability & Tech Stack Distribution Matrix ─────────────────────────────
-export function CapabilitiesMatrix() {
-  const capabilities = [
-    { label: "AI Agents & Autonomous Workflows", pct: 92, color: "#F55036" },
-    { label: "Next.js SaaS Platforms & Web Apps", pct: 88, color: "#38BDF8" },
-    { label: "RAG Systems & Vector Embeddings", pct: 78, color: "#A855F7" },
-    { label: "Custom API & n8n Enterprise Pipelines", pct: 84, color: "#10B981" },
+// ─── 4. Real Practice & Tech Stack Distribution Matrix ─────────────────────────────
+export interface StackCapability {
+  label: string;
+  count: number;
+  pct: number;
+  color: string;
+}
+
+export function CapabilitiesMatrix({
+  data = [],
+}: {
+  data?: StackCapability[];
+}) {
+  const defaultCapabilities: StackCapability[] = [
+    { label: "AI Agents & Autonomous Workflows", count: 0, pct: 25, color: "#F55036" },
+    { label: "Next.js SaaS Platforms & Web Apps", count: 0, pct: 25, color: "#38BDF8" },
+    { label: "RAG Systems & Vector Embeddings", count: 0, pct: 25, color: "#A855F7" },
+    { label: "Custom API & Enterprise Pipelines", count: 0, pct: 25, color: "#10B981" },
   ];
+
+  const items = data.length > 0 ? data : defaultCapabilities;
 
   return (
     <div className="bg-[#080B12] border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
@@ -441,12 +497,12 @@ export function CapabilitiesMatrix() {
       </div>
 
       <div className="space-y-4 my-auto py-2">
-        {capabilities.map((item) => (
+        {items.map((item) => (
           <div key={item.label}>
             <div className="flex items-center justify-between text-xs font-mono mb-1.5">
-              <span className="text-white/80">{item.label}</span>
+              <span className="text-white/80 truncate max-w-[200px]">{item.label}</span>
               <span className="font-bold" style={{ color: item.color }}>
-                {item.pct}%
+                {item.pct}% {item.count > 0 ? `(${item.count})` : ""}
               </span>
             </div>
             <div className="w-full h-2 rounded-full bg-white/[0.05] overflow-hidden">
