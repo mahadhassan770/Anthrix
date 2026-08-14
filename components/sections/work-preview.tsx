@@ -2,13 +2,23 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { work } from "@/lib/content/work";
+import { ArrowRight, ArrowUpRight, ExternalLink } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
+import type { PortfolioProject } from "@/components/work/project-card";
 
-export function WorkPreview() {
-  const featured = work.find((p) => p.featured)!;
-  const secondary = work.filter((p) => !p.featured).slice(0, 3);
+function resolveImage(p: PortfolioProject): string {
+  return (
+    p.image ||
+    p.coverImage ||
+    `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80`
+  );
+}
+
+export function WorkPreview({ projects = [] }: { projects?: PortfolioProject[] }) {
+  if (!projects || projects.length === 0) return null;
+
+  const featured = projects.find((p) => p.featured) || projects[0];
+  const secondary = projects.filter((p) => p.id !== featured.id).slice(0, 3);
 
   return (
     <section
@@ -70,7 +80,9 @@ export function WorkPreview() {
         <Reveal>
           <div className="mb-4">
             <Link
-              href={`/work/${featured.slug}`}
+              href={featured.liveUrl || `/work/${featured.slug}`}
+              target={featured.liveUrl ? "_blank" : undefined}
+              rel={featured.liveUrl ? "noopener noreferrer" : undefined}
               className="group grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] rounded-2xl overflow-hidden transition-all duration-400 block"
               style={{
                 background: "#0d0f14",
@@ -80,7 +92,7 @@ export function WorkPreview() {
               {/* Image */}
               <div className="relative h-[260px] lg:h-[320px] overflow-hidden">
                 <Image
-                  src={featured.image}
+                  src={resolveImage(featured)}
                   alt={featured.title}
                   fill
                   sizes="(max-width: 1024px) 100vw, 60vw"
@@ -115,7 +127,7 @@ export function WorkPreview() {
                   {featured.description}
                 </p>
                 <div className="flex flex-wrap gap-2 mb-7">
-                  {featured.techStack.map((tech) => (
+                  {(featured.techStack ?? featured.tags).slice(0, 5).map((tech) => (
                     <span
                       key={tech}
                       className="text-[10px] px-2.5 py-1 rounded-md font-mono"
@@ -133,8 +145,12 @@ export function WorkPreview() {
                   className="inline-flex items-center gap-2 text-sm font-semibold group-hover:gap-3 transition-all duration-200"
                   style={{ color: "#F55036" }}
                 >
-                  View Case Study
-                  <ArrowUpRight size={14} />
+                  {featured.liveUrl ? "View Live Project" : "View Case Study"}
+                  {featured.liveUrl ? (
+                    <ExternalLink size={14} className="transition-transform group-hover:translate-x-1" />
+                  ) : (
+                    <ArrowUpRight size={14} />
+                  )}
                 </span>
               </div>
             </Link>
@@ -146,7 +162,9 @@ export function WorkPreview() {
           {secondary.map((project, i) => (
             <Reveal key={project.id}>
               <Link
-                href={`/work/${project.slug}`}
+                href={project.liveUrl || `/work/${project.slug}`}
+                target={project.liveUrl ? "_blank" : undefined}
+                rel={project.liveUrl ? "noopener noreferrer" : undefined}
                 className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 h-full block"
                 style={{
                   background: "#0d0f14",
@@ -156,7 +174,7 @@ export function WorkPreview() {
                 {/* Image */}
                 <div className="relative h-[180px] overflow-hidden flex-shrink-0">
                   <Image
-                    src={project.image}
+                    src={resolveImage(project)}
                     alt={project.title}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -192,7 +210,7 @@ export function WorkPreview() {
                     {project.description}
                   </p>
                   <div className="flex flex-wrap gap-1.5 mb-4">
-                    {project.techStack.slice(0, 3).map((tech) => (
+                    {(project.techStack ?? project.tags).slice(0, 3).map((tech) => (
                       <span
                         key={tech}
                         className="text-[10px] px-2 py-0.5 rounded font-mono"
@@ -210,8 +228,12 @@ export function WorkPreview() {
                     className="inline-flex items-center gap-1.5 text-xs font-semibold group-hover:gap-2 transition-all duration-200"
                     style={{ color: "#F55036" }}
                   >
-                    View Project
-                    <ArrowUpRight size={12} />
+                    {project.liveUrl ? "View Live" : "View Project"}
+                    {project.liveUrl ? (
+                      <ExternalLink size={12} />
+                    ) : (
+                      <ArrowUpRight size={12} />
+                    )}
                   </span>
                 </div>
               </Link>

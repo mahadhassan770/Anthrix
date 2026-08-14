@@ -9,10 +9,31 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const capabilities = await prisma.capability.findMany({
     orderBy: { order: "asc" }
   });
+
+  const dbProjectsRaw = await prisma.project.findMany({
+    where: { published: true },
+    orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+    take: 4, // 1 featured + 3 secondary
+  });
+
+  const projects = dbProjectsRaw.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    description: p.description,
+    tags: p.tags,
+    coverImage: p.coverImage,
+    featured: p.featured,
+    liveUrl: p.liveUrl,
+    githubUrl: p.githubUrl,
+    isDbProject: true,
+  }));
 
   return (
     <>
@@ -21,7 +42,7 @@ export default async function Home() {
       <Process />
       <Stats />
       <Team />
-      <WorkPreview />
+      <WorkPreview projects={projects} />
       <CTA />
     </>
   );
