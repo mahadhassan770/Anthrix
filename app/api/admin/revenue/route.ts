@@ -42,9 +42,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const DEFAULT_RATE = 280.0;
+    const currency = (data.currency || "USD").toUpperCase();
+    const rawAmount = parseFloat(data.amount);
+    const rate = parseFloat(data.exchangeRate) || DEFAULT_RATE;
+
+    let amountUSD = rawAmount;
+    let amountPKR = rawAmount * rate;
+
+    if (currency === "PKR") {
+      amountUSD = rawAmount / rate;
+      amountPKR = rawAmount;
+    }
+
     const transaction = await db.transaction.create({
       data: {
-        amount: parseFloat(data.amount),
+        amount: amountUSD,
+        amountPKR: amountPKR,
+        currency: currency,
+        exchangeRate: rate,
         description: data.description,
         date: data.date ? new Date(data.date) : new Date(),
         status: data.status ?? "paid",

@@ -197,15 +197,18 @@ model Client {
 }
 
 model Transaction {
-  id          String   @id @default(cuid())
-  amount      Float
-  description String
-  date        DateTime @default(now())
-  status      String   @default("paid")
-  clientId    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  amount       Float
+  amountPKR    Float?
+  currency     String   @default("USD")
+  exchangeRate Float    @default(280.0)
+  description  String
+  date         DateTime @default(now())
+  status       String   @default("paid")
+  clientId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("transactions")
 }

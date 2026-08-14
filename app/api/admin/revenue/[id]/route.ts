@@ -15,16 +15,34 @@ export async function PATCH(
   try {
     const { id } = await params;
     const data = await req.json();
+    const DEFAULT_RATE = 280.0;
+    const rate = parseFloat(data.exchangeRate) || DEFAULT_RATE;
+    const currency = data.currency ? data.currency.toUpperCase() : undefined;
+
+    let updateData: any = {
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.date !== undefined && { date: new Date(data.date) }),
+      ...(data.status !== undefined && { status: data.status }),
+      ...(data.clientId !== undefined && { clientId: data.clientId }),
+      ...(currency !== undefined && { currency }),
+    };
+
+    if (data.amount !== undefined) {
+      const rawAmount = parseFloat(data.amount);
+      const curr = currency || "USD";
+      if (curr === "PKR") {
+        updateData.amount = rawAmount / rate;
+        updateData.amountPKR = rawAmount;
+      } else {
+        updateData.amount = rawAmount;
+        updateData.amountPKR = rawAmount * rate;
+      }
+      updateData.exchangeRate = rate;
+    }
 
     const transaction = await db.transaction.update({
       where: { id },
-      data: {
-        ...(data.amount !== undefined && { amount: parseFloat(data.amount) }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.date !== undefined && { date: new Date(data.date) }),
-        ...(data.status !== undefined && { status: data.status }),
-        ...(data.clientId !== undefined && { clientId: data.clientId }),
-      },
+      data: updateData,
     });
 
     return NextResponse.json(transaction);
