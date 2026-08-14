@@ -75,6 +75,23 @@ export default function RevenuePage() {
   const displayPending = isPKR ? pendingUSD * rate : pendingUSD;
   const displayOverdue = isPKR ? overdueUSD * rate : overdueUSD;
 
+  // Build real 6-month monthly data from fetched transactions
+  const monthlyRevenue = Array.from({ length: 6 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - (5 - i));
+    const yr = d.getFullYear();
+    const mo = d.getMonth();
+    const month = d.toLocaleString("default", { month: "short" });
+    const revenue = transactions
+      .filter((t) => {
+        const txDate = new Date(t.date);
+        return txDate.getFullYear() === yr && txDate.getMonth() === mo && t.status === "paid";
+      })
+      .reduce((acc, curr) => acc + curr.amount, 0);
+    return { month, revenue, projected: revenue > 0 ? Math.round(revenue * 1.15) : 0 };
+  });
+
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this transaction?")) return;
 
@@ -177,82 +194,89 @@ export default function RevenuePage() {
         </div>
       )}
 
-      {/* ── Financial Overview Cards (Active Currency View) ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-[#080B12] rounded-2xl border border-white/10 p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <TrendingUp size={18} className="text-emerald-400" />
+      {/* ── Financial Overview Cards (Clean, simple typography) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Collected */}
+        <div className="bg-[#080B12] rounded-2xl border border-white/10 p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                <TrendingUp size={16} className="text-emerald-400" />
               </div>
               <div>
-                <h3 className="text-xs font-mono uppercase text-white/50">Total Collected</h3>
-                <span className="text-[10px] font-mono text-emerald-400 font-bold">SETTLED INVOICES</span>
+                <p className="text-xs font-medium text-white/60">Total Collected</p>
+                <p className="text-[11px] text-emerald-400">Settled invoices</p>
               </div>
             </div>
-            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              {viewCurrency}
-            </span>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">{viewCurrency}</span>
           </div>
-          <p className="text-3xl font-bold text-white font-[family-name:var(--font-orbitron)] mt-2">
-            {symbol}{displayTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-          </p>
-          <p className="text-xs font-mono text-white/40 mt-1">
-            ≈ {isPKR ? `$${totalUSD.toLocaleString()} USD` : `Rs ${(totalUSD * rate).toLocaleString()} PKR`}
-          </p>
+          <div>
+            <p className="text-3xl font-bold text-white tracking-tight">
+              {symbol}{displayTotal.toLocaleString(undefined, { minimumFractionDigits: isPKR ? 0 : 2, maximumFractionDigits: isPKR ? 0 : 2 })}
+            </p>
+            <p className="text-xs text-white/40 mt-1">
+              {isPKR ? `≈ $${totalUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD` : `≈ Rs ${(totalUSD * rate).toLocaleString(undefined, { maximumFractionDigits: 0 })} PKR`}
+            </p>
+          </div>
         </div>
 
-        <div className="bg-[#080B12] rounded-2xl border border-white/10 p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
-                <DollarSign size={18} className="text-yellow-400" />
+        {/* Pending */}
+        <div className="bg-[#080B12] rounded-2xl border border-white/10 p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
+                <DollarSign size={16} className="text-yellow-400" />
               </div>
               <div>
-                <h3 className="text-xs font-mono uppercase text-white/50">Pending Invoices</h3>
-                <span className="text-[10px] font-mono text-yellow-400 font-bold">AWAITING PAYMENT</span>
+                <p className="text-xs font-medium text-white/60">Pending Invoices</p>
+                <p className="text-[11px] text-yellow-400">Awaiting payment</p>
               </div>
             </div>
-            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-yellow-500/10 border border-yellow-500/20 text-yellow-400">
-              {viewCurrency}
-            </span>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400">{viewCurrency}</span>
           </div>
-          <p className="text-3xl font-bold text-white font-[family-name:var(--font-orbitron)] mt-2">
-            {symbol}{displayPending.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-          </p>
-          <p className="text-xs font-mono text-white/40 mt-1">
-            ≈ {isPKR ? `$${pendingUSD.toLocaleString()} USD` : `Rs ${(pendingUSD * rate).toLocaleString()} PKR`}
-          </p>
+          <div>
+            <p className="text-3xl font-bold text-white tracking-tight">
+              {symbol}{displayPending.toLocaleString(undefined, { minimumFractionDigits: isPKR ? 0 : 2, maximumFractionDigits: isPKR ? 0 : 2 })}
+            </p>
+            <p className="text-xs text-white/40 mt-1">
+              {isPKR ? `≈ $${pendingUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD` : `≈ Rs ${(pendingUSD * rate).toLocaleString(undefined, { maximumFractionDigits: 0 })} PKR`}
+            </p>
+          </div>
         </div>
 
-        <div className="bg-[#080B12] rounded-2xl border border-white/10 p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-                <AlertCircle size={18} className="text-red-400" />
+        {/* Overdue */}
+        <div className="bg-[#080B12] rounded-2xl border border-white/10 p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                <AlertCircle size={16} className="text-red-400" />
               </div>
               <div>
-                <h3 className="text-xs font-mono uppercase text-white/50">Overdue</h3>
-                <span className="text-[10px] font-mono text-red-400 font-bold">ACTION REQUIRED</span>
+                <p className="text-xs font-medium text-white/60">Overdue</p>
+                <p className="text-[11px] text-red-400">Action required</p>
               </div>
             </div>
-            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-400">
-              {viewCurrency}
-            </span>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">{viewCurrency}</span>
           </div>
-          <p className="text-3xl font-bold text-red-400 font-[family-name:var(--font-orbitron)] mt-2">
-            {symbol}{displayOverdue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-          </p>
-          <p className="text-xs font-mono text-white/40 mt-1">
-            ≈ {isPKR ? `$${overdueUSD.toLocaleString()} USD` : `Rs ${(overdueUSD * rate).toLocaleString()} PKR`}
-          </p>
+          <div>
+            <p className="text-3xl font-bold text-red-400 tracking-tight">
+              {symbol}{displayOverdue.toLocaleString(undefined, { minimumFractionDigits: isPKR ? 0 : 2, maximumFractionDigits: isPKR ? 0 : 2 })}
+            </p>
+            <p className="text-xs text-white/40 mt-1">
+              {isPKR ? `≈ $${overdueUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD` : `≈ Rs ${(overdueUSD * rate).toLocaleString(undefined, { maximumFractionDigits: 0 })} PKR`}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* ── Visual Charts Section (Dynamic Currency Sync) ── */}
+      {/* ── Visual Charts Section (Real Monthly Data + Donut) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <RevenueTrendChart totalRevenue={totalUSD} currency={viewCurrency} />
+        <div className="lg:col-span-2 bg-[#080B12] border border-white/10 rounded-2xl p-6">
+          <RevenueTrendChart
+            data={monthlyRevenue}
+            totalRevenue={totalUSD}
+            currency={viewCurrency}
+          />
         </div>
         <div>
           <FinancialDonutChart

@@ -295,9 +295,9 @@ export default function ExecutiveDashboardClient({ data }: { data: DashboardData
         </div>
 
         {/* ── RIGHT COLUMN (1/3 width) ── */}
-        <div className="space-y-6">
+        <div className="space-y-5">
 
-          {/* 1. Settlement Donut Chart (Fully Fixed Geometry & Simple Fonts) */}
+          {/* 1. Invoice Settlement Donut */}
           <FinancialDonutChart
             paid={data.paidRevenue}
             pending={data.pendingRevenue}
@@ -305,112 +305,156 @@ export default function ExecutiveDashboardClient({ data }: { data: DashboardData
             currency={currency}
           />
 
-          {/* 2. Recent Inquiries Feed */}
-          <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <MessageSquare size={15} className="text-[#F55036]" />
-                <h3 className="text-sm font-semibold text-white">Recent Inquiries</h3>
+          {/* 2. Recent Inquiries — Redesigned */}
+          <div className="bg-[#080B12] border border-white/10 rounded-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-[#F55036]/10 border border-[#F55036]/20 flex items-center justify-center">
+                  <MessageSquare size={13} className="text-[#F55036]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white leading-none">Recent Inquiries</h3>
+                  {data.unreadMessages > 0 && (
+                    <p className="text-[11px] text-[#F55036] mt-0.5">{data.unreadMessages} unread</p>
+                  )}
+                </div>
               </div>
               <Link
                 href="/admin/messages"
-                className="text-xs text-white/40 hover:text-[#F55036] transition-colors flex items-center gap-1 font-medium"
+                className="text-xs text-white/40 hover:text-[#F55036] transition-colors flex items-center gap-1"
               >
-                View all <ArrowUpRight size={12} />
+                All <ArrowUpRight size={11} />
               </Link>
             </div>
 
-            {data.recentMessages.length === 0 ? (
-              <p className="text-xs text-white/30 py-4 text-center">No messages yet</p>
-            ) : (
-              <div className="space-y-3">
-                {data.recentMessages.map((msg) => (
-                  <Link
-                    key={msg.id}
-                    href="/admin/messages"
-                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/[0.03] transition-colors group"
-                  >
-                    <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
-                        !msg.read
-                          ? "bg-[#F55036]/20 border border-[#F55036]/40 text-[#F55036]"
-                          : "bg-white/5 text-white/40"
-                      }`}
+            {/* Body */}
+            <div className="p-3">
+              {data.recentMessages.length === 0 ? (
+                <div className="py-8 text-center">
+                  <MessageSquare size={20} className="text-white/10 mx-auto mb-2" />
+                  <p className="text-xs text-white/30">No messages yet</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {data.recentMessages.map((msg) => (
+                    <Link
+                      key={msg.id}
+                      href="/admin/messages"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors group"
                     >
-                      {msg.name[0]?.toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-white group-hover:text-[#F55036] truncate transition-colors">
-                        {msg.name}
-                      </p>
-                      <p className="text-[11px] text-white/40 truncate">
-                        {msg.subject ?? msg.body.slice(0, 30)}
-                      </p>
-                    </div>
-                    <span className="text-[11px] text-white/30 whitespace-nowrap">
-                      {new Date(msg.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 3. Recent Projects Snapshot */}
-          <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <FolderKanban size={15} className="text-violet-400" />
-                <h3 className="text-sm font-semibold text-white">Recent Projects</h3>
-              </div>
-              <Link
-                href="/admin/projects"
-                className="text-xs text-white/40 hover:text-white transition-colors flex items-center gap-1 font-medium"
-              >
-                View all <ArrowUpRight size={12} />
-              </Link>
-            </div>
-
-            {data.recentProjects.length === 0 ? (
-              <p className="text-xs text-white/30 py-4 text-center">No projects yet</p>
-            ) : (
-              <div className="space-y-3">
-                {data.recentProjects.map((p) => (
-                  <Link
-                    key={p.id}
-                    href={`/admin/projects/${p.id}`}
-                    className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-white/[0.03] transition-colors group"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-white group-hover:text-violet-300 truncate transition-colors">
-                        {p.title}
-                      </p>
-                      <p className="text-[11px] text-white/40">
-                        {new Date(p.createdAt).toLocaleDateString("en-US", {
+                      {/* Avatar */}
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                          !msg.read
+                            ? "bg-[#F55036]/20 text-[#F55036]"
+                            : "bg-white/5 text-white/50"
+                        }`}
+                      >
+                        {msg.name[0]?.toUpperCase()}
+                      </div>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-medium text-white/90 group-hover:text-white truncate">
+                            {msg.name}
+                          </p>
+                          {!msg.read && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#F55036] flex-shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-[11px] text-white/40 truncate mt-0.5">
+                          {msg.subject ?? msg.body.slice(0, 32)}
+                        </p>
+                      </div>
+                      {/* Date */}
+                      <span className="text-[11px] text-white/25 whitespace-nowrap flex-shrink-0">
+                        {new Date(msg.createdAt).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                         })}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 font-medium ${
-                        p.published
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : "bg-white/5 text-white/30 border border-white/10"
-                      }`}
-                    >
-                      {p.published ? "LIVE" : "DRAFT"}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-        </div>
+          {/* 3. Recent Projects — Redesigned */}
+          <div className="bg-[#080B12] border border-white/10 rounded-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+                  <FolderKanban size={13} className="text-violet-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white leading-none">Recent Projects</h3>
+                  <p className="text-[11px] text-white/40 mt-0.5">{data.projectsCount} total</p>
+                </div>
+              </div>
+              <Link
+                href="/admin/projects"
+                className="text-xs text-white/40 hover:text-violet-400 transition-colors flex items-center gap-1"
+              >
+                All <ArrowUpRight size={11} />
+              </Link>
+            </div>
+
+            {/* Body */}
+            <div className="p-3">
+              {data.recentProjects.length === 0 ? (
+                <div className="py-8 text-center">
+                  <FolderKanban size={20} className="text-white/10 mx-auto mb-2" />
+                  <p className="text-xs text-white/30">No projects yet</p>
+                  <Link href="/admin/projects/new" className="text-xs text-[#F55036] hover:underline mt-1 inline-block">
+                    + Create first project
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {data.recentProjects.map((p) => (
+                    <Link
+                      key={p.id}
+                      href={`/admin/projects/${p.id}`}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors group"
+                    >
+                      {/* Icon */}
+                      <div className="w-8 h-8 rounded-xl bg-violet-500/10 border border-violet-500/15 flex items-center justify-center flex-shrink-0">
+                        <FolderKanban size={13} className="text-violet-400" />
+                      </div>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-white/90 group-hover:text-white truncate">
+                          {p.title}
+                        </p>
+                        <p className="text-[11px] text-white/40 mt-0.5">
+                          {new Date(p.createdAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                      {/* Status Badge */}
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 font-medium ${
+                          p.published
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : "bg-white/5 text-white/30 border border-white/10"
+                        }`}
+                      >
+                        {p.published ? "Live" : "Draft"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+
       </div>
     </div>
   );
