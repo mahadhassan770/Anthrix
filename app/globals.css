@@ -1,0 +1,159 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  :root {
+    /* Light Mode Palette */
+    --color-background:           #FFFFFF;
+    --color-foreground:           #0F1115;
+    
+    --color-primary:              #F55036;
+    --color-primary-foreground:   #FFFFFF;
+    
+    --color-secondary:            #F9FAFB;
+    --color-secondary-foreground: #0F1115;
+    
+    --color-muted:                #F3F4F6;
+    --color-muted-foreground:     #6B7280;
+    
+    --color-accent:               #38BDF8;
+    --color-accent-foreground:    #FFFFFF;
+    
+    --color-destructive:          #EF4444;
+    --color-destructive-foreground: #FFFFFF;
+    
+    --color-border:               #E5E7EB;
+    --color-input:                #E5E7EB;
+    --color-ring:                 #F55036;
+    
+    --color-card:                 #FFFFFF;
+    --color-card-foreground:      #0F1115;
+  }
+
+  .dark {
+    /* Dark Mode Palette (Industrial Carbon) */
+    --color-background:           #0F1115;
+    --color-foreground:           #EDEDED;
+    
+    --color-primary:              #F55036;
+    --color-primary-foreground:   #FFFFFF;
+    
+    --color-secondary:            #1C1F26;
+    --color-secondary-foreground: #EDEDED;
+    
+    --color-muted:                #1C1F26;
+    --color-muted-foreground:     #8B949E;
+    
+    --color-accent:               #38BDF8;
+    --color-accent-foreground:    #FFFFFF;
+    
+    --color-destructive:          #EF4444;
+    --color-destructive-foreground: #FFFFFF;
+    
+    --color-border:               #2D323B;
+    --color-input:                #2D323B;
+    --color-ring:                 #F55036;
+    
+    --color-card:                 #1C1F26;
+    --color-card-foreground:      #EDEDED;
+  }
+}
+
+@theme inline {
+  --color-background:           var(--color-background);
+  --color-foreground:           var(--color-foreground);
+  --color-primary:              var(--color-primary);
+  --color-primary-foreground:   var(--color-primary-foreground);
+  --color-secondary:            var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+  --color-muted:                var(--color-muted);
+  --color-muted-foreground:     var(--color-muted-foreground);
+  --color-accent:               var(--color-accent);
+  --color-accent-foreground:    var(--color-accent-foreground);
+  --color-destructive:          var(--color-destructive);
+  --color-destructive-foreground: var(--color-destructive-foreground);
+  --color-border:               var(--color-border);
+  --color-input:                var(--color-input);
+  --color-ring:                 var(--color-ring);
+  --color-card:                 var(--color-card);
+  --color-card-foreground:      var(--color-card-foreground);
+
+  /* Radius scale */
+  --radius:    0.5rem;
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) * 2);
+
+  /* Typography */
+  --font-sans:    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+  max-width: 80rem;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+@layer base {
+  *, ::before, ::after {
+    border-color: var(--color-border);
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Smooth scroll only when user hasn't opted out */
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  /* ── Accessible focus ring ──
+     Visible in keyboard nav, invisible on mouse click.
+     Uses :focus-visible so mouse users never see the ring. */
+  :focus-visible {
+    outline: 2px solid var(--color-orange);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Remove default focus outline — we handle it above */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Make images block-level to prevent sub-pixel gaps */
+  img, video {
+    display: block;
+    max-width: 100%;
+  }
+}
