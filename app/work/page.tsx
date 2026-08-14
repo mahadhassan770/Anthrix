@@ -166,21 +166,21 @@ export default function WorkPage() {
               </div>
             </div>
 
-            {/* Right: Bar chart graphic */}
+            {/* Right: Growth Chart graphic */}
             <div className="relative hidden lg:flex items-center justify-end h-full overflow-hidden">
               <div
                 className="absolute inset-0 pointer-events-none z-10"
                 style={{
                   background:
-                    "linear-gradient(to right, #080B12 0%, transparent 45%)",
+                    "linear-gradient(to right, #080B12 0%, rgba(8,11,18,0.4) 30%, transparent 60%)",
                 }}
               />
               <Image
-                src="/cta-barchart.jpg"
-                alt="Growth chart"
-                width={520}
-                height={360}
-                className="w-full max-w-[520px] h-auto object-contain select-none opacity-80 relative z-0"
+                src="/work-cta.jpg"
+                alt="Anthrix Scaling Architecture"
+                width={560}
+                height={380}
+                className="w-full max-w-[560px] h-auto object-contain select-none opacity-95 relative z-0 drop-shadow-[0_0_40px_rgba(245,80,54,0.25)]"
               />
             </div>
 
