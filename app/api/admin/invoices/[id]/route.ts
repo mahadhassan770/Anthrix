@@ -72,6 +72,32 @@ export async function PATCH(
     include: { items: true, bankAccount: true },
   });
 
+  // Automatically record a Transaction if linked to a Client and marked as paid
+  if (data.status === "paid" && invoice.clientId) {
+    const desc = `Invoice payment: ${invoice.invoiceNumber}`;
+    const existingTx = await db.transaction.findFirst({
+      where: { description: desc },
+    });
+    if (!existingTx) {
+      const rate = 280.0;
+      const amountUSD = invoice.currency === "USD" ? invoice.total : invoice.total / rate;
+      const amountPKR = invoice.currency === "PKR" ? invoice.total : invoice.total * rate;
+
+      await db.transaction.create({
+        data: {
+          amount: amountUSD,
+          amountPKR: amountPKR,
+          currency: invoice.currency,
+          exchangeRate: rate,
+          description: desc,
+          date: new Date(),
+          status: "paid",
+          clientId: invoice.clientId,
+        },
+      });
+    }
+  }
+
   return NextResponse.json(invoice);
 }
 

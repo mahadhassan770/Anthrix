@@ -192,6 +192,7 @@ model Client {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   transactions Transaction[]
+  invoices     Invoice[]
 
   @@map("clients")
 }
@@ -241,8 +242,9 @@ model Invoice {
   invoiceNumber String        @unique
   shareToken    String        @unique @default(cuid())
 
-  // Client snapshot (denormalized so invoice is self-contained)
+  // Client link and snapshot
   clientId      String?
+  client        Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
   clientName    String
   clientEmail   String?
   clientPhone   String?
