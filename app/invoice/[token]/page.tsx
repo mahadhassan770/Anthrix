@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Clock,
   XCircle,
+  FileDown,
 } from "lucide-react";
 
 type InvoiceItem = {
@@ -78,6 +79,7 @@ export default function PublicInvoicePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -106,6 +108,71 @@ export default function PublicInvoicePage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleExportPdf = async () => {
+    if (!invoice) return;
+    setExportingPdf(true);
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const { default: html2canvas } = await import("html2canvas");
+
+      const element = document.getElementById("invoice-document");
+      if (!element) return;
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#080B12",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = canvasWidth / canvasHeight;
+      const imgWidth = pdfWidth;
+      const imgHeight = imgWidth / ratio;
+
+      // If invoice is taller than one page, paginate
+      if (imgHeight <= pdfHeight) {
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      } else {
+        let yOffset = 0;
+        let pageCount = 0;
+        while (yOffset < canvasHeight) {
+          if (pageCount > 0) pdf.addPage();
+          const sliceHeight = Math.min(canvasHeight - yOffset, (pdfHeight / imgWidth) * canvasWidth);
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvasWidth;
+          sliceCanvas.height = sliceHeight;
+          const ctx = sliceCanvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(canvas, 0, yOffset, canvasWidth, sliceHeight, 0, 0, canvasWidth, sliceHeight);
+          }
+          const sliceData = sliceCanvas.toDataURL("image/png");
+          const sliceImgHeight = (sliceHeight / canvasWidth) * imgWidth;
+          pdf.addImage(sliceData, "PNG", 0, 0, imgWidth, sliceImgHeight);
+          yOffset += sliceHeight;
+          pageCount++;
+        }
+      }
+
+      pdf.save(`Invoice-${invoice.invoiceNumber}.pdf`);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      alert("Failed to export PDF. Try using Print → Save as PDF instead.");
+    } finally {
+      setExportingPdf(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -208,12 +275,30 @@ export default function PublicInvoicePage() {
           </button>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F55036]/10 hover:bg-[#F55036]/20 border border-[#F55036]/30 text-[#F55036] text-xs font-semibold transition-all hover:scale-[1.02]"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white/70 hover:text-white text-xs font-semibold transition-all hover:scale-[1.02] print:hidden"
           >
             <Printer size={13} />
-            <span>Print / Save PDF</span>
+            <span>Print</span>
+          </button>
+          <button
+            onClick={handleExportPdf}
+            disabled={exportingPdf}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F55036]/10 hover:bg-[#F55036]/20 border border-[#F55036]/30 text-[#F55036] text-xs font-semibold transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed print:hidden"
+          >
+            {exportingPdf ? (
+              <>
+                <Loader2 size={13} className="animate-spin" />
+                <span>Generating PDF...</span>
+              </>
+            ) : (
+              <>
+                <FileDown size={13} />
+                <span>Export PDF</span>
+              </>
+            )}
           </button>
         </div>
+
       </div>
 
       {/* Main Invoice Wrapper */}

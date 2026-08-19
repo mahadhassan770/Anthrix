@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft, Copy, Check, ExternalLink, CheckCircle2,
   Loader2, Send, XCircle, Image as ImageIcon,
-  Building2, Smartphone, Globe, Info
+  Building2, Smartphone, Globe, Info, FileDown
 } from "lucide-react";
 
 type Invoice = {
@@ -66,6 +66,64 @@ export default function InvoiceDetailPage() {
     setUpdating(false);
   };
 
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!invoice) return;
+    setExportingPdf(true);
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const { default: html2canvas } = await import("html2canvas");
+
+      const element = document.getElementById("admin-invoice-document");
+      if (!element) return;
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#080B12",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvasHeight / canvasWidth) * imgWidth;
+
+      if (imgHeight <= pdfHeight) {
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      } else {
+        let yOffset = 0;
+        let pageCount = 0;
+        while (yOffset < canvasHeight) {
+          if (pageCount > 0) pdf.addPage();
+          const sliceHeight = Math.min(canvasHeight - yOffset, (pdfHeight / imgWidth) * canvasWidth);
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvasWidth;
+          sliceCanvas.height = sliceHeight;
+          const ctx = sliceCanvas.getContext("2d");
+          if (ctx) ctx.drawImage(canvas, 0, yOffset, canvasWidth, sliceHeight, 0, 0, canvasWidth, sliceHeight);
+          const sliceData = sliceCanvas.toDataURL("image/png");
+          pdf.addImage(sliceData, "PNG", 0, 0, imgWidth, (sliceHeight / canvasWidth) * imgWidth);
+          yOffset += sliceHeight;
+          pageCount++;
+        }
+      }
+
+      pdf.save(`Invoice-${invoice.invoiceNumber}.pdf`);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      alert("PDF export failed. Please try again.");
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center min-h-[400px] text-white/40"><Loader2 className="animate-spin" size={20} /></div>;
   if (!invoice) return <div className="text-center py-20 text-white/30">Invoice not found.</div>;
 
@@ -104,8 +162,20 @@ export default function InvoiceDetailPage() {
               </button>
             </>
           )}
+          <button
+            onClick={handleExportPdf}
+            disabled={exportingPdf}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#F55036]/30 bg-[#F55036]/10 text-[#F55036] text-xs font-semibold hover:bg-[#F55036]/20 transition-all disabled:opacity-50"
+          >
+            {exportingPdf ? (
+              <><Loader2 size={12} className="animate-spin" /> Exporting...</>
+            ) : (
+              <><FileDown size={12} /> Export PDF</>
+            )}
+          </button>
         </div>
       </div>
+
 
       {/* Share Link */}
       <div className="bg-[#080B12] border border-white/10 rounded-2xl p-4 flex items-center gap-3">
@@ -142,7 +212,7 @@ export default function InvoiceDetailPage() {
       )}
 
       {/* Invoice Preview */}
-      <div className="bg-[#080B12] border border-white/10 rounded-2xl overflow-hidden">
+      <div id="admin-invoice-document" className="bg-[#080B12] border border-white/10 rounded-2xl overflow-hidden">
         {/* Invoice top bar */}
         <div className="bg-[#0D1117] px-6 py-5 border-b border-white/5 flex items-start justify-between">
           <div>
