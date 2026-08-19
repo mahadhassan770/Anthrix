@@ -217,15 +217,17 @@ model Transaction {
 
 model BankAccount {
   id            String    @id @default(cuid())
-  bankName      String    // "Meezan Bank", "UBL", "HBL", "PayPal"
+  bankName      String    // "Meezan Bank", "Nayapay", "Sadapay", "Easypaisa", "JazzCash", "Wise", "Payoneer", "PayPal", etc.
   accountTitle  String
-  accountNumber String?   // Null for PayPal accounts
+  accountNumber String?
   iban          String?
   branch        String?
-  type          String    @default("bank")   // "bank" | "paypal"
-  currency      String    @default("PKR")    // "PKR" | "USD"
+  swiftCode     String?   // For International Wire / SWIFT
+  type          String    @default("bank")   // "bank" | "wallet" | "international"
+  currency      String    @default("PKR")    // "PKR" | "USD" | "EUR" | "GBP" | "AED"
   paypalEmail   String?
   paypalMe      String?   // PayPal.me username (without URL prefix)
+  instructions  String?   // Custom notes / instructions for client
   isDefault     Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

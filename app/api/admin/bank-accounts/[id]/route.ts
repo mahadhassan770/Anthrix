@@ -25,6 +25,8 @@ export async function PATCH(
       branch: data.branch ?? null,
       type: data.type,
       currency: data.currency,
+      swiftCode: data.swiftCode ?? null,
+      instructions: data.instructions ?? null,
       paypalEmail: data.paypalEmail ?? null,
       paypalMe: data.paypalMe ?? null,
       isDefault: Boolean(data.isDefault),

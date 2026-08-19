@@ -18,7 +18,7 @@ type Invoice = {
   items: { id: string; description: string; quantity: number; rate: number; amount: number }[];
   bankAccount?: {
     id: string; bankName: string; accountTitle: string; accountNumber?: string;
-    iban?: string; branch?: string; type: string; paypalEmail?: string; paypalMe?: string;
+    iban?: string; branch?: string; swiftCode?: string; type: string; instructions?: string; paypalEmail?: string; paypalMe?: string;
   } | null;
 };
 
@@ -200,25 +200,44 @@ export default function InvoiceDetailPage() {
         {/* Payment method */}
         {invoice.bankAccount && (
           <div className="px-6 py-4 border-t border-white/5 bg-white/[0.01]">
-            <p className="text-xs text-white/30 uppercase tracking-wider mb-2">Payment Method</p>
-            {invoice.bankAccount.type === "paypal" ? (
-              <div className="text-sm text-white/70">
-                <span className="text-blue-400 font-semibold">PayPal</span> — {invoice.bankAccount.paypalEmail}
-                {invoice.bankAccount.paypalMe && (
-                  <a href={`https://paypal.me/${invoice.bankAccount.paypalMe}/${invoice.total}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="ml-3 text-xs text-blue-400 hover:underline">PayPal.me Link →</a>
-                )}
-              </div>
-            ) : (
-              <div className="text-sm text-white/70 space-y-0.5">
-                <p><span className="text-white/40">Bank:</span> {invoice.bankAccount.bankName}</p>
-                <p><span className="text-white/40">Account:</span> {invoice.bankAccount.accountTitle}</p>
-                {invoice.bankAccount.accountNumber && <p><span className="text-white/40">Number:</span> {invoice.bankAccount.accountNumber}</p>}
-                {invoice.bankAccount.iban && <p><span className="text-white/40">IBAN:</span> {invoice.bankAccount.iban}</p>}
-                {invoice.bankAccount.branch && <p><span className="text-white/40">Branch:</span> {invoice.bankAccount.branch}</p>}
-              </div>
-            )}
+            <p className="text-xs text-white/30 uppercase tracking-wider mb-2">Payment Method Details</p>
+            <div className="text-sm text-white/70 space-y-1">
+              <p className="font-semibold text-white flex items-center gap-1.5">
+                {invoice.bankAccount.type === "wallet" ? "📱" : invoice.bankAccount.type === "international" ? "🌐" : "🏦"}
+                {invoice.bankAccount.bankName}
+              </p>
+              <p><span className="text-white/40">Title:</span> {invoice.bankAccount.accountTitle}</p>
+              {invoice.bankAccount.accountNumber && (
+                <p><span className="text-white/40">Account / No:</span> <span className="font-mono text-white">{invoice.bankAccount.accountNumber}</span></p>
+              )}
+              {invoice.bankAccount.iban && (
+                <p><span className="text-white/40">IBAN:</span> <span className="font-mono text-white/80">{invoice.bankAccount.iban}</span></p>
+              )}
+              {invoice.bankAccount.swiftCode && (
+                <p><span className="text-white/40">SWIFT/BIC:</span> <span className="font-mono text-white/80">{invoice.bankAccount.swiftCode}</span></p>
+              )}
+              {invoice.bankAccount.branch && (
+                <p><span className="text-white/40">Branch:</span> {invoice.bankAccount.branch}</p>
+              )}
+              {invoice.bankAccount.paypalMe && (
+                <p>
+                  <span className="text-white/40">Link:</span>{" "}
+                  <a
+                    href={invoice.bankAccount.paypalMe.startsWith("http") ? invoice.bankAccount.paypalMe : `https://${invoice.bankAccount.paypalMe}/${invoice.total}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline text-xs"
+                  >
+                    Open Payment Link →
+                  </a>
+                </p>
+              )}
+              {invoice.bankAccount.instructions && (
+                <p className="text-xs text-white/50 bg-white/[0.02] p-2 rounded-lg border border-white/5 mt-1">
+                  💡 {invoice.bankAccount.instructions}
+                </p>
+              )}
+            </div>
           </div>
         )}
 

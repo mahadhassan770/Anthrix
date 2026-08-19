@@ -176,14 +176,14 @@ export default function NewInvoicePage() {
                 <option value="">— Select payment method —</option>
                 {filteredAccounts.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.type === "paypal" ? "💳" : "🏦"} {a.bankName} — {a.accountTitle}
+                    {a.type === "wallet" ? "📱" : a.type === "international" ? "🌐" : "🏦"} {a.bankName} — {a.accountTitle}
                     {a.isDefault ? " (Default)" : ""}
                   </option>
                 ))}
               </select>
               {filteredAccounts.length === 0 && (
                 <p className="text-[11px] text-yellow-400/70 mt-1">
-                  No {currency} payment methods. <a href="/admin/invoices/payment-methods" className="underline">Add one →</a>
+                  No {currency} payment methods found. <a href="/admin/invoices/payment-methods" className="underline">Configure methods →</a>
                 </p>
               )}
             </div>

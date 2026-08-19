@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
       branch: data.branch ?? null,
       type: data.type ?? "bank",
       currency: data.currency ?? "PKR",
+      swiftCode: data.swiftCode ?? null,
+      instructions: data.instructions ?? null,
       paypalEmail: data.paypalEmail ?? null,
       paypalMe: data.paypalMe ?? null,
       isDefault: Boolean(data.isDefault),

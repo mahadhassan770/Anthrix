@@ -7,9 +7,17 @@ import { CheckCircle2, Upload, Loader2, ExternalLink, AlertCircle } from "lucide
 
 type InvoiceItem = { id: string; description: string; quantity: number; rate: number; amount: number };
 type BankAccount = {
-  bankName: string; accountTitle: string; accountNumber?: string;
-  iban?: string; branch?: string; type: string;
-  paypalEmail?: string; paypalMe?: string; currency: string;
+  bankName: string;
+  accountTitle: string;
+  accountNumber?: string;
+  iban?: string;
+  branch?: string;
+  swiftCode?: string;
+  type: string;
+  paypalEmail?: string;
+  paypalMe?: string;
+  instructions?: string;
+  currency: string;
 };
 type Invoice = {
   id: string; invoiceNumber: string; shareToken: string;
@@ -201,56 +209,58 @@ export default function PublicInvoicePage() {
 
         {/* Payment Instructions */}
         {!isPaid && !isCancelled && ba && (
-          <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5">
-            <p className="text-sm font-semibold text-white mb-4">
-              {ba.type === "paypal" ? "💳 Pay via PayPal" : "🏦 Bank Transfer Details"}
-            </p>
+          <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/5">
+              <p className="text-sm font-semibold text-white flex items-center gap-2">
+                {ba.type === "wallet" ? "📱 Mobile Wallet Transfer" : ba.type === "international" ? "🌐 International Payment Instructions" : "🏦 Bank Transfer Details"}
+              </p>
+              <span className="text-[11px] font-mono uppercase tracking-wider text-white/40">
+                {ba.bankName}
+              </span>
+            </div>
 
-            {ba.type === "paypal" ? (
-              <div className="space-y-3">
-                <div className="bg-[#0D1117] rounded-xl p-4 border border-blue-500/10 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white/40">PayPal Email</span>
-                    <span className="text-white font-medium">{ba.paypalEmail}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white/40">Amount</span>
-                    <span className="text-white font-bold">${invoice.total.toLocaleString()} USD</span>
-                  </div>
-                </div>
-                {ba.paypalMe && (
-                  <a
-                    href={`https://paypal.me/${ba.paypalMe}/${invoice.total}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#0070BA] text-white font-semibold text-sm hover:bg-[#005EA6] transition-all"
-                  >
-                    Pay ${invoice.total.toLocaleString()} via PayPal.me
-                    <ExternalLink size={14} />
-                  </a>
-                )}
-                <p className="text-xs text-white/30 text-center">
-                  After paying, please upload your payment confirmation below.
-                </p>
+            {/* International One-click Payment Link (PayPal.me, Wise Link, Stripe Link, etc.) */}
+            {ba.type === "international" && ba.paypalMe && (
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 space-y-2.5">
+                <p className="text-xs text-blue-400 font-medium">⚡ Quick One-Click Online Payment:</p>
+                <a
+                  href={ba.paypalMe.startsWith("http") ? ba.paypalMe : `https://${ba.paypalMe}/${invoice.total}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#0070BA] text-white font-semibold text-sm hover:bg-[#005EA6] transition-all"
+                >
+                  Pay {sym}{invoice.total.toLocaleString()} Online Now
+                  <ExternalLink size={14} />
+                </a>
               </div>
-            ) : (
-              <div className="bg-[#0D1117] rounded-xl p-4 border border-white/5 space-y-3">
-                {[
-                  ["Bank", ba.bankName],
-                  ["Account Title", ba.accountTitle],
-                  ["Account Number", ba.accountNumber],
-                  ["IBAN", ba.iban],
-                  ["Branch", ba.branch],
-                  ["Amount", `${sym}${invoice.total.toLocaleString()} ${invoice.currency}`],
-                  ["Reference / Remarks", invoice.invoiceNumber],
-                ].filter(([, v]) => v).map(([label, value]) => (
-                  <div key={label} className="flex flex-col sm:flex-row sm:justify-between gap-0.5">
-                    <span className="text-xs text-white/30">{label}</span>
-                    <span className={`text-sm font-medium ${label === "Reference / Remarks" ? "text-[#F55036]" : "text-white"}`}>
-                      {value}
-                    </span>
-                  </div>
-                ))}
+            )}
+
+            {/* Standard Key-Value Table */}
+            <div className="bg-[#0D1117] rounded-xl p-4 border border-white/5 space-y-3">
+              {[
+                ["Method / Provider", ba.bankName],
+                ["Beneficiary / Account Title", ba.accountTitle],
+                [ba.type === "wallet" ? "Mobile / Account Number" : ba.type === "international" ? "Account / Email / Address" : "Account Number", ba.accountNumber],
+                ["IBAN", ba.iban],
+                ["SWIFT / BIC", ba.swiftCode],
+                ["Branch / Location", ba.branch],
+                ["Payable Amount", `${sym}${invoice.total.toLocaleString()} ${invoice.currency}`],
+                ["Reference / Remarks", invoice.invoiceNumber],
+              ].filter(([, v]) => v).map(([label, value]) => (
+                <div key={label} className="flex flex-col sm:flex-row sm:justify-between gap-0.5">
+                  <span className="text-xs text-white/40">{label}</span>
+                  <span className={`text-sm font-medium ${label === "Reference / Remarks" ? "text-[#F55036] font-mono" : "text-white"}`}>
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Special Instructions Note */}
+            {ba.instructions && (
+              <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 text-xs text-white/60 space-y-1">
+                <p className="text-white/40 uppercase tracking-wider text-[10px] font-semibold">Special Instructions:</p>
+                <p className="leading-relaxed">{ba.instructions}</p>
               </div>
             )}
           </div>
