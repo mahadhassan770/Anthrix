@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Menu,
   DollarSign,
+  Receipt,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/admin/blog", label: "Blog / Case Studies", icon: FileText },
   { href: "/admin/services", label: "Services", icon: Briefcase },
   { href: "/admin/clients", label: "Clients", icon: Users },
+  { href: "/admin/invoices", label: "Invoices", icon: Receipt },
   { href: "/admin/revenue", label: "Revenue", icon: DollarSign },
   { href: "/admin/team", label: "Team", icon: Users },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare },

@@ -14,6 +14,7 @@ async function getDashboardData(): Promise<Omit<DashboardDataProps, "userName" |
     unreadMessages,
     clientsCount,
     transactions,
+    invoices,
     allMessages,
     allProjects,
   ] = await Promise.all([
@@ -28,6 +29,9 @@ async function getDashboardData(): Promise<Omit<DashboardDataProps, "userName" |
       orderBy: { date: "asc" },
       select: { amount: true, amountPKR: true, status: true, date: true },
     }),
+    db.invoice.findMany({
+      select: { total: true, currency: true, status: true, createdAt: true, paidAt: true },
+    }),
     db.message.findMany({
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, subject: true, body: true, read: true, createdAt: true },
@@ -38,18 +42,30 @@ async function getDashboardData(): Promise<Omit<DashboardDataProps, "userName" |
     }),
   ]);
 
-  // ── 1. Real Revenue Totals ──────────────────────────────────────────────────
+  // ── 1. Real Revenue Totals (Transactions + Invoices) ────────────────────────
+  const invoicePaidUSD = invoices
+    .filter((i) => i.status === "paid")
+    .reduce((acc, i) => acc + (i.currency === "USD" ? i.total : i.total / 280), 0);
+
+  const invoicePendingUSD = invoices
+    .filter((i) => i.status === "sent" || i.status === "viewed")
+    .reduce((acc, i) => acc + (i.currency === "USD" ? i.total : i.total / 280), 0);
+
+  const invoiceOverdueUSD = invoices
+    .filter((i) => i.status === "overdue")
+    .reduce((acc, i) => acc + (i.currency === "USD" ? i.total : i.total / 280), 0);
+
   const paidRevenue = transactions
     .filter((t) => t.status === "paid")
-    .reduce((acc, curr) => acc + curr.amount, 0);
+    .reduce((acc, curr) => acc + curr.amount, 0) + invoicePaidUSD;
 
   const pendingRevenue = transactions
     .filter((t) => t.status === "pending")
-    .reduce((acc, curr) => acc + curr.amount, 0);
+    .reduce((acc, curr) => acc + curr.amount, 0) + invoicePendingUSD;
 
   const overdueRevenue = transactions
     .filter((t) => t.status === "overdue")
-    .reduce((acc, curr) => acc + curr.amount, 0);
+    .reduce((acc, curr) => acc + curr.amount, 0) + invoiceOverdueUSD;
 
   // ── 2. Real Monthly Revenue Stream (Past 6 Months) ──────────────────────────
   const now = new Date();

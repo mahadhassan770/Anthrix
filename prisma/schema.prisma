@@ -212,3 +212,78 @@ model Transaction {
 
   @@map("transactions")
 }
+
+// ─── Invoice System ────────────────────────────────────────────────────────
+
+model BankAccount {
+  id            String    @id @default(cuid())
+  bankName      String    // "Meezan Bank", "UBL", "HBL", "PayPal"
+  accountTitle  String
+  accountNumber String?   // Null for PayPal accounts
+  iban          String?
+  branch        String?
+  type          String    @default("bank")   // "bank" | "paypal"
+  currency      String    @default("PKR")    // "PKR" | "USD"
+  paypalEmail   String?
+  paypalMe      String?   // PayPal.me username (without URL prefix)
+  isDefault     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  invoices      Invoice[]
+
+  @@map("bank_accounts")
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  shareToken    String        @unique @default(cuid())
+
+  // Client snapshot (denormalized so invoice is self-contained)
+  clientId      String?
+  clientName    String
+  clientEmail   String?
+  clientPhone   String?
+  clientAddress String?
+
+  // Financial
+  currency      String        @default("PKR")
+  subtotal      Float         @default(0)
+  taxRate       Float         @default(0)
+  taxAmount     Float         @default(0)
+  discount      Float         @default(0)
+  total         Float         @default(0)
+
+  // Meta
+  notes         String?
+  dueDate       DateTime?
+  status        String        @default("draft") // draft | sent | viewed | paid | overdue | cancelled
+
+  // Payment method
+  bankAccountId String?
+  bankAccount   BankAccount?  @relation(fields: [bankAccountId], references: [id])
+
+  // Proof of payment (ImgBB URL)
+  paymentProof     String?
+  proofUploadedAt  DateTime?
+  paidAt           DateTime?
+
+  items         InvoiceItem[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Float   @default(1)
+  rate        Float
+  amount      Float
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
