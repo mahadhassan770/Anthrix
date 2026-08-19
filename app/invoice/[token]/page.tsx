@@ -3,7 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { CheckCircle2, Upload, Loader2, ExternalLink, AlertCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  Upload,
+  Loader2,
+  ExternalLink,
+  AlertCircle,
+  Building2,
+  Smartphone,
+  Globe,
+  Zap,
+  Info,
+} from "lucide-react";
 
 type InvoiceItem = { id: string; description: string; quantity: number; rate: number; amount: number };
 type BankAccount = {
@@ -20,11 +31,24 @@ type BankAccount = {
   currency: string;
 };
 type Invoice = {
-  id: string; invoiceNumber: string; shareToken: string;
-  clientName: string; clientEmail?: string; clientPhone?: string; clientAddress?: string;
-  currency: string; subtotal: number; taxRate: number; taxAmount: number; discount: number; total: number;
-  notes?: string; dueDate?: string; status: string;
-  paymentProof?: string; createdAt: string;
+  id: string;
+  invoiceNumber: string;
+  shareToken: string;
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientAddress?: string;
+  currency: string;
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  discount: number;
+  total: number;
+  notes?: string;
+  dueDate?: string;
+  status: string;
+  paymentProof?: string;
+  createdAt: string;
   items: InvoiceItem[];
   bankAccount: BankAccount | null;
 };
@@ -43,7 +67,10 @@ export default function PublicInvoicePage() {
   useEffect(() => {
     if (!token) return;
     fetch(`/api/invoice/${token}`)
-      .then((r) => { if (!r.ok) throw new Error("Invoice not found"); return r.json(); })
+      .then((r) => {
+        if (!r.ok) throw new Error("Invoice not found");
+        return r.json();
+      })
       .then(setInvoice)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -61,7 +88,7 @@ export default function PublicInvoicePage() {
     if (!previewUrl || !invoice || !token) return;
     setUploading(true);
     try {
-      // Strip the data URI prefix to get pure base64
+      // Strip data URI prefix to send clean base64
       const base64 = previewUrl.split(",")[1];
       const res = await fetch(`/api/invoice/${token}/proof`, {
         method: "POST",
@@ -77,21 +104,23 @@ export default function PublicInvoicePage() {
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#05080D] flex items-center justify-center">
-      <Loader2 className="animate-spin text-white/30" size={24} />
-    </div>
-  );
-
-  if (error || !invoice) return (
-    <div className="min-h-screen bg-[#05080D] flex items-center justify-center">
-      <div className="text-center">
-        <AlertCircle size={40} className="text-red-400 mx-auto mb-4" />
-        <p className="text-white font-semibold text-lg">Invoice Not Found</p>
-        <p className="text-white/40 text-sm mt-1">{error || "This invoice link is invalid or has expired."}</p>
+  if (loading)
+    return (
+      <div className="min-h-screen bg-[#05080D] flex items-center justify-center">
+        <Loader2 className="animate-spin text-white/30" size={24} />
       </div>
-    </div>
-  );
+    );
+
+  if (error || !invoice)
+    return (
+      <div className="min-h-screen bg-[#05080D] flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle size={40} className="text-red-400 mx-auto mb-4" />
+          <p className="text-white font-semibold text-lg">Invoice Not Found</p>
+          <p className="text-white/40 text-sm mt-1">{error || "This invoice link is invalid or has expired."}</p>
+        </div>
+      </div>
+    );
 
   const sym = invoice.currency === "USD" ? "$" : "Rs ";
   const isPaid = invoice.status === "paid";
@@ -102,7 +131,6 @@ export default function PublicInvoicePage() {
   return (
     <div className="min-h-screen bg-[#05080D] py-10 px-4" style={{ fontFamily: "system-ui, sans-serif" }}>
       <div className="max-w-[680px] mx-auto space-y-4">
-
         {/* Agency Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -117,7 +145,9 @@ export default function PublicInvoicePage() {
             </span>
           )}
           {isCancelled && (
-            <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/30">CANCELLED</span>
+            <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/30">
+              CANCELLED
+            </span>
           )}
           {isOverdue && !isPaid && (
             <span className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400">
@@ -133,13 +163,24 @@ export default function PublicInvoicePage() {
             <div>
               <p className="text-xs text-white/30 uppercase tracking-wider">Invoice</p>
               <p className="text-2xl font-bold text-[#F55036] mt-0.5">{invoice.invoiceNumber}</p>
-              <p className="text-xs text-white/30 mt-1">Issued: {new Date(invoice.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}</p>
+              <p className="text-xs text-white/30 mt-1">
+                Issued:{" "}
+                {new Date(invoice.createdAt).toLocaleDateString("en-PK", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
             </div>
             {invoice.dueDate && (
               <div className="text-right">
                 <p className="text-xs text-white/30 uppercase tracking-wider">Due Date</p>
                 <p className={`text-base font-bold mt-0.5 ${isOverdue && !isPaid ? "text-red-400" : "text-white"}`}>
-                  {new Date(invoice.dueDate).toLocaleDateString("en-PK", { day: "numeric", month: "long", year: "numeric" })}
+                  {new Date(invoice.dueDate).toLocaleDateString("en-PK", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </p>
               </div>
             )}
@@ -180,20 +221,24 @@ export default function PublicInvoicePage() {
             {/* Totals */}
             <div className="mt-5 pt-4 border-t border-white/5 space-y-2 max-w-[200px] ml-auto">
               <div className="flex justify-between text-sm text-white/40">
-                <span>Subtotal</span><span>{sym}{invoice.subtotal.toLocaleString()}</span>
+                <span>Subtotal</span>
+                <span>{sym}{invoice.subtotal.toLocaleString()}</span>
               </div>
               {invoice.taxRate > 0 && (
                 <div className="flex justify-between text-sm text-white/40">
-                  <span>Tax ({invoice.taxRate}%)</span><span>{sym}{invoice.taxAmount.toLocaleString()}</span>
+                  <span>Tax ({invoice.taxRate}%)</span>
+                  <span>{sym}{invoice.taxAmount.toLocaleString()}</span>
                 </div>
               )}
               {invoice.discount > 0 && (
                 <div className="flex justify-between text-sm text-red-400">
-                  <span>Discount</span><span>−{sym}{invoice.discount.toLocaleString()}</span>
+                  <span>Discount</span>
+                  <span>−{sym}{invoice.discount.toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between text-white font-bold text-xl pt-2 border-t border-white/10">
-                <span>Total</span><span>{sym}{invoice.total.toLocaleString()}</span>
+                <span>Total</span>
+                <span>{sym}{invoice.total.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -211,9 +256,22 @@ export default function PublicInvoicePage() {
         {!isPaid && !isCancelled && ba && (
           <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/5">
-              <p className="text-sm font-semibold text-white flex items-center gap-2">
-                {ba.type === "wallet" ? "📱 Mobile Wallet Transfer" : ba.type === "international" ? "🌐 International Payment Instructions" : "🏦 Bank Transfer Details"}
-              </p>
+              <div className="flex items-center gap-2">
+                {ba.type === "wallet" ? (
+                  <Smartphone size={16} className="text-purple-400" />
+                ) : ba.type === "international" ? (
+                  <Globe size={16} className="text-blue-400" />
+                ) : (
+                  <Building2 size={16} className="text-emerald-400" />
+                )}
+                <span className="text-sm font-semibold text-white">
+                  {ba.type === "wallet"
+                    ? "Mobile Wallet Transfer"
+                    : ba.type === "international"
+                    ? "International Payment Details"
+                    : "Bank Transfer Details"}
+                </span>
+              </div>
               <span className="text-[11px] font-mono uppercase tracking-wider text-white/40">
                 {ba.bankName}
               </span>
@@ -222,7 +280,9 @@ export default function PublicInvoicePage() {
             {/* International One-click Payment Link (PayPal.me, Wise Link, Stripe Link, etc.) */}
             {ba.type === "international" && ba.paypalMe && (
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 space-y-2.5">
-                <p className="text-xs text-blue-400 font-medium">⚡ Quick One-Click Online Payment:</p>
+                <p className="text-xs text-blue-400 font-medium flex items-center gap-1.5">
+                  <Zap size={13} /> Quick One-Click Online Payment:
+                </p>
                 <a
                   href={ba.paypalMe.startsWith("http") ? ba.paypalMe : `https://${ba.paypalMe}/${invoice.total}`}
                   target="_blank"
@@ -235,32 +295,48 @@ export default function PublicInvoicePage() {
               </div>
             )}
 
-            {/* Standard Key-Value Table */}
+            {/* Key-Value Table */}
             <div className="bg-[#0D1117] rounded-xl p-4 border border-white/5 space-y-3">
               {[
                 ["Method / Provider", ba.bankName],
                 ["Beneficiary / Account Title", ba.accountTitle],
-                [ba.type === "wallet" ? "Mobile / Account Number" : ba.type === "international" ? "Account / Email / Address" : "Account Number", ba.accountNumber],
+                [
+                  ba.type === "wallet"
+                    ? "Mobile / Account Number"
+                    : ba.type === "international"
+                    ? "Account / Email / Address"
+                    : "Account Number",
+                  ba.accountNumber,
+                ],
                 ["IBAN", ba.iban],
                 ["SWIFT / BIC", ba.swiftCode],
                 ["Branch / Location", ba.branch],
                 ["Payable Amount", `${sym}${invoice.total.toLocaleString()} ${invoice.currency}`],
                 ["Reference / Remarks", invoice.invoiceNumber],
-              ].filter(([, v]) => v).map(([label, value]) => (
-                <div key={label} className="flex flex-col sm:flex-row sm:justify-between gap-0.5">
-                  <span className="text-xs text-white/40">{label}</span>
-                  <span className={`text-sm font-medium ${label === "Reference / Remarks" ? "text-[#F55036] font-mono" : "text-white"}`}>
-                    {value}
-                  </span>
-                </div>
-              ))}
+              ]
+                .filter(([, v]) => v)
+                .map(([label, value]) => (
+                  <div key={label} className="flex flex-col sm:flex-row sm:justify-between gap-0.5">
+                    <span className="text-xs text-white/40">{label}</span>
+                    <span
+                      className={`text-sm font-medium ${
+                        label === "Reference / Remarks" ? "text-[#F55036] font-mono" : "text-white"
+                      }`}
+                    >
+                      {value}
+                    </span>
+                  </div>
+                ))}
             </div>
 
             {/* Special Instructions Note */}
             {ba.instructions && (
               <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 text-xs text-white/60 space-y-1">
-                <p className="text-white/40 uppercase tracking-wider text-[10px] font-semibold">Special Instructions:</p>
-                <p className="leading-relaxed">{ba.instructions}</p>
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-white/40 uppercase tracking-wider">
+                  <Info size={11} />
+                  <span>Special Instructions</span>
+                </div>
+                <p className="leading-relaxed pl-4">{ba.instructions}</p>
               </div>
             )}
           </div>
@@ -312,7 +388,15 @@ export default function PublicInvoicePage() {
                     disabled={uploading}
                     className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-[#F55036] to-[#D93520] text-white font-semibold text-sm hover:scale-[1.01] transition-all disabled:opacity-50"
                   >
-                    {uploading ? <><Loader2 size={14} className="animate-spin" /> Uploading...</> : <><Upload size={14} /> Submit Payment Proof</>}
+                    {uploading ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" /> Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} /> Submit Payment Proof
+                      </>
+                    )}
                   </button>
                 )}
               </>

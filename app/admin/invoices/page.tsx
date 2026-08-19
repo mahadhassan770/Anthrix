@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Plus, Copy, Check, ExternalLink, Trash2, Eye,
-  FileText, Clock, CheckCircle2, AlertCircle, XCircle, Send, Loader2
+  FileText, Clock, CheckCircle2, AlertCircle, XCircle, Send, Loader2, CreditCard
 } from "lucide-react";
 
 type Invoice = {
@@ -107,7 +107,7 @@ export default function InvoicesPage() {
             href="/admin/invoices/payment-methods"
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white text-xs font-medium transition-all"
           >
-            🏦 Payment Methods
+            <CreditCard size={13} /> Payment Methods
           </Link>
           <Link
             href="/admin/invoices/new"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Loader2, Pencil, Check, X, Building2, Smartphone, Globe, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Loader2, Pencil, Check, X, Building2, Smartphone, Globe, AlertCircle, Info } from "lucide-react";
 
 type BankAccount = {
   id: string;
@@ -188,9 +188,9 @@ export default function PaymentMethodsPage() {
       <div className="flex items-center gap-1.5 bg-[#080B12] p-1.5 rounded-2xl border border-white/10 overflow-x-auto">
         {[
           { id: "all", label: "All Methods", icon: null },
-          { id: "bank", label: "🏦 Pakistani Banks", icon: <Building2 size={13} /> },
-          { id: "wallet", label: "📱 NayaPay / SadaPay / Wallets", icon: <Smartphone size={13} /> },
-          { id: "international", label: "🌐 International", icon: <Globe size={13} /> },
+          { id: "bank", label: "Pakistani Banks", icon: <Building2 size={13} /> },
+          { id: "wallet", label: "NayaPay / SadaPay / Wallets", icon: <Smartphone size={13} /> },
+          { id: "international", label: "International", icon: <Globe size={13} /> },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -201,7 +201,8 @@ export default function PaymentMethodsPage() {
                 : "text-white/50 hover:text-white hover:bg-white/5"
             }`}
           >
-            {tab.label}
+            {tab.icon}
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>
@@ -584,9 +585,10 @@ export default function PaymentMethodsPage() {
                     )}
 
                     {a.instructions && (
-                      <p className="text-[11px] text-white/40 bg-white/[0.02] px-2.5 py-1 rounded-lg border border-white/5 mt-1 inline-block">
-                        💡 {a.instructions}
-                      </p>
+                      <div className="flex items-center gap-1.5 text-[11px] text-white/50 bg-white/[0.02] px-2.5 py-1 rounded-lg border border-white/5 mt-1">
+                        <Info size={11} className="text-white/40 flex-shrink-0" />
+                        <span>{a.instructions}</span>
+                      </div>
                     )}
                   </div>
                 </div>

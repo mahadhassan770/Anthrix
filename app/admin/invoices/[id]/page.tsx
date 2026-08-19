@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import {
   ArrowLeft, Copy, Check, ExternalLink, CheckCircle2,
-  Loader2, Send, XCircle, Image as ImageIcon
+  Loader2, Send, XCircle, Image as ImageIcon,
+  Building2, Smartphone, Globe, Info
 } from "lucide-react";
 
 type Invoice = {
@@ -202,8 +203,14 @@ export default function InvoiceDetailPage() {
           <div className="px-6 py-4 border-t border-white/5 bg-white/[0.01]">
             <p className="text-xs text-white/30 uppercase tracking-wider mb-2">Payment Method Details</p>
             <div className="text-sm text-white/70 space-y-1">
-              <p className="font-semibold text-white flex items-center gap-1.5">
-                {invoice.bankAccount.type === "wallet" ? "📱" : invoice.bankAccount.type === "international" ? "🌐" : "🏦"}
+              <p className="font-semibold text-white flex items-center gap-2">
+                {invoice.bankAccount.type === "wallet" ? (
+                  <Smartphone size={14} className="text-purple-400" />
+                ) : invoice.bankAccount.type === "international" ? (
+                  <Globe size={14} className="text-blue-400" />
+                ) : (
+                  <Building2 size={14} className="text-emerald-400" />
+                )}
                 {invoice.bankAccount.bankName}
               </p>
               <p><span className="text-white/40">Title:</span> {invoice.bankAccount.accountTitle}</p>
@@ -233,9 +240,10 @@ export default function InvoiceDetailPage() {
                 </p>
               )}
               {invoice.bankAccount.instructions && (
-                <p className="text-xs text-white/50 bg-white/[0.02] p-2 rounded-lg border border-white/5 mt-1">
-                  💡 {invoice.bankAccount.instructions}
-                </p>
+                <div className="flex items-start gap-1.5 text-xs text-white/60 bg-white/[0.02] p-2.5 rounded-lg border border-white/5 mt-1">
+                  <Info size={13} className="text-white/40 flex-shrink-0 mt-0.5" />
+                  <span>{invoice.bankAccount.instructions}</span>
+                </div>
               )}
             </div>
           </div>

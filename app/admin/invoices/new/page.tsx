@@ -150,8 +150,8 @@ export default function NewInvoicePage() {
               <label className="text-xs text-white/50 block mb-1">Currency</label>
               <select value={currency} onChange={(e) => { setCurrency(e.target.value); setBankAccountId(""); }}
                 className="w-full bg-[#0D1117] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#F55036]">
-                <option value="PKR">🇵🇰 PKR</option>
-                <option value="USD">🇺🇸 USD</option>
+                <option value="PKR">PKR (Rs)</option>
+                <option value="USD">USD ($)</option>
               </select>
             </div>
             <div>
@@ -176,7 +176,7 @@ export default function NewInvoicePage() {
                 <option value="">— Select payment method —</option>
                 {filteredAccounts.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.type === "wallet" ? "📱" : a.type === "international" ? "🌐" : "🏦"} {a.bankName} — {a.accountTitle}
+                    [{a.type === "wallet" ? "Wallet" : a.type === "international" ? "International" : "Bank"}] {a.bankName} — {a.accountTitle}
                     {a.isDefault ? " (Default)" : ""}
                   </option>
                 ))}
