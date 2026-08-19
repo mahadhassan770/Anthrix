@@ -157,3 +157,41 @@
     max-width: 100%;
   }
 }
+
+/* ============================================
+   PRINT STYLES FOR INVOICES & REPORTS
+   ============================================ */
+@media print {
+  @page {
+    margin: 10mm;
+    size: auto;
+  }
+
+  html, body {
+    background-color: #080B12 !important;
+    color: #FFFFFF !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  #invoice-document,
+  #admin-invoice-document {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: #080B12 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
