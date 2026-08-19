@@ -14,9 +14,22 @@ import {
   Globe,
   Zap,
   Info,
+  Printer,
+  Copy,
+  Check,
+  ShieldCheck,
+  Clock,
+  XCircle,
 } from "lucide-react";
 
-type InvoiceItem = { id: string; description: string; quantity: number; rate: number; amount: number };
+type InvoiceItem = {
+  id: string;
+  description: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+};
+
 type BankAccount = {
   bankName: string;
   accountTitle: string;
@@ -30,6 +43,7 @@ type BankAccount = {
   instructions?: string;
   currency: string;
 };
+
 type Invoice = {
   id: string;
   invoiceNumber: string;
@@ -62,6 +76,8 @@ export default function PublicInvoicePage() {
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -76,6 +92,22 @@ export default function PublicInvoicePage() {
       .finally(() => setLoading(false));
   }, [token]);
 
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const copyShareLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -88,7 +120,6 @@ export default function PublicInvoicePage() {
     if (!previewUrl || !invoice || !token) return;
     setUploading(true);
     try {
-      // Strip data URI prefix to send clean base64
       const base64 = previewUrl.split(",")[1];
       const res = await fetch(`/api/invoice/${token}/proof`, {
         method: "POST",
@@ -104,23 +135,41 @@ export default function PublicInvoicePage() {
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[#05080D] flex items-center justify-center">
-        <Loader2 className="animate-spin text-white/30" size={24} />
-      </div>
-    );
-
-  if (error || !invoice)
-    return (
-      <div className="min-h-screen bg-[#05080D] flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle size={40} className="text-red-400 mx-auto mb-4" />
-          <p className="text-white font-semibold text-lg">Invoice Not Found</p>
-          <p className="text-white/40 text-sm mt-1">{error || "This invoice link is invalid or has expired."}</p>
+      <div className="min-h-screen bg-[#05080D] flex flex-col items-center justify-center space-y-4">
+        <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-card border border-white/10 overflow-hidden shadow-[0_0_24px_rgba(245,80,54,0.2)]">
+          <img src="/logo.png" alt="Anthrix" className="h-7 w-7 object-contain" />
+        </div>
+        <div className="flex items-center gap-2 text-white/50 text-sm">
+          <Loader2 className="animate-spin text-[#F55036]" size={16} />
+          <span>Loading secure invoice...</span>
         </div>
       </div>
     );
+  }
+
+  if (error || !invoice) {
+    return (
+      <div className="min-h-screen bg-[#05080D] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-[#080B12] border border-white/10 rounded-2xl p-8 text-center space-y-4 shadow-2xl">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto text-red-400">
+            <AlertCircle size={24} />
+          </div>
+          <h2 className="text-xl font-bold text-white">Invoice Not Found</h2>
+          <p className="text-sm text-white/40 leading-relaxed">
+            {error || "This invoice link may be invalid, expired, or has been removed."}
+          </p>
+          <a
+            href="https://anthrix.com"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-medium border border-white/10 transition-all"
+          >
+            Visit Anthrix Homepage
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const sym = invoice.currency === "USD" ? "$" : "Rs ";
   const isPaid = invoice.status === "paid";
@@ -129,251 +178,435 @@ export default function PublicInvoicePage() {
   const ba = invoice.bankAccount;
 
   return (
-    <div className="min-h-screen bg-[#05080D] py-10 px-4" style={{ fontFamily: "system-ui, sans-serif" }}>
-      <div className="max-w-[680px] mx-auto space-y-4">
-        {/* Agency Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="text-xl font-bold text-white tracking-tight">
-              ANTHRIX<span className="text-[#F55036]">.</span>
-            </p>
-            <p className="text-xs text-white/30">anthrix.com</p>
+    <div className="min-h-screen bg-[#05080D] text-foreground antialiased selection:bg-[#F55036]/30 selection:text-white py-8 sm:py-12 px-3 sm:px-6">
+      {/* Top Floating Control Bar */}
+      <div className="max-w-4xl mx-auto mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 print:hidden">
+        {/* Brand */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 overflow-hidden shadow-[0_0_16px_rgba(245,80,54,0.25)]">
+            <img src="/logo.png" alt="Anthrix Logo" className="h-6 w-6 object-contain" />
           </div>
-          {isPaid && (
-            <span className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-              <CheckCircle2 size={13} /> PAID
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5 font-[family-name:var(--font-orbitron)] font-extrabold text-sm tracking-[0.18em] uppercase text-white">
+              ANTHRIX
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F55036] shadow-[0_0_8px_#F55036] animate-pulse" />
+            </div>
+            <span className="text-[10px] font-mono tracking-widest text-white/40 uppercase">
+              Official Invoice Portal
             </span>
-          )}
-          {isCancelled && (
-            <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/30">
-              CANCELLED
-            </span>
-          )}
-          {isOverdue && !isPaid && (
-            <span className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400">
-              <AlertCircle size={11} /> OVERDUE
-            </span>
-          )}
+          </div>
         </div>
 
-        {/* Invoice Card */}
-        <div className="bg-[#080B12] border border-white/10 rounded-2xl overflow-hidden">
-          {/* Top Bar */}
-          <div className="bg-[#0D1117] px-6 py-5 border-b border-white/5 flex items-start justify-between">
-            <div>
-              <p className="text-xs text-white/30 uppercase tracking-wider">Invoice</p>
-              <p className="text-2xl font-bold text-[#F55036] mt-0.5">{invoice.invoiceNumber}</p>
-              <p className="text-xs text-white/30 mt-1">
-                Issued:{" "}
-                {new Date(invoice.createdAt).toLocaleDateString("en-PK", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-            {invoice.dueDate && (
-              <div className="text-right">
-                <p className="text-xs text-white/30 uppercase tracking-wider">Due Date</p>
-                <p className={`text-base font-bold mt-0.5 ${isOverdue && !isPaid ? "text-red-400" : "text-white"}`}>
-                  {new Date(invoice.dueDate).toLocaleDateString("en-PK", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Bill To */}
-          <div className="px-6 py-4 border-b border-white/5">
-            <p className="text-xs text-white/30 uppercase tracking-wider mb-2">Billed To</p>
-            <p className="text-base font-semibold text-white">{invoice.clientName}</p>
-            {invoice.clientEmail && <p className="text-sm text-white/40">{invoice.clientEmail}</p>}
-            {invoice.clientPhone && <p className="text-sm text-white/40">{invoice.clientPhone}</p>}
-            {invoice.clientAddress && <p className="text-sm text-white/40">{invoice.clientAddress}</p>}
-          </div>
-
-          {/* Line Items */}
-          <div className="px-6 py-5">
-            <table className="w-full">
-              <thead>
-                <tr className="text-[11px] text-white/30 uppercase tracking-wider border-b border-white/5">
-                  <th className="pb-3 text-left font-medium">Description</th>
-                  <th className="pb-3 text-right font-medium">Qty</th>
-                  <th className="pb-3 text-right font-medium">Rate</th>
-                  <th className="pb-3 text-right font-medium">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.04]">
-                {invoice.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="py-3 text-sm text-white/80">{item.description}</td>
-                    <td className="py-3 text-sm text-right text-white/40">{item.quantity}</td>
-                    <td className="py-3 text-sm text-right text-white/40">{sym}{item.rate.toLocaleString()}</td>
-                    <td className="py-3 text-sm text-right text-white font-medium">{sym}{item.amount.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Totals */}
-            <div className="mt-5 pt-4 border-t border-white/5 space-y-2 max-w-[200px] ml-auto">
-              <div className="flex justify-between text-sm text-white/40">
-                <span>Subtotal</span>
-                <span>{sym}{invoice.subtotal.toLocaleString()}</span>
-              </div>
-              {invoice.taxRate > 0 && (
-                <div className="flex justify-between text-sm text-white/40">
-                  <span>Tax ({invoice.taxRate}%)</span>
-                  <span>{sym}{invoice.taxAmount.toLocaleString()}</span>
-                </div>
-              )}
-              {invoice.discount > 0 && (
-                <div className="flex justify-between text-sm text-red-400">
-                  <span>Discount</span>
-                  <span>−{sym}{invoice.discount.toLocaleString()}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-white font-bold text-xl pt-2 border-t border-white/10">
-                <span>Total</span>
-                <span>{sym}{invoice.total.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          {invoice.notes && (
-            <div className="px-6 py-4 border-t border-white/5 bg-white/[0.01]">
-              <p className="text-xs text-white/30 uppercase tracking-wider mb-1">Notes</p>
-              <p className="text-sm text-white/50">{invoice.notes}</p>
-            </div>
-          )}
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button
+            onClick={copyShareLink}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white/70 hover:text-white text-xs font-medium transition-all"
+          >
+            {copiedLink ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            <span>{copiedLink ? "Link Copied!" : "Copy Link"}</span>
+          </button>
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F55036]/10 hover:bg-[#F55036]/20 border border-[#F55036]/30 text-[#F55036] text-xs font-semibold transition-all hover:scale-[1.02]"
+          >
+            <Printer size={13} />
+            <span>Print / Save PDF</span>
+          </button>
         </div>
+      </div>
 
-        {/* Payment Instructions */}
-        {!isPaid && !isCancelled && ba && (
-          <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                {ba.type === "wallet" ? (
-                  <Smartphone size={16} className="text-purple-400" />
-                ) : ba.type === "international" ? (
-                  <Globe size={16} className="text-blue-400" />
-                ) : (
-                  <Building2 size={16} className="text-emerald-400" />
-                )}
-                <span className="text-sm font-semibold text-white">
-                  {ba.type === "wallet"
-                    ? "Mobile Wallet Transfer"
-                    : ba.type === "international"
-                    ? "International Payment Details"
-                    : "Bank Transfer Details"}
+      {/* Main Invoice Wrapper */}
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Invoice Paper Document */}
+        <div
+          id="invoice-document"
+          className="relative bg-[#080B12] border border-white/10 rounded-3xl overflow-hidden shadow-2xl transition-all"
+        >
+          {/* Subtle Ambient Top Glow */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#F55036]/5 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Header Banner */}
+          <div className="p-6 sm:p-10 border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+              {/* Issued By */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center">
+                    <img src="/logo.png" alt="Anthrix Logo" className="h-5 w-5 object-contain" />
+                  </div>
+                  <span className="font-[family-name:var(--font-orbitron)] font-extrabold text-base tracking-[0.16em] uppercase text-white">
+                    ANTHRIX
+                  </span>
+                </div>
+                <div className="text-xs text-white/50 space-y-0.5 pt-1">
+                  <p className="font-semibold text-white/80">Anthrix Systems & Engineering</p>
+                  <p>Autonomous AI Systems · SaaS · Cloud Infrastructure</p>
+                  <p className="font-mono text-white/40">contact@anthrix.com · anthrix.com</p>
+                </div>
+              </div>
+
+              {/* Invoice Metadata */}
+              <div className="sm:text-right space-y-1 sm:space-y-1.5">
+                <div className="flex items-center sm:justify-end gap-2">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/40">INVOICE</span>
+                  {isPaid ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                      <CheckCircle2 size={11} /> PAID
+                    </span>
+                  ) : isCancelled ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/40">
+                      <XCircle size={11} /> CANCELLED
+                    </span>
+                  ) : isOverdue ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400">
+                      <Clock size={11} /> OVERDUE
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                      <Clock size={11} /> AWAITING PAYMENT
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-mono tracking-tight">
+                  {invoice.invoiceNumber}
+                </h1>
+                <div className="text-xs text-white/50 space-y-0.5">
+                  <p>
+                    <span className="text-white/30">Issue Date:</span>{" "}
+                    <span className="text-white/80 font-medium">
+                      {new Date(invoice.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </p>
+                  {invoice.dueDate && (
+                    <p>
+                      <span className="text-white/30">Due Date:</span>{" "}
+                      <span
+                        className={`font-semibold ${
+                          isOverdue && !isPaid ? "text-red-400" : "text-white/90"
+                        }`}
+                      >
+                        {new Date(invoice.dueDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Billed To Card */}
+            <div className="mt-8 pt-6 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-[#0D1117] border border-white/5 rounded-2xl p-4 space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-white/30 block mb-1">
+                  Billed To
                 </span>
+                <p className="text-sm font-bold text-white">{invoice.clientName}</p>
+                {invoice.clientEmail && (
+                  <p className="text-xs text-white/50 font-mono">{invoice.clientEmail}</p>
+                )}
+                {invoice.clientPhone && (
+                  <p className="text-xs text-white/50">{invoice.clientPhone}</p>
+                )}
+                {invoice.clientAddress && (
+                  <p className="text-xs text-white/40 pt-1 leading-relaxed">{invoice.clientAddress}</p>
+                )}
               </div>
-              <span className="text-[11px] font-mono uppercase tracking-wider text-white/40">
+
+              <div className="bg-[#0D1117] border border-white/5 rounded-2xl p-4 flex flex-col justify-between">
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/30 block mb-1">
+                    Total Amount Due
+                  </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#F55036] tracking-tight">
+                      {sym}{invoice.total.toLocaleString()}
+                    </span>
+                    <span className="text-xs text-white/40 font-mono uppercase">{invoice.currency}</span>
+                  </div>
+                </div>
+                <div className="text-[11px] text-white/40 flex items-center gap-1.5 pt-2">
+                  <ShieldCheck size={14} className="text-emerald-400" />
+                  <span>Secure direct transfer · 0% transaction surcharge</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Line Items Table */}
+          <div className="p-6 sm:p-10">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-white/10 text-[11px] font-mono uppercase tracking-wider text-white/30">
+                    <th className="pb-3 text-left font-semibold">Description</th>
+                    <th className="pb-3 text-center font-semibold w-20">Qty</th>
+                    <th className="pb-3 text-right font-semibold w-32">Rate ({sym.trim()})</th>
+                    <th className="pb-3 text-right font-semibold w-36">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {invoice.items.map((item) => (
+                    <tr key={item.id} className="group">
+                      <td className="py-4 text-sm text-white/90 font-medium">
+                        {item.description}
+                      </td>
+                      <td className="py-4 text-sm text-center text-white/50 font-mono">
+                        {item.quantity}
+                      </td>
+                      <td className="py-4 text-sm text-right text-white/50 font-mono">
+                        {sym}{item.rate.toLocaleString()}
+                      </td>
+                      <td className="py-4 text-sm text-right font-semibold text-white font-mono">
+                        {sym}{item.amount.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Financial Summary */}
+            <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between gap-6 items-start">
+              {/* Notes / Terms */}
+              <div className="max-w-md w-full space-y-2">
+                {invoice.notes && (
+                  <div className="bg-[#0D1117] border border-white/5 rounded-2xl p-4 text-xs text-white/60 space-y-1">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-white/30 block">
+                      Notes & Terms
+                    </span>
+                    <p className="leading-relaxed">{invoice.notes}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Totals Calculation */}
+              <div className="w-full sm:w-72 bg-[#0D1117] border border-white/5 rounded-2xl p-4 space-y-2.5 text-sm">
+                <div className="flex justify-between text-white/50 text-xs">
+                  <span>Subtotal</span>
+                  <span className="font-mono text-white/80">{sym}{invoice.subtotal.toLocaleString()}</span>
+                </div>
+                {invoice.taxRate > 0 && (
+                  <div className="flex justify-between text-white/50 text-xs">
+                    <span>Tax ({invoice.taxRate}%)</span>
+                    <span className="font-mono text-white/80">+{sym}{invoice.taxAmount.toLocaleString()}</span>
+                  </div>
+                )}
+                {invoice.discount > 0 && (
+                  <div className="flex justify-between text-emerald-400 text-xs">
+                    <span>Discount</span>
+                    <span className="font-mono">−{sym}{invoice.discount.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="pt-2 border-t border-white/10 flex justify-between items-baseline">
+                  <span className="text-sm font-bold text-white uppercase tracking-wider">Total</span>
+                  <span className="text-xl font-extrabold text-[#F55036] font-mono">
+                    {sym}{invoice.total.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Instructions Section */}
+        {!isPaid && !isCancelled && ba && (
+          <div className="bg-[#080B12] border border-white/10 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-white">
+                  {ba.type === "wallet" ? (
+                    <Smartphone size={20} className="text-purple-400" />
+                  ) : ba.type === "international" ? (
+                    <Globe size={20} className="text-blue-400" />
+                  ) : (
+                    <Building2 size={20} className="text-emerald-400" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    {ba.type === "wallet"
+                      ? "Mobile Wallet Transfer"
+                      : ba.type === "international"
+                      ? "International Payment Details"
+                      : "Bank Transfer Details"}
+                  </h3>
+                  <p className="text-xs text-white/40">
+                    Send funds directly using the details below without extra processing fees
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-mono uppercase px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/60">
                 {ba.bankName}
               </span>
             </div>
 
-            {/* International One-click Payment Link (PayPal.me, Wise Link, Stripe Link, etc.) */}
+            {/* Quick One-Click Online Payment Banner */}
             {ba.type === "international" && ba.paypalMe && (
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 space-y-2.5">
-                <p className="text-xs text-blue-400 font-medium flex items-center gap-1.5">
-                  <Zap size={13} /> Quick One-Click Online Payment:
+              <div className="bg-gradient-to-r from-blue-600/10 to-blue-500/5 border border-blue-500/20 rounded-2xl p-5 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
+                  <Zap size={14} />
+                  <span>One-Click Instant Checkout</span>
+                </div>
+                <p className="text-xs text-white/60">
+                  You can complete payment instantly online using your debit/credit card or account balance.
                 </p>
                 <a
-                  href={ba.paypalMe.startsWith("http") ? ba.paypalMe : `https://${ba.paypalMe}/${invoice.total}`}
+                  href={
+                    ba.paypalMe.startsWith("http")
+                      ? ba.paypalMe
+                      : `https://${ba.paypalMe}/${invoice.total}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#0070BA] text-white font-semibold text-sm hover:bg-[#005EA6] transition-all"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-[#0070BA] hover:bg-[#005EA6] text-white font-bold text-sm transition-all shadow-[0_4px_16px_rgba(0,112,186,0.3)] hover:scale-[1.01]"
                 >
-                  Pay {sym}{invoice.total.toLocaleString()} Online Now
-                  <ExternalLink size={14} />
+                  <span>Pay {sym}{invoice.total.toLocaleString()} Online Now</span>
+                  <ExternalLink size={15} />
                 </a>
               </div>
             )}
 
-            {/* Key-Value Table */}
-            <div className="bg-[#0D1117] rounded-xl p-4 border border-white/5 space-y-3">
+            {/* Transfer Details Card */}
+            <div className="bg-[#0D1117] border border-white/5 rounded-2xl p-5 space-y-3.5">
               {[
-                ["Method / Provider", ba.bankName],
-                ["Beneficiary / Account Title", ba.accountTitle],
-                [
-                  ba.type === "wallet"
-                    ? "Mobile / Account Number"
-                    : ba.type === "international"
-                    ? "Account / Email / Address"
-                    : "Account Number",
-                  ba.accountNumber,
-                ],
-                ["IBAN", ba.iban],
-                ["SWIFT / BIC", ba.swiftCode],
-                ["Branch / Location", ba.branch],
-                ["Payable Amount", `${sym}${invoice.total.toLocaleString()} ${invoice.currency}`],
-                ["Reference / Remarks", invoice.invoiceNumber],
+                { label: "Payment Method", value: ba.bankName, copy: false },
+                { label: "Account / Beneficiary Title", value: ba.accountTitle, copy: true },
+                {
+                  label:
+                    ba.type === "wallet"
+                      ? "Mobile / Wallet Number"
+                      : ba.type === "international"
+                      ? "Account / Email / Address"
+                      : "Account Number",
+                  value: ba.accountNumber,
+                  copy: true,
+                },
+                { label: "IBAN", value: ba.iban, copy: true },
+                { label: "SWIFT / BIC Code", value: ba.swiftCode, copy: true },
+                { label: "Branch Name / City", value: ba.branch, copy: false },
+                {
+                  label: "Exact Payable Amount",
+                  value: `${sym}${invoice.total.toLocaleString()} ${invoice.currency}`,
+                  copy: false,
+                },
+                {
+                  label: "Payment Reference / Remarks",
+                  value: invoice.invoiceNumber,
+                  copy: true,
+                  highlight: true,
+                },
               ]
-                .filter(([, v]) => v)
-                .map(([label, value]) => (
-                  <div key={label} className="flex flex-col sm:flex-row sm:justify-between gap-0.5">
-                    <span className="text-xs text-white/40">{label}</span>
-                    <span
-                      className={`text-sm font-medium ${
-                        label === "Reference / Remarks" ? "text-[#F55036] font-mono" : "text-white"
-                      }`}
-                    >
-                      {value}
-                    </span>
+                .filter((row) => row.value)
+                .map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-white/[0.03] last:border-0 last:pb-0"
+                  >
+                    <span className="text-xs text-white/40 font-medium">{row.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-sm font-medium ${
+                          row.highlight
+                            ? "text-[#F55036] font-mono font-bold"
+                            : "text-white font-mono"
+                        }`}
+                      >
+                        {row.value}
+                      </span>
+                      {row.copy && row.value && (
+                        <button
+                          onClick={() => copyToClipboard(row.value as string, row.label)}
+                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-all text-xs"
+                          title="Copy to clipboard"
+                        >
+                          {copiedField === row.label ? (
+                            <Check size={12} className="text-emerald-400" />
+                          ) : (
+                            <Copy size={12} />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
             </div>
 
-            {/* Special Instructions Note */}
+            {/* Custom Instructions */}
             {ba.instructions && (
-              <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 text-xs text-white/60 space-y-1">
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-white/40 uppercase tracking-wider">
-                  <Info size={11} />
-                  <span>Special Instructions</span>
+              <div className="flex items-start gap-2.5 bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-xs text-white/70">
+                <Info size={16} className="text-white/40 flex-shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="font-semibold text-white/90">Important Instructions:</p>
+                  <p className="leading-relaxed text-white/50">{ba.instructions}</p>
                 </div>
-                <p className="leading-relaxed pl-4">{ba.instructions}</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Upload Proof */}
+        {/* Proof of Payment Submission */}
         {!isPaid && !isCancelled && (
-          <div className="bg-[#080B12] border border-white/10 rounded-2xl p-5">
+          <div className="bg-[#080B12] border border-white/10 rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl print:hidden">
             {uploaded || invoice.paymentProof ? (
-              <div className="flex flex-col items-center text-center gap-3 py-4">
-                <CheckCircle2 size={36} className="text-emerald-400" />
-                <div>
-                  <p className="text-white font-semibold">Payment proof received!</p>
-                  <p className="text-xs text-white/40 mt-1">We&apos;ll review your payment and confirm shortly. Thank you!</p>
+              <div className="flex flex-col items-center text-center gap-3 py-6">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.2)]">
+                  <CheckCircle2 size={32} />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-white">Payment Proof Received</h3>
+                  <p className="text-xs text-white/50 max-w-sm mx-auto leading-relaxed">
+                    Thank you! Your payment receipt has been submitted. Our accounting team will verify the transfer and update your invoice status shortly.
+                  </p>
                 </div>
               </div>
             ) : (
               <>
-                <p className="text-sm font-semibold text-white mb-1">Upload Payment Proof</p>
-                <p className="text-xs text-white/40 mb-4">Take a screenshot of your transfer receipt and upload it here.</p>
+                <div className="flex items-center justify-between pb-3 border-b border-white/5">
+                  <div>
+                    <h3 className="text-base font-bold text-white">Submit Payment Receipt</h3>
+                    <p className="text-xs text-white/40">
+                      Upload your bank transfer screenshot or payment confirmation receipt
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                    Step 2 of 2
+                  </span>
+                </div>
 
                 <div
                   onClick={() => fileRef.current?.click()}
-                  className="border-2 border-dashed border-white/10 hover:border-[#F55036]/40 rounded-xl p-6 text-center cursor-pointer transition-all group"
+                  className="border-2 border-dashed border-white/10 hover:border-[#F55036]/50 rounded-2xl p-8 text-center cursor-pointer transition-all bg-white/[0.01] hover:bg-white/[0.03] group"
                 >
                   {previewUrl ? (
-                    <div className="relative w-full max-h-48 overflow-hidden rounded-lg">
-                      <img src={previewUrl} alt="Preview" className="mx-auto max-h-48 object-contain rounded-lg" />
+                    <div className="relative w-full max-h-56 overflow-hidden rounded-xl">
+                      <img
+                        src={previewUrl}
+                        alt="Transfer Receipt Preview"
+                        className="mx-auto max-h-56 object-contain rounded-xl shadow-lg"
+                      />
+                      <p className="text-xs text-white/40 mt-3 group-hover:text-white transition-colors">
+                        Click to choose a different screenshot
+                      </p>
                     </div>
                   ) : (
-                    <>
-                      <Upload size={24} className="text-white/20 group-hover:text-[#F55036]/60 mx-auto mb-2 transition-colors" />
-                      <p className="text-sm text-white/40">Click to select screenshot</p>
-                      <p className="text-xs text-white/20 mt-1">PNG, JPG, JPEG (max 5MB)</p>
-                    </>
+                    <div className="space-y-2">
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-white/40 group-hover:text-[#F55036] group-hover:border-[#F55036]/30 transition-all">
+                        <Upload size={22} />
+                      </div>
+                      <p className="text-sm font-semibold text-white">Click or drag screenshot here</p>
+                      <p className="text-xs text-white/30">PNG, JPG, JPEG or screenshot (Max 5MB)</p>
+                    </div>
                   )}
                 </div>
+
                 <input
                   ref={fileRef}
                   type="file"
@@ -386,15 +619,17 @@ export default function PublicInvoicePage() {
                   <button
                     onClick={handleUpload}
                     disabled={uploading}
-                    className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-[#F55036] to-[#D93520] text-white font-semibold text-sm hover:scale-[1.01] transition-all disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-[#F55036] to-[#D93520] text-white font-bold text-sm hover:scale-[1.01] transition-all shadow-[0_4px_20px_rgba(245,80,54,0.3)] disabled:opacity-50"
                   >
                     {uploading ? (
                       <>
-                        <Loader2 size={14} className="animate-spin" /> Uploading...
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Verifying & Submitting Proof...</span>
                       </>
                     ) : (
                       <>
-                        <Upload size={14} /> Submit Payment Proof
+                        <Upload size={16} />
+                        <span>Confirm & Submit Payment Receipt</span>
                       </>
                     )}
                   </button>
@@ -404,18 +639,29 @@ export default function PublicInvoicePage() {
           </div>
         )}
 
-        {/* Paid Banner */}
+        {/* Paid Confirmation Screen */}
         {isPaid && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 text-center">
-            <CheckCircle2 size={40} className="text-emerald-400 mx-auto mb-3" />
-            <p className="text-white font-bold text-lg">Payment Confirmed!</p>
-            <p className="text-white/40 text-sm mt-1">This invoice has been marked as paid. Thank you!</p>
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-8 text-center space-y-2 shadow-2xl">
+            <CheckCircle2 size={44} className="text-emerald-400 mx-auto" />
+            <h3 className="text-xl font-bold text-white">Payment Fully Settled</h3>
+            <p className="text-xs text-white/50 max-w-sm mx-auto">
+              This invoice has been verified and settled. Thank you for your partnership with Anthrix.
+            </p>
           </div>
         )}
 
-        <p className="text-center text-xs text-white/20 pb-6">
-          Invoice issued by Anthrix · anthrix.com · For queries contact us at contact@anthrix.com
-        </p>
+        {/* Invoice Footer */}
+        <footer className="text-center space-y-1.5 pt-6 pb-12 print:hidden">
+          <p className="text-xs text-white/40">
+            Anthrix Systems · High Performance Autonomous AI & Web Engineering
+          </p>
+          <p className="text-[11px] text-white/20">
+            For questions or billing support, contact{" "}
+            <a href="mailto:contact@anthrix.com" className="text-white/40 hover:underline">
+              contact@anthrix.com
+            </a>
+          </p>
+        </footer>
       </div>
     </div>
   );

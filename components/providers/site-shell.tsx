@@ -7,10 +7,10 @@ import { LenisProvider } from "@/components/providers/lenis-provider";
 
 export function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith("/admin");
+  const isExcluded = pathname?.startsWith("/admin") || pathname?.startsWith("/invoice");
 
-  if (isAdmin) {
-    // Admin routes: no public navbar, no footer, no lenis, no mt-20
+  if (isExcluded) {
+    // Admin & Standalone Invoice routes: no public navbar, no footer, no lenis, no mt-20
     return <>{children}</>;
   }
 
