@@ -291,3 +291,15 @@ model InvoiceItem {
 
   @@map("invoice_items")
 }
+
+// ─── System Settings (Super Admin Only) ───────────────────────────────────
+
+model SystemSetting {
+  key       String   @id
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
+

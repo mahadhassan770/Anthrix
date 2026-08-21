@@ -1,0 +1,393 @@
+"use client";
+
+import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
+import {
+  X, Send, Loader2, Bot, Minimize2, Maximize2,
+  Zap, Navigation, Calculator, ChevronRight, Sparkles,
+  MessageSquare,
+} from "lucide-react";
+import QuoteScopeCard from "./quote-scope-card";
+import { executeAutopilotAction, getCurrentPageContext, type AutopilotAction } from "@/lib/copilot-autopilot";
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type Message = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  action?: AutopilotAction | null;
+  quote?: {
+    tier: string;
+    budgetRange: string;
+    budgetRangePKR?: string;
+    weeks: string;
+    deliverables: string[];
+    summary: string;
+  } | null;
+};
+
+// ─── Quick Prompt Chips ─────────────────────────────────────────────────────
+
+const QUICK_PROMPTS = [
+  { label: "Show me your work", icon: Navigation, color: "text-blue-400 border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10" },
+  { label: "Get a project estimate", icon: Calculator, color: "text-[#F55036] border-[#F55036]/30 bg-[#F55036]/5 hover:bg-[#F55036]/10" },
+  { label: "What services do you offer?", icon: Sparkles, color: "text-violet-400 border-violet-500/30 bg-violet-500/5 hover:bg-violet-500/10" },
+  { label: "Book a discovery call", icon: MessageSquare, color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10" },
+];
+
+// ─── Waveform Animation ─────────────────────────────────────────────────────
+
+function Waveform({ active }: { active: boolean }) {
+  const bars = 5;
+  return (
+    <div className="flex items-center gap-[3px]">
+      {Array.from({ length: bars }).map((_, i) => (
+        <span
+          key={i}
+          className="inline-block w-[3px] rounded-full bg-[#F55036] transition-all"
+          style={{
+            height: active ? `${8 + Math.sin(i * 1.2) * 6}px` : "4px",
+            animation: active ? `wave ${0.8 + i * 0.15}s ease-in-out infinite alternate` : "none",
+            animationDelay: `${i * 0.12}s`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes wave {
+          from { height: 4px; opacity: 0.5; }
+          to { height: 16px; opacity: 1; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ─── Typing Indicator ───────────────────────────────────────────────────────
+
+function TypingIndicator() {
+  return (
+    <div className="flex items-end gap-2 mb-3">
+      <div className="w-7 h-7 rounded-full bg-[#F55036]/10 border border-[#F55036]/20 flex items-center justify-center flex-shrink-0">
+        <Bot size={14} className="text-[#F55036]" />
+      </div>
+      <div className="bg-white/[0.04] border border-white/8 rounded-2xl rounded-bl-sm px-4 py-3">
+        <div className="flex items-center gap-1">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="w-1.5 h-1.5 rounded-full bg-white/40"
+              style={{ animation: `pulse 1.4s ease-in-out ${i * 0.2}s infinite` }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Copilot Component ─────────────────────────────────────────────────
+
+export default function AnthrixCopilot() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isThinking, setIsThinking] = useState(false);
+  const [hasGreeted, setHasGreeted] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(1); // teaser badge
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  useEffect(() => { scrollToBottom(); }, [messages, isThinking, scrollToBottom]);
+
+  // Auto-greeting when opened for first time
+  useEffect(() => {
+    if (isOpen && !hasGreeted) {
+      setHasGreeted(true);
+      setUnreadCount(0);
+      setMessages([
+        {
+          id: "greeting",
+          role: "assistant",
+          text: "Hey there! 👋 I'm A-OS, the Anthrix AI Copilot.\n\nI can help you explore our work, get an instant project estimate, or answer any questions about what we build. What's on your mind?",
+          action: null,
+          quote: null,
+        },
+      ]);
+    } else if (isOpen) {
+      setUnreadCount(0);
+    }
+  }, [isOpen, hasGreeted]);
+
+  const sendMessage = useCallback(async (userText: string) => {
+    if (!userText.trim() || isThinking) return;
+
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      text: userText.trim(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setIsThinking(true);
+
+    try {
+      const pageContext = getCurrentPageContext();
+      const history = [...messages, userMsg].map((m) => ({
+        role: m.role,
+        content: m.text,
+      }));
+
+      const res = await fetch("/api/copilot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history, pageContext }),
+      });
+
+      const data = await res.json();
+
+      const assistantMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        text: data.text || "I'm here to help!",
+        action: data.action || null,
+        quote: data.quote || null,
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
+
+      // Execute any autopilot action with a short delay for UX
+      if (data.action) {
+        setTimeout(() => {
+          executeAutopilotAction(data.action);
+        }, 800);
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          text: "Sorry, I had a connectivity issue. Please try again in a moment.",
+          action: null,
+          quote: null,
+        },
+      ]);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [messages, isThinking]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
+  };
+
+  return (
+    <>
+      {/* ── Floating Trigger Capsule ────────────────────────────────────────── */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-6 right-6 z-50 group flex items-center gap-3 pl-3 pr-4 py-2.5 rounded-full bg-[#080B12] border border-[#F55036]/30 shadow-[0_0_30px_rgba(245,80,54,0.25)] hover:shadow-[0_0_45px_rgba(245,80,54,0.4)] transition-all duration-300 hover:scale-[1.03]"
+          aria-label="Open Anthrix AI Copilot"
+        >
+          {/* Animated energy ring */}
+          <div className="relative w-8 h-8 flex-shrink-0">
+            <div className="absolute inset-0 rounded-full bg-[#F55036]/20 animate-ping" style={{ animationDuration: "2.5s" }} />
+            <div className="relative w-8 h-8 rounded-full bg-[#F55036]/10 border border-[#F55036]/40 flex items-center justify-center">
+              <Bot size={16} className="text-[#F55036]" />
+            </div>
+          </div>
+
+          {/* Label */}
+          <div className="flex flex-col items-start">
+            <span className="text-[11px] font-extrabold tracking-[0.12em] uppercase text-white font-[family-name:var(--font-orbitron)]">
+              A-OS
+            </span>
+            <span className="text-[9px] text-white/40 leading-none">Anthrix Copilot</span>
+          </div>
+
+          {/* Waveform */}
+          <Waveform active={false} />
+
+          {/* Unread badge */}
+          {unreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#F55036] text-white text-[9px] font-bold flex items-center justify-center shadow-[0_0_10px_rgba(245,80,54,0.8)]">
+              {unreadCount}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* ── HUD Window ─────────────────────────────────────────────────────── */}
+      {isOpen && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex flex-col rounded-2xl border border-white/10 bg-[#080B12] shadow-[0_0_80px_rgba(0,0,0,0.8),0_0_40px_rgba(245,80,54,0.1)] transition-all duration-300 overflow-hidden ${
+            isMinimized ? "w-80 h-14" : "w-[380px] h-[580px] sm:w-[420px]"
+          }`}
+        >
+          {/* ── Header ────────────────────────────────────────────────────── */}
+          <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-[#0D1117]">
+            <div className="flex items-center gap-3">
+              {/* Logo mark */}
+              <div className="relative w-8 h-8 flex-shrink-0">
+                <div className="absolute inset-0 rounded-full bg-[#F55036]/15 animate-pulse" style={{ animationDuration: "3s" }} />
+                <div className="relative w-8 h-8 rounded-full bg-[#F55036]/10 border border-[#F55036]/30 flex items-center justify-center overflow-hidden">
+                  <img src="/logo.png" alt="Anthrix" className="w-5 h-5 object-contain" />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-extrabold tracking-[0.15em] uppercase text-white font-[family-name:var(--font-orbitron)]">
+                    A-OS
+                  </span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
+                </div>
+                <span className="text-[10px] text-white/30">Anthrix Autonomous Copilot</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Waveform active={isThinking} />
+              <div className="w-px h-4 bg-white/10 mx-1" />
+              <button
+                onClick={() => setIsMinimized(!isMinimized)}
+                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
+                title={isMinimized ? "Expand" : "Minimize"}
+              >
+                {isMinimized ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
+              </button>
+              <button
+                onClick={() => { setIsOpen(false); setIsMinimized(false); }}
+                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-red-500/20 flex items-center justify-center text-white/40 hover:text-red-400 transition-all"
+                title="Close"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          </div>
+
+          {/* ── Body (hidden when minimized) ──────────────────────────────── */}
+          {!isMinimized && (
+            <>
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                {messages.map((msg) => (
+                  <div key={msg.id} className={`flex items-end gap-2 mb-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                    {/* Avatar */}
+                    {msg.role === "assistant" && (
+                      <div className="w-7 h-7 rounded-full bg-[#F55036]/10 border border-[#F55036]/20 flex items-center justify-center flex-shrink-0">
+                        <Bot size={14} className="text-[#F55036]" />
+                      </div>
+                    )}
+
+                    <div className={`flex flex-col gap-1 max-w-[85%] ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                      {/* Bubble */}
+                      <div
+                        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                          msg.role === "user"
+                            ? "bg-[#F55036]/15 border border-[#F55036]/25 text-white rounded-br-sm"
+                            : "bg-white/[0.04] border border-white/8 text-white/85 rounded-bl-sm"
+                        }`}
+                      >
+                        {msg.text}
+                      </div>
+
+                      {/* Quote Card */}
+                      {msg.role === "assistant" && msg.quote && (
+                        <div className="w-full">
+                          <QuoteScopeCard quote={msg.quote} userMessage={messages.find(m => m.role === "user")?.text || ""} />
+                        </div>
+                      )}
+
+                      {/* Action Chip */}
+                      {msg.role === "assistant" && msg.action && (
+                        <button
+                          onClick={() => executeAutopilotAction(msg.action!)}
+                          className="flex items-center gap-1.5 mt-1 text-[11px] text-[#F55036] hover:text-white transition-colors"
+                        >
+                          <ChevronRight size={12} />
+                          <span>
+                            {msg.action.type === "navigate" ? `Go to ${msg.action.target}` :
+                             msg.action.type === "scroll_to" ? `Scroll to ${msg.action.target}` :
+                             msg.action.type === "open_contact" ? "Open contact form" : "Take action"}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {isThinking && <TypingIndicator />}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Quick Prompts (show only when just greeting or no messages) */}
+              {messages.length <= 1 && !isThinking && (
+                <div className="flex-shrink-0 px-4 pb-3 flex flex-wrap gap-1.5">
+                  {QUICK_PROMPTS.map((chip) => {
+                    const Icon = chip.icon;
+                    return (
+                      <button
+                        key={chip.label}
+                        onClick={() => sendMessage(chip.label)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-medium transition-all ${chip.color}`}
+                      >
+                        <Icon size={11} />
+                        {chip.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ── Input ─────────────────────────────────────────────────── */}
+              <div className="flex-shrink-0 px-4 pb-4 pt-2 border-t border-white/[0.06]">
+                <div className="flex items-end gap-2 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2.5 focus-within:border-[#F55036]/40 transition-colors">
+                  <textarea
+                    ref={inputRef}
+                    rows={1}
+                    value={input}
+                    onChange={(e) => {
+                      setInput(e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = Math.min(e.target.scrollHeight, 80) + "px";
+                    }}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask me anything about Anthrix..."
+                    className="flex-1 bg-transparent text-sm text-white placeholder-white/25 outline-none resize-none leading-relaxed"
+                    style={{ maxHeight: "80px" }}
+                    disabled={isThinking}
+                  />
+                  <button
+                    onClick={() => sendMessage(input)}
+                    disabled={!input.trim() || isThinking}
+                    className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#F55036] hover:bg-[#E04025] disabled:bg-white/10 disabled:text-white/20 flex items-center justify-center text-white transition-all disabled:cursor-not-allowed shadow-[0_0_12px_rgba(245,80,54,0.4)]"
+                  >
+                    {isThinking ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Send size={14} />
+                    )}
+                  </button>
+                </div>
+                <p className="text-[9px] text-white/20 text-center mt-2">
+                  Powered by Groq · LLaMA 3.3 70B · Built by Anthrix
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
