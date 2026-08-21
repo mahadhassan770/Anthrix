@@ -51,14 +51,34 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    const apiKey = body.groqApiKey || (await db.systemSetting.findUnique({ where: { key: "groq_api_key" } }))?.value || process.env.GROQ_API_KEY;
+    
+    if (!apiKey) {
+      return NextResponse.json({ success: false, message: "No Groq API key provided." }, { status: 400 });
+    }
+
+    // Fetch models action
+    if (body.action === "fetch_models") {
+      try {
+        const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
+          headers: { "Authorization": `Bearer ${apiKey.trim()}` },
+        });
+        if (!modelsRes.ok) {
+          return NextResponse.json({ success: false, message: "Failed to fetch models from Groq." }, { status: 400 });
+        }
+        const data = await modelsRes.json();
+        const models = (data.data || [])
+          .map((m: any) => m.id)
+          .filter((id: string) => !id.includes("whisper") && !id.includes("tts") && !id.includes("vision") && !id.includes("safeguard"))
+          .sort();
+        return NextResponse.json({ success: true, models });
+      } catch (err: any) {
+        return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+      }
+    }
+
     // Test connection action
     if (body.action === "test_connection") {
-      const apiKey = body.groqApiKey || (await db.systemSetting.findUnique({ where: { key: "groq_api_key" } }))?.value || process.env.GROQ_API_KEY;
-      
-      if (!apiKey) {
-        return NextResponse.json({ success: false, message: "No Groq API key provided." }, { status: 400 });
-      }
-
       const model = body.groqModel || "llama-3.3-70b-versatile";
       
       try {
@@ -69,7 +89,7 @@ export async function POST(req: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: model,
+            model: model.trim(),
             messages: [{ role: "user", content: "Reply with the exact word 'ONLINE' and nothing else." }],
             max_tokens: 10,
             temperature: 0.1,
@@ -79,14 +99,35 @@ export async function POST(req: NextRequest) {
         if (!testRes.ok) {
           const errData = await testRes.json().catch(() => ({}));
           const errMsg = errData.error?.message || `Groq API responded with status ${testRes.status}`;
-          return NextResponse.json({ success: false, message: `Groq Error: ${errMsg}` }, { status: 400 });
+
+          // Also fetch available models to suggest to the user
+          let availableList = "";
+          try {
+            const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
+              headers: { "Authorization": `Bearer ${apiKey.trim()}` },
+            });
+            if (modelsRes.ok) {
+              const data = await modelsRes.json();
+              const models = (data.data || [])
+                .map((m: any) => m.id)
+                .filter((id: string) => !id.includes("whisper") && !id.includes("tts") && !id.includes("safeguard"));
+              if (models.length > 0) {
+                availableList = ` Available models on your key: ${models.slice(0, 5).join(", ")}`;
+              }
+            }
+          } catch {}
+
+          return NextResponse.json({
+            success: false,
+            message: `Groq Error: ${errMsg}.${availableList}`,
+          }, { status: 400 });
         }
 
         const testData = await testRes.json();
         const reply = testData.choices?.[0]?.message?.content?.trim();
         return NextResponse.json({
           success: true,
-          message: `Connection successful! Model ${model} responded: "${reply}"`,
+          message: `Connection successful! Model "${model}" is active and responded: "${reply}"`,
         });
       } catch (err: any) {
         return NextResponse.json({ success: false, message: `Network Error: ${err.message}` }, { status: 500 });

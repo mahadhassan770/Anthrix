@@ -94,40 +94,61 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = ANTHRIX_CONTEXT + customPrompt + (pageContext ? `\n\n## Current Page Context\nUser is currently on: ${pageContext}` : "");
 
-    // Call Groq API
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey.trim()}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages.slice(-10), // Keep last 10 messages for context
-        ],
-        max_tokens: 1024,
-        temperature: 0.7,
-        response_format: { type: "json_object" },
-      }),
-    });
+    const candidateModels = Array.from(new Set([
+      model,
+      "llama-3.3-70b-versatile",
+      "llama-3.1-70b-versatile",
+      "llama-3.1-8b-instant",
+      "llama3-70b-8192",
+      "llama3-8b-8192",
+      "mixtral-8x7b-32768",
+    ]));
 
-    if (!groqRes.ok) {
-      const errData = await groqRes.json().catch(() => ({}));
-      console.error("Groq API error:", errData);
+    let rawContent = "";
+
+    for (const m of candidateModels) {
+      try {
+        const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey.trim()}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: m,
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...messages.slice(-10),
+            ],
+            max_tokens: 1024,
+            temperature: 0.7,
+            response_format: { type: "json_object" },
+          }),
+        });
+
+        if (groqRes.ok) {
+          const groqData = await groqRes.json();
+          rawContent = groqData.choices?.[0]?.message?.content || "{}";
+          break;
+        } else {
+          const errData = await groqRes.json().catch(() => ({}));
+          console.warn(`Groq model ${m} failed:`, errData.error?.message);
+        }
+      } catch (err: any) {
+        console.warn(`Groq fetch with model ${m} network error:`, err.message);
+      }
+    }
+
+    if (!rawContent) {
       return NextResponse.json(
         {
-          text: "I'm having trouble connecting right now. Please try again in a moment, or reach out via our contact form.",
+          text: "I'm having trouble connecting right now. Please verify the Groq API Key and Model in the Super Admin settings.",
           action: null,
           quote: null,
         },
         { status: 200 }
       );
     }
-
-    const groqData = await groqRes.json();
-    const rawContent = groqData.choices?.[0]?.message?.content || "{}";
 
     let parsed;
     try {
