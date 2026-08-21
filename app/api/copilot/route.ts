@@ -58,18 +58,42 @@ Respond with a JSON object in this EXACT format:
 CRITICAL: Always respond with valid JSON only. No markdown. No extra text outside the JSON.
 `;
 
+function extractJSON(raw: string) {
+  if (!raw) return null;
+  // 1. Try direct parse
+  try {
+    return JSON.parse(raw);
+  } catch {}
+
+  // 2. Try stripping markdown code blocks
+  try {
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    return JSON.parse(cleaned);
+  } catch {}
+
+  // 3. Try regex extraction for outermost JSON object
+  try {
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (match) {
+      return JSON.parse(match[0]);
+    }
+  } catch {}
+
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { messages, pageContext } = await req.json();
 
-    // Fetch Groq API key from DB (fallback to env)
+    // Fetch API key & model from DB (fallback to env)
     const [keyRecord, modelRecord] = await Promise.all([
       db.systemSetting.findUnique({ where: { key: "groq_api_key" } }),
       db.systemSetting.findUnique({ where: { key: "groq_model" } }),
     ]);
 
-    const apiKey = keyRecord?.value || process.env.GROQ_API_KEY;
-    const model = modelRecord?.value || "llama-3.3-70b-versatile";
+    const apiKey = (keyRecord?.value || process.env.GROQ_API_KEY || "").trim();
+    const configuredModel = (modelRecord?.value || "llama-3.1-70b-versatile").trim();
 
     // Check if copilot is enabled
     const enabledRecord = await db.systemSetting.findUnique({ where: { key: "copilot_enabled" } });
@@ -80,7 +104,7 @@ export async function POST(req: NextRequest) {
     if (!apiKey) {
       return NextResponse.json(
         {
-          text: "The Anthrix AI Copilot is being set up. Please check back soon!",
+          text: "The Anthrix AI Copilot is being configured. Please set your LLM API Key in Super Admin settings.",
           action: null,
           quote: null,
         },
@@ -94,55 +118,108 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = ANTHRIX_CONTEXT + customPrompt + (pageContext ? `\n\n## Current Page Context\nUser is currently on: ${pageContext}` : "");
 
-    const candidateModels = Array.from(new Set([
-      model,
-      "llama-3.3-70b-versatile",
+    // Build candidate models list
+    let candidateModels = Array.from(new Set([
+      configuredModel,
       "llama-3.1-70b-versatile",
       "llama-3.1-8b-instant",
       "llama3-70b-8192",
       "llama3-8b-8192",
       "mixtral-8x7b-32768",
+      "gemma2-9b-it",
     ]));
 
-    let rawContent = "";
+    // Format chat history
+    const formattedMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages.slice(-10).map((m: any) => ({
+        role: m.role === "assistant" ? "assistant" : "user",
+        content: typeof m.content === "string" ? m.content : typeof m.text === "string" ? m.text : String(m),
+      })),
+    ];
 
+    let rawContent = "";
+    let lastError = "";
+
+    // 1. Try candidate models
     for (const m of candidateModels) {
-      try {
-        const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${apiKey.trim()}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+      // Try first with standard JSON instruction, fallback without json_object header if rejected
+      for (const useJsonFormat of [true, false]) {
+        try {
+          const bodyPayload: any = {
             model: m,
-            messages: [
-              { role: "system", content: systemPrompt },
-              ...messages.slice(-10),
-            ],
+            messages: formattedMessages,
             max_tokens: 1024,
             temperature: 0.7,
-            response_format: { type: "json_object" },
-          }),
-        });
+          };
+          if (useJsonFormat) {
+            bodyPayload.response_format = { type: "json_object" };
+          }
 
-        if (groqRes.ok) {
-          const groqData = await groqRes.json();
-          rawContent = groqData.choices?.[0]?.message?.content || "{}";
-          break;
-        } else {
-          const errData = await groqRes.json().catch(() => ({}));
-          console.warn(`Groq model ${m} failed:`, errData.error?.message);
+          const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(bodyPayload),
+          });
+
+          if (groqRes.ok) {
+            const groqData = await groqRes.json();
+            rawContent = groqData.choices?.[0]?.message?.content || "";
+            if (rawContent) break;
+          } else {
+            const errData = await groqRes.json().catch(() => ({}));
+            lastError = errData.error?.message || `Status ${groqRes.status}`;
+          }
+        } catch (err: any) {
+          lastError = err.message;
         }
-      } catch (err: any) {
-        console.warn(`Groq fetch with model ${m} network error:`, err.message);
       }
+      if (rawContent) break;
+    }
+
+    // 2. If candidates failed, dynamically discover models available on this API key
+    if (!rawContent) {
+      try {
+        const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
+          headers: { "Authorization": `Bearer ${apiKey}` },
+        });
+        if (modelsRes.ok) {
+          const mData = await modelsRes.json();
+          const liveModels = (mData.data || [])
+            .map((item: any) => item.id)
+            .filter((id: string) => !id.includes("whisper") && !id.includes("tts") && !id.includes("safeguard"));
+
+          for (const liveM of liveModels.slice(0, 3)) {
+            const retryRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: liveM,
+                messages: formattedMessages,
+                max_tokens: 1024,
+                temperature: 0.7,
+              }),
+            });
+            if (retryRes.ok) {
+              const retryData = await retryRes.json();
+              rawContent = retryData.choices?.[0]?.message?.content || "";
+              if (rawContent) break;
+            }
+          }
+        }
+      } catch {}
     }
 
     if (!rawContent) {
       return NextResponse.json(
         {
-          text: "I'm having trouble connecting right now. Please verify the Groq API Key and Model in the Super Admin settings.",
+          text: `I'm having trouble connecting to the LLM engine (${lastError || "Check API Key"}). Please verify your LLM API Key and Model in the Super Admin settings.`,
           action: null,
           quote: null,
         },
@@ -150,21 +227,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let parsed;
-    try {
-      parsed = JSON.parse(rawContent);
-    } catch {
-      parsed = {
-        text: rawContent,
-        action: null,
-        quote: null,
-      };
+    const parsed = extractJSON(rawContent);
+
+    if (parsed && typeof parsed === "object") {
+      return NextResponse.json({
+        text: parsed.text || "I'm here to help! Ask me anything about Anthrix.",
+        action: parsed.action || null,
+        quote: parsed.quote || null,
+      });
     }
 
     return NextResponse.json({
-      text: parsed.text || "I'm here to help! Ask me anything about Anthrix.",
-      action: parsed.action || null,
-      quote: parsed.quote || null,
+      text: rawContent,
+      action: null,
+      quote: null,
     });
   } catch (error: any) {
     console.error("Copilot route error:", error);
