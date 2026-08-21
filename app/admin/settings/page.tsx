@@ -125,7 +125,7 @@ export default function SettingsPage() {
 
   const handleFetchModels = async () => {
     if (!aiSettings.groqApiKey) {
-      setAiMsg({ type: "error", text: "Please enter your Groq API key first." });
+      setAiMsg({ type: "error", text: "Please enter your LLM API key first." });
       return;
     }
     setFetchingModels(true);
@@ -139,12 +139,12 @@ export default function SettingsPage() {
       const data = await res.json();
       if (res.ok && data.success && data.models?.length > 0) {
         setModelsList(data.models);
-        setAiMsg({ type: "success", text: `Fetched ${data.models.length} active models from your Groq account!` });
+        setAiMsg({ type: "success", text: `Fetched ${data.models.length} active models from your LLM provider!` });
         if (!data.models.includes(aiSettings.groqModel)) {
           setAiSettings((prev) => ({ ...prev, groqModel: data.models[0] }));
         }
       } else {
-        setAiMsg({ type: "error", text: data.message || "Failed to fetch models from Groq." });
+        setAiMsg({ type: "error", text: data.message || "Failed to fetch models from LLM provider." });
       }
     } catch {
       setAiMsg({ type: "error", text: "Network error while fetching models." });
@@ -300,7 +300,7 @@ export default function SettingsPage() {
     { id: "profile", label: "General", icon: User, desc: "Personal info and avatar" },
     { id: "security", label: "Security", icon: Lock, desc: "Passwords and authentication" },
     { id: "appearance", label: "Appearance", icon: Palette, desc: "Theme and interface" },
-    ...(isSuperAdmin ? [{ id: "ai", label: "AI Copilot", icon: Bot, desc: "Groq engine & configuration" }] : []),
+    ...(isSuperAdmin ? [{ id: "ai", label: "AI Copilot", icon: Bot, desc: "LLM engine & configuration" }] : []),
   ];
 
   if (isPending) {
@@ -625,7 +625,7 @@ export default function SettingsPage() {
                       <h2 className="text-lg font-bold text-white">Anthrix A-OS Copilot Engine</h2>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F55036]/10 border border-[#F55036]/30 text-[#F55036] tracking-wider uppercase">Super Admin</span>
                     </div>
-                    <p className="text-sm text-white/50">Powered by Groq · LLaMA 3.3 70B Versatile · Ultra-Low Latency</p>
+                    <p className="text-sm text-white/50">Powered by High-Speed LLM Inference Engine · Ultra-Low Latency</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${aiSettings.copilotEnabled ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-white/5 border-white/10 text-white/30"}`}>
@@ -647,7 +647,7 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Groq API Key */}
+              {/* LLM API Key */}
               <div className="bg-card rounded-2xl border border-border overflow-hidden">
                 <div className="p-6 sm:p-8 space-y-5">
                   <div className="flex items-center gap-3">
@@ -655,22 +655,22 @@ export default function SettingsPage() {
                       <Zap size={15} className="text-primary" />
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-foreground">Groq API Configuration</h3>
-                      <p className="text-xs text-muted-foreground">Get your key at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">console.groq.com</a></p>
+                      <h3 className="text-base font-bold text-foreground">LLM API Configuration</h3>
+                      <p className="text-xs text-muted-foreground">Connect your AI inference provider API key</p>
                     </div>
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-border/50">
                     {/* API Key Field */}
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">Groq API Key</label>
+                      <label className="text-sm font-semibold text-foreground">LLM API Key</label>
                       <div className="relative">
                         <input
                           type={aiShowKey ? "text" : "password"}
                           value={aiSettings.groqApiKey}
                           onChange={(e) => setAiSettings({ ...aiSettings, groqApiKey: e.target.value })}
                           className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-12 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
-                          placeholder="gsk_..."
+                          placeholder="Enter your LLM API Key (e.g. gsk_...)"
                         />
                         <button
                           type="button"
@@ -685,7 +685,7 @@ export default function SettingsPage() {
                     {/* Model Selection */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-foreground">Groq Model</label>
+                        <label className="text-sm font-semibold text-foreground">LLM Model</label>
                         <button
                           type="button"
                           onClick={handleFetchModels}
@@ -762,7 +762,7 @@ export default function SettingsPage() {
                   className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-400 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {aiTesting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                  {aiTesting ? "Testing Connection..." : "Test Groq Connection"}
+                  {aiTesting ? "Testing Connection..." : "Test LLM Connection"}
                 </button>
                 <button
                   onClick={handleAiSave}
@@ -778,7 +778,7 @@ export default function SettingsPage() {
               <div className="flex items-start gap-3 p-4 rounded-xl bg-[#F55036]/5 border border-[#F55036]/15">
                 <Shield size={16} className="text-[#F55036] mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-white/40 leading-relaxed">
-                  The Groq API key is stored securely in your database and is only accessible to super administrators. It is never exposed to the public or regular admins.
+                  The LLM API key is stored securely in your database and is only accessible to super administrators. It is never exposed to the public or regular admins.
                 </p>
               </div>
             </div>

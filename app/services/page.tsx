@@ -4,10 +4,10 @@ import { ArrowUpRight, Terminal, Cpu, ArrowRight, Layers, Workflow } from "lucid
 import { Pillar } from "@/components/services/pillar";
 import { Reveal } from "@/components/motion/reveal";
 import { CTA } from "@/components/sections/cta";
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/lib/db";
 import { ServicesHero } from "@/components/services/services-hero";
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Services & Capabilities",
@@ -16,15 +16,20 @@ export const metadata: Metadata = {
 };
 
 export default async function ServicesPage() {
-  const services = await prisma.service.findMany({
-    where: { published: true },
-    orderBy: { order: "asc" },
-    include: {
-      offerings: {
-        orderBy: { order: "asc" },
+  let services: any[] = [];
+  try {
+    services = await db.service.findMany({
+      where: { published: true },
+      orderBy: { order: "asc" },
+      include: {
+        offerings: {
+          orderBy: { order: "asc" },
+        },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.error("Failed to fetch services:", err);
+  }
 
   return (
     <div className="bg-[#05080D] min-h-screen text-white">

@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     const apiKey = body.groqApiKey || (await db.systemSetting.findUnique({ where: { key: "groq_api_key" } }))?.value || process.env.GROQ_API_KEY;
     
     if (!apiKey) {
-      return NextResponse.json({ success: false, message: "No Groq API key provided." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "No LLM API key provided." }, { status: 400 });
     }
 
     // Fetch models action
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
           headers: { "Authorization": `Bearer ${apiKey.trim()}` },
         });
         if (!modelsRes.ok) {
-          return NextResponse.json({ success: false, message: "Failed to fetch models from Groq." }, { status: 400 });
+          return NextResponse.json({ success: false, message: "Failed to fetch models from LLM provider." }, { status: 400 });
         }
         const data = await modelsRes.json();
         const models = (data.data || [])
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 
         if (!testRes.ok) {
           const errData = await testRes.json().catch(() => ({}));
-          const errMsg = errData.error?.message || `Groq API responded with status ${testRes.status}`;
+          const errMsg = errData.error?.message || `LLM API responded with status ${testRes.status}`;
 
           // Also fetch available models to suggest to the user
           let availableList = "";
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
 
           return NextResponse.json({
             success: false,
-            message: `Groq Error: ${errMsg}.${availableList}`,
+            message: `LLM Error: ${errMsg}.${availableList}`,
           }, { status: 400 });
         }
 

@@ -381,7 +381,7 @@ export default function AnthrixCopilot() {
                   </button>
                 </div>
                 <p className="text-[9px] text-white/20 text-center mt-2">
-                  Powered by Groq · LLaMA 3.3 70B · Built by Anthrix
+                  Powered by Anthrix LLM Engine · Autonomous AI
                 </p>
               </div>
             </>
