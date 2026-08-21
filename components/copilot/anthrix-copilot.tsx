@@ -8,6 +8,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import QuoteScopeCard from "./quote-scope-card";
+import MarkdownMessage from "./markdown-message";
 import { executeAutopilotAction, getCurrentPageContext, type AutopilotAction } from "@/lib/copilot-autopilot";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -293,13 +294,17 @@ export default function AnthrixCopilot() {
                     <div className={`flex flex-col gap-1 max-w-[85%] ${msg.role === "user" ? "items-end" : "items-start"}`}>
                       {/* Bubble */}
                       <div
-                        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                           msg.role === "user"
-                            ? "bg-[#F55036]/15 border border-[#F55036]/25 text-white rounded-br-sm"
+                            ? "bg-[#F55036]/15 border border-[#F55036]/25 text-white rounded-br-sm whitespace-pre-wrap"
                             : "bg-white/[0.04] border border-white/8 text-white/85 rounded-bl-sm"
                         }`}
                       >
-                        {msg.text}
+                        {msg.role === "assistant" ? (
+                          <MarkdownMessage content={msg.text} />
+                        ) : (
+                          msg.text
+                        )}
                       </div>
 
                       {/* Quote Card */}
