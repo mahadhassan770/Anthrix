@@ -58,22 +58,29 @@ Respond with a JSON object in this EXACT format:
 CRITICAL: Always respond with valid JSON only. No markdown. No extra text outside the JSON.
 `;
 
+function cleanThinking(str: string): string {
+  if (!str) return "";
+  return str.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/<thought>[\s\S]*?<\/thought>/gi, "").trim();
+}
+
 function extractJSON(raw: string) {
   if (!raw) return null;
+  const cleaned = cleanThinking(raw);
+
   // 1. Try direct parse
   try {
-    return JSON.parse(raw);
+    return JSON.parse(cleaned);
   } catch {}
 
   // 2. Try stripping markdown code blocks
   try {
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-    return JSON.parse(cleaned);
+    const codeBlockStripped = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    return JSON.parse(codeBlockStripped);
   } catch {}
 
   // 3. Try regex extraction for outermost JSON object
   try {
-    const match = raw.match(/\{[\s\S]*\}/);
+    const match = cleaned.match(/\{[\s\S]*\}/);
     if (match) {
       return JSON.parse(match[0]);
     }
@@ -230,15 +237,17 @@ export async function POST(req: NextRequest) {
     const parsed = extractJSON(rawContent);
 
     if (parsed && typeof parsed === "object") {
+      const cleanText = cleanThinking(parsed.text || "I'm here to help! Ask me anything about Anthrix.");
       return NextResponse.json({
-        text: parsed.text || "I'm here to help! Ask me anything about Anthrix.",
+        text: cleanText,
         action: parsed.action || null,
         quote: parsed.quote || null,
       });
     }
 
+    const cleanFallback = cleanThinking(rawContent);
     return NextResponse.json({
-      text: rawContent,
+      text: cleanFallback || "I'm here to help! Ask me anything about Anthrix.",
       action: null,
       quote: null,
     });
