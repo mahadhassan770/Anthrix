@@ -86,6 +86,28 @@ function extractJSON(raw: string) {
     }
   } catch {}
 
+  // 4. Try regex extraction for text field if JSON was truncated
+  try {
+    const textMatch = cleaned.match(/"text"\s*:\s*"([\s\S]*?)(?:"\s*,\s*"action"|"\s*,\s*"quote"|"\s*\}|$)/);
+    if (textMatch && textMatch[1]) {
+      const unescaped = textMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+      return { text: unescaped, action: null, quote: null };
+    }
+  } catch {}
+
+  // 5. If response begins with { "text": " or similar but is unclosed, grab the text snippet
+  if (cleaned.includes('"text":')) {
+    const idx = cleaned.indexOf('"text":');
+    let snippet = cleaned.substring(idx + 7).trim();
+    if (snippet.startsWith('"')) snippet = snippet.substring(1);
+    snippet = snippet.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+    // Remove trailing unclosed quotes / brackets
+    snippet = snippet.replace(/["}\]\s]+$/, "").trim();
+    if (snippet) {
+      return { text: snippet, action: null, quote: null };
+    }
+  }
+
   return null;
 }
 
@@ -156,7 +178,7 @@ export async function POST(req: NextRequest) {
           const bodyPayload: any = {
             model: m,
             messages: formattedMessages,
-            max_tokens: 1024,
+            max_tokens: 3072,
             temperature: 0.7,
           };
           if (useJsonFormat) {
@@ -209,7 +231,7 @@ export async function POST(req: NextRequest) {
               body: JSON.stringify({
                 model: liveM,
                 messages: formattedMessages,
-                max_tokens: 1024,
+                max_tokens: 3072,
                 temperature: 0.7,
               }),
             });
