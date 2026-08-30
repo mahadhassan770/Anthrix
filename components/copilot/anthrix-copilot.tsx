@@ -18,10 +18,10 @@ type Message = {
 // ─── Quick Prompt Chips ─────────────────────────────────────────────────────
 
 const QUICK_PROMPTS = [
-  { label: "What services do you offer?", icon: Sparkles, color: "text-violet-400 border-violet-500/30 bg-violet-500/5 hover:bg-violet-500/10" },
-  { label: "I have a project in mind", icon: Zap, color: "text-[#F55036] border-[#F55036]/30 bg-[#F55036]/5 hover:bg-[#F55036]/10" },
-  { label: "How much does it cost?", icon: HelpCircle, color: "text-blue-400 border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10" },
-  { label: "I want to get in touch", icon: MessageSquare, color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10" },
+  { label: "What services do you offer?", icon: Sparkles },
+  { label: "I have a project in mind", icon: Zap },
+  { label: "How much does it cost?", icon: HelpCircle },
+  { label: "I want to get in touch", icon: MessageSquare },
 ];
 
 // ─── Waveform Animation ─────────────────────────────────────────────────────
@@ -224,7 +224,7 @@ export default function AnthrixCopilot() {
                   <span className="text-xs font-extrabold tracking-[0.15em] uppercase text-white font-[family-name:var(--font-orbitron)]">
                     A-OS
                   </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#F55036] shadow-[0_0_6px_rgba(245,80,54,0.8)] animate-pulse" />
                 </div>
                 <span className="text-[10px] text-white/30">Anthrix Autonomous Copilot</span>
               </div>
@@ -242,7 +242,7 @@ export default function AnthrixCopilot() {
               </button>
               <button
                 onClick={() => { setIsOpen(false); setIsMinimized(false); }}
-                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-red-500/20 flex items-center justify-center text-white/40 hover:text-red-400 transition-all"
+                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-[#F55036]/15 flex items-center justify-center text-white/40 hover:text-[#F55036] transition-all"
                 title="Close"
               >
                 <X size={12} />
@@ -296,10 +296,10 @@ export default function AnthrixCopilot() {
                       <button
                         key={chip.label}
                         onClick={() => sendMessage(chip.label)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-medium transition-all ${chip.color}`}
+                        className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03] hover:border-[#F55036]/40 hover:bg-[#F55036]/10 text-white/80 hover:text-white text-[11px] font-medium transition-all shadow-sm"
                       >
-                        <Icon size={11} />
-                        {chip.label}
+                        <Icon size={12} className="text-[#F55036] transition-transform group-hover:scale-110" />
+                        <span>{chip.label}</span>
                       </button>
                     );
                   })}

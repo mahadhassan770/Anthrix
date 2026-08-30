@@ -25,7 +25,7 @@ function CodeBlock({ children, className }: { children: React.ReactNode; classNa
           onClick={handleCopy}
           className="flex items-center gap-1 hover:text-white transition-colors"
         >
-          {copied ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
+          {copied ? <Check size={11} className="text-[#F55036]" /> : <Copy size={11} />}
           <span>{copied ? "Copied" : "Copy"}</span>
         </button>
       </div>
