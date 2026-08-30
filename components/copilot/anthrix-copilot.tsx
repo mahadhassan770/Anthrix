@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   X, Send, Loader2, Bot, Minimize2, Maximize2,
-  Sparkles, MessageSquare, Zap, HelpCircle,
+  Sparkles, MessageSquare, Zap, HelpCircle, RotateCcw,
 } from "lucide-react";
 import MarkdownMessage from "./markdown-message";
 
@@ -80,13 +80,53 @@ export default function AnthrixCopilot() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
-  const [hasGreeted, setHasGreeted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1); // teaser badge
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const defaultGreeting: Message = {
+    id: "greeting",
+    role: "assistant",
+    text: "Hey there! 👋 I'm **A-OS**, the Anthrix AI Copilot.\n\nI can answer questions about our services, capabilities, and solutions — or help you get in touch with our team.\n\n*What's on your mind?*",
+  };
+
+  // Load chat history from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("anthrix_copilot_chat_v1");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+        } else {
+          setMessages([defaultGreeting]);
+        }
+      } else {
+        setMessages([defaultGreeting]);
+      }
+    } catch {
+      setMessages([defaultGreeting]);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
+
+  // Save chat history to localStorage on change (capped at last 25 messages for ultra-light footprint)
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      if (messages.length > 0) {
+        const capped = messages.slice(-25);
+        localStorage.setItem("anthrix_copilot_chat_v1", JSON.stringify(capped));
+      }
+    } catch (err) {
+      console.error("Failed to save copilot chat history:", err);
+    }
+  }, [messages, isLoaded]);
 
   const scrollToBottom = useCallback(() => {
     if (messagesContainerRef.current) {
@@ -98,22 +138,24 @@ export default function AnthrixCopilot() {
     scrollToBottom();
   }, [messages, isThinking, scrollToBottom]);
 
-  // Auto-greeting when opened for first time
+  // Reset unread badge on open
   useEffect(() => {
-    if (isOpen && !hasGreeted) {
-      setHasGreeted(true);
-      setUnreadCount(0);
-      setMessages([
-        {
-          id: "greeting",
-          role: "assistant",
-          text: "Hey there! 👋 I'm **A-OS**, the Anthrix AI Copilot.\n\nI can help you explore our **work**, get an instant **project estimate**, or answer any questions about **what we build**.\n\n*What's on your mind?*",
-        },
-      ]);
-    } else if (isOpen) {
+    if (isOpen) {
       setUnreadCount(0);
     }
-  }, [isOpen, hasGreeted]);
+  }, [isOpen]);
+
+  const clearChat = () => {
+    const freshGreeting: Message = {
+      id: "greeting-" + Date.now(),
+      role: "assistant",
+      text: "Hey there! 👋 I'm **A-OS**, the Anthrix AI Copilot.\n\nI can answer questions about our services, capabilities, and solutions — or help you get in touch with our team.\n\n*What's on your mind?*",
+    };
+    setMessages([freshGreeting]);
+    try {
+      localStorage.setItem("anthrix_copilot_chat_v1", JSON.stringify([freshGreeting]));
+    } catch {}
+  };
 
   const sendMessage = useCallback(async (userText: string) => {
     if (!userText.trim() || isThinking) return;
@@ -239,6 +281,13 @@ export default function AnthrixCopilot() {
             <div className="flex items-center gap-1">
               <Waveform active={isThinking} />
               <div className="w-px h-4 bg-white/10 mx-1" />
+              <button
+                onClick={clearChat}
+                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
+                title="New conversation (Clear chat)"
+              >
+                <RotateCcw size={12} />
+              </button>
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
                 className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
