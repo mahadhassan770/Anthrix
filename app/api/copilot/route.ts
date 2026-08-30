@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
     if (!apiKey) {
       return NextResponse.json(
         {
-          text: "The Anthrix AI Copilot is being configured. Please set your LLM API Key in Super Admin settings.",
+          text: "Thank you for your message! If you have a project in mind, feel free to share your requirements, target budget, and contact email so our engineering leads can get in touch with a customized proposal.",
           action: null,
           quote: null,
         },
@@ -313,9 +313,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (!rawContent) {
+      console.warn("LLM generation failed:", lastError);
       return NextResponse.json(
         {
-          text: `I'm having trouble connecting to the LLM engine (${lastError || "Check API Key"}). Please verify your LLM API Key and Model in the Super Admin settings.`,
+          text: "Thank you for your message! Please feel free to share your project requirements, target budget, and contact email so our engineering leads can review it and get in touch with a customized proposal.",
           action: null,
           quote: null,
         },
@@ -326,25 +327,25 @@ export async function POST(req: NextRequest) {
     const parsed = extractJSON(rawContent);
 
     if (parsed && typeof parsed === "object") {
-      const cleanText = cleanThinking(parsed.text || "I'm here to help! Ask me anything about Anthrix.");
+      const cleanText = cleanThinking(parsed.text || "Thank you for reaching out! How can we assist you with your project today?");
       return NextResponse.json({
         text: cleanText,
-        action: parsed.action || null,
-        quote: parsed.quote || null,
+        action: null,
+        quote: null,
       });
     }
 
     const cleanFallback = cleanThinking(rawContent);
     return NextResponse.json({
-      text: cleanFallback || "I'm here to help! Ask me anything about Anthrix.",
+      text: cleanFallback || "Thank you for reaching out! How can we assist you with your project today?",
       action: null,
       quote: null,
     });
   } catch (error: any) {
-    console.error("Copilot route error:", error);
+    console.error("Copilot route internal error:", error);
     return NextResponse.json(
       {
-        text: "Something went wrong. Please try again or contact us directly.",
+        text: "Thank you for your message! Please feel free to share your project requirements, target budget, and contact email so our team can follow up directly.",
         action: null,
         quote: null,
       },

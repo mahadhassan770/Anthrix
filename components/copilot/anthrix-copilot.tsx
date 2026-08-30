@@ -197,7 +197,7 @@ export default function AnthrixCopilot() {
         {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          text: "Sorry, I had a connectivity issue. Please try again in a moment.",
+          text: "Thank you for your message! Please feel free to share your project requirements, target budget, and contact email so our team can follow up with a proposal.",
         },
       ]);
     } finally {
