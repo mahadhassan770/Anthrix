@@ -348,7 +348,7 @@ export default function SettingsPage() {
   const initials = profileForm.name?.charAt(0).toUpperCase() || "A";
 
   return (
-    <div className="w-full max-w-6xl space-y-8 pb-16">
+    <div className="w-full space-y-8 pb-16">
 
       {/* Header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-card to-background border border-border p-8 lg:p-10">
@@ -405,7 +405,7 @@ export default function SettingsPage() {
         </aside>
 
         {/* Content */}
-        <main className="flex-1">
+        <main className="flex-1 min-w-0">
 
           {/* ─── PROFILE TAB ─────────────────────────────────────────────────── */}
           {activeTab === "profile" && (
