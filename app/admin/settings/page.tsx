@@ -51,8 +51,7 @@ export default function SettingsPage() {
   const [aiTesting, setAiTesting] = useState(false);
   const [aiMsg, setAiMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [aiLoaded, setAiLoaded] = useState(false);
-  const [fetchingModels, setFetchingModels] = useState(false);
-  const [modelsList, setModelsList] = useState<string[]>([
+  const [modelsList] = useState<string[]>([
     "llama-3.3-70b-versatile",
     "llama-3.1-70b-versatile",
     "llama-3.1-8b-instant",
@@ -62,6 +61,7 @@ export default function SettingsPage() {
     "deepseek-r1-distill-llama-70b",
     "gemma2-9b-it",
     "qwen-2.5-32b",
+    "llama-guard-3-8b",
   ]);
 
   // Sync form with session once loaded
@@ -154,36 +154,6 @@ export default function SettingsPage() {
       setAiMsg({ type: "error", text: "Network error during connection test." });
     } finally {
       setAiTesting(false);
-    }
-  };
-
-  const handleFetchModels = async () => {
-    if (!aiSettings.groqApiKey) {
-      setAiMsg({ type: "error", text: "Please enter your LLM API key first." });
-      return;
-    }
-    setFetchingModels(true);
-    setAiMsg(null);
-    try {
-      const res = await fetch("/api/admin/system-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "fetch_models", groqApiKey: aiSettings.groqApiKey }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success && data.models?.length > 0) {
-        setModelsList(data.models);
-        setAiMsg({ type: "success", text: `Fetched ${data.models.length} active models from your LLM provider!` });
-        if (!data.models.includes(aiSettings.groqModel)) {
-          setAiSettings((prev) => ({ ...prev, groqModel: data.models[0] }));
-        }
-      } else {
-        setAiMsg({ type: "error", text: data.message || "Failed to fetch models from LLM provider." });
-      }
-    } catch {
-      setAiMsg({ type: "error", text: "Network error while fetching models." });
-    } finally {
-      setFetchingModels(false);
     }
   };
 
@@ -937,33 +907,20 @@ export default function SettingsPage() {
 
                     {/* Model Selection */}
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-foreground">LLM Model</label>
-                        <button
-                          type="button"
-                          onClick={handleFetchModels}
-                          disabled={fetchingModels || !aiSettings.groqApiKey}
-                          className="text-xs text-primary hover:underline flex items-center gap-1 disabled:opacity-40 disabled:no-underline"
-                        >
-                          {fetchingModels ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
-                          <span>{fetchingModels ? "Fetching..." : "Fetch Available Models"}</span>
-                        </button>
-                      </div>
-                      <div className="flex gap-2">
-                        <select
-                          value={aiSettings.groqModel}
-                          onChange={(e) => setAiSettings({ ...aiSettings, groqModel: e.target.value })}
-                          className="flex-1 bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
-                        >
-                          {modelsList.map((m) => (
-                            <option key={m} value={m}>
-                              {m}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <label className="text-sm font-semibold text-foreground">LLM Model</label>
+                      <select
+                        value={aiSettings.groqModel}
+                        onChange={(e) => setAiSettings({ ...aiSettings, groqModel: e.target.value })}
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
+                      >
+                        {modelsList.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </select>
                       <p className="text-xs text-muted-foreground">
-                        Select a model or click <strong>Fetch Available Models</strong> to see what your API key supports (e.g. <code>llama-3.1-8b-instant</code>, <code>llama-3.1-70b-versatile</code>, <code>mixtral-8x7b-32768</code>).
+                        Select the inference model for the public Anthrix AI Copilot.
                       </p>
                     </div>
 
