@@ -17,7 +17,7 @@ import {
   DollarSign,
   Receipt,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -38,12 +38,14 @@ function NavLink({
   label,
   icon: Icon,
   exact,
+  badge,
   onClick,
 }: {
   href: string;
   label: string;
   icon: React.ElementType;
   exact?: boolean;
+  badge?: number;
   onClick?: () => void;
 }) {
   const pathname = usePathname();
@@ -62,14 +64,33 @@ function NavLink({
     >
       <Icon size={16} className={isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground transition-colors"} />
       <span>{label}</span>
-      {isActive && <ChevronRight size={14} className="ml-auto text-primary/50" />}
+      {badge !== undefined && badge > 0 ? (
+        <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F55036] text-white shadow-[0_0_8px_rgba(245,80,54,0.6)]">
+          {badge}
+        </span>
+      ) : isActive ? (
+        <ChevronRight size={14} className="ml-auto text-primary/50" />
+      ) : null}
     </Link>
   );
 }
 
 function Sidebar({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session } = useSession();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    fetch("/api/admin/messages")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.counts?.unread !== undefined) {
+          setUnreadCount(data.counts.unread);
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
 
   async function handleSignOut() {
     await signOut();
@@ -95,7 +116,12 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => (
-          <NavLink key={item.href} {...item} onClick={onClose} />
+          <NavLink
+            key={item.href}
+            {...item}
+            badge={item.href === "/admin/messages" ? unreadCount : undefined}
+            onClick={onClose}
+          />
         ))}
       </nav>
 

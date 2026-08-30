@@ -8,8 +8,16 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 async function submitForm(data: Record<string, string>): Promise<void> {
-  await new Promise((res) => setTimeout(res, 1500));
-  console.log("Contact form submission:", data);
+  const res = await fetch("/api/contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to submit message");
+  }
 }
 
 const inputBase =
@@ -20,6 +28,7 @@ const inputStyle =
 export function ContactForm() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -38,9 +47,15 @@ export function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await submitForm(form);
-    setLoading(false);
-    setSubmitted(true);
+    setErrorMsg("");
+    try {
+      await submitForm(form);
+      setSubmitted(true);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to send message. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -167,6 +182,12 @@ export function ContactForm() {
             placeholder="Tell us about your project"
             className={cn(inputBase, inputStyle, "resize-none leading-relaxed")}
           />
+
+          {errorMsg && (
+            <p className="text-xs text-[#F55036] bg-[#F55036]/10 border border-[#F55036]/20 px-3.5 py-2 rounded-lg">
+              {errorMsg}
+            </p>
+          )}
 
           {/* Action row */}
           <div className="flex flex-wrap gap-3 pt-1">
