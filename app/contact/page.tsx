@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, Phone, MapPin, ArrowUpRight, Zap, Phone as PhoneIcon, FileText, Rocket } from "lucide-react";
+import { Mail, Phone, MapPin, ArrowUpRight, Zap, Phone as PhoneIcon, FileText, Rocket, PhoneCall } from "lucide-react";
 import { ContactForm } from "@/components/contact/contact-form";
+import { getContactSettings } from "@/lib/contact-settings";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Contact — Anthrix",
@@ -10,7 +13,17 @@ export const metadata: Metadata = {
     "Have a project in mind or need expert advice? Get in touch with Anthrix — we respond within 1 business day.",
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const contact = await getContactSettings();
+
+  const contactChips = [
+    { icon: Mail, label: "Email Us", value: contact.email, href: `mailto:${contact.email}` },
+    { icon: Phone, label: "Call Us", value: contact.phone, href: `tel:${contact.phone.replace(/[^+\d]/g, "")}` },
+    ...(contact.secondaryPhone
+      ? [{ icon: PhoneCall, label: "Secondary Line", value: contact.secondaryPhone, href: `tel:${contact.secondaryPhone.replace(/[^+\d]/g, "")}` }]
+      : []),
+    { icon: MapPin, label: "Visit Us", value: contact.location, href: "#" },
+  ];
   return (
     <div style={{ background: "#05080D", minHeight: "100vh" }}>
 
@@ -62,11 +75,7 @@ export default function ContactPage() {
 
               {/* Contact chips */}
               <div className="flex flex-col sm:flex-row flex-wrap gap-4">
-                {[
-                  { icon: Mail, label: "Email Us", value: "hello@anthrix.dev", href: "mailto:hello@anthrix.dev" },
-                  { icon: Phone, label: "Call Us", value: "+1 (415) 123-4567", href: "tel:+14151234567" },
-                  { icon: MapPin, label: "Visit Us", value: "San Francisco, CA", href: "#" },
-                ].map((item) => (
+                {contactChips.map((item) => (
                   <a
                     key={item.label}
                     href={item.href}

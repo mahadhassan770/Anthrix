@@ -3,6 +3,9 @@ import Link from "next/link";
 import { ArrowUpRight, Mail } from "lucide-react";
 import { team } from "@/lib/content/team";
 import { CTA } from "@/components/sections/cta";
+import { getContactSettings } from "@/lib/contact-settings";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "About — Anthrix",
@@ -10,7 +13,8 @@ export const metadata: Metadata = {
     "We are a two-person technical studio building high-performance SaaS platforms, AI agents, and automation systems for businesses that need real infrastructure.",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const contact = await getContactSettings();
   return (
     <div style={{ background: "#05080D", minHeight: "100vh" }}>
 
@@ -261,7 +265,7 @@ export default function AboutPage() {
               <ArrowUpRight size={15} />
             </Link>
             <Link
-              href="mailto:hello@anthrix.dev"
+              href={`mailto:${contact.email}`}
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white/70 hover:text-white font-medium text-sm transition-all duration-200"
               style={{
                 background: "rgba(255,255,255,0.04)",

@@ -66,6 +66,14 @@ type Invoice = {
   createdAt: string;
   items: InvoiceItem[];
   bankAccount: BankAccount | null;
+  contactSettings?: {
+    email: string;
+    phone: string;
+    secondaryPhone: string;
+    location: string;
+    supportEmail: string;
+    workingHours: string;
+  };
 };
 
 export default function PublicInvoicePage() {
@@ -254,7 +262,9 @@ export default function PublicInvoicePage() {
                 <div className="text-xs text-white/50 space-y-0.5 pt-1">
                   <p className="font-semibold text-white/80">Anthrix Systems & Engineering</p>
                   <p>Autonomous AI Systems · SaaS · Cloud Infrastructure</p>
-                  <p className="font-mono text-white/40">contact@anthrix.com · anthrix.com</p>
+                  <p className="font-mono text-white/40">
+                    {invoice?.contactSettings?.supportEmail || invoice?.contactSettings?.email || "contact@anthrix.com"} · anthrix.com
+                  </p>
                 </div>
               </div>
 
@@ -669,8 +679,11 @@ export default function PublicInvoicePage() {
           </p>
           <p className="text-[11px] text-white/20">
             For questions or billing support, contact{" "}
-            <a href="mailto:contact@anthrix.com" className="text-white/40 hover:underline">
-              contact@anthrix.com
+            <a
+              href={`mailto:${invoice?.contactSettings?.supportEmail || invoice?.contactSettings?.email || "contact@anthrix.com"}`}
+              className="text-white/40 hover:underline"
+            >
+              {invoice?.contactSettings?.supportEmail || invoice?.contactSettings?.email || "contact@anthrix.com"}
             </a>
           </p>
         </footer>

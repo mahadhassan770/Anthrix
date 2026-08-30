@@ -1,7 +1,11 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, MapPin } from "lucide-react";
+import { Mail, MapPin, Phone, PhoneCall } from "lucide-react";
 import { siteConfig } from "@/lib/site-config";
+import { DEFAULT_CONTACT_SETTINGS } from "@/lib/contact-settings";
 
 const footerLinks = {
   Services: [
@@ -15,11 +19,6 @@ const footerLinks = {
     { label: "Our Work", href: "/work" },
     { label: "Blog", href: "/blog" },
     { label: "Careers", href: "/contact" },
-  ],
-  Contact: [
-    { label: "hello@anthrix.dev", href: "mailto:hello@anthrix.dev", icon: Mail },
-    { label: "+1 (415) 123-4567", href: "tel:+14151234567", icon: null },
-    { label: "San Francisco, CA", href: "#", icon: MapPin },
   ],
 };
 
@@ -88,6 +87,18 @@ const socials = [
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const [contact, setContact] = useState(DEFAULT_CONTACT_SETTINGS);
+
+  useEffect(() => {
+    fetch("/api/contact-settings")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.error) {
+          setContact(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <footer
@@ -204,18 +215,47 @@ export function Footer() {
               Contact
             </h4>
             <ul className="flex flex-col gap-3">
-              {footerLinks.Contact.map((item) => (
-                <li key={item.label}>
+              <li>
+                <a
+                  href={`mailto:${contact.email}`}
+                  className="text-sm transition-colors duration-200 hover:text-white flex items-center gap-2"
+                  style={{ color: "#6B7280" }}
+                >
+                  <Mail size={13} style={{ color: "#F55036", flexShrink: 0 }} />
+                  {contact.email}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`tel:${contact.phone.replace(/[^+\d]/g, "")}`}
+                  className="text-sm transition-colors duration-200 hover:text-white flex items-center gap-2"
+                  style={{ color: "#6B7280" }}
+                >
+                  <Phone size={13} style={{ color: "#F55036", flexShrink: 0 }} />
+                  {contact.phone}
+                </a>
+              </li>
+              {contact.secondaryPhone && (
+                <li>
                   <a
-                    href={item.href}
+                    href={`tel:${contact.secondaryPhone.replace(/[^+\d]/g, "")}`}
                     className="text-sm transition-colors duration-200 hover:text-white flex items-center gap-2"
                     style={{ color: "#6B7280" }}
                   >
-                    {item.icon && <item.icon size={13} style={{ color: "#F55036", flexShrink: 0 }} />}
-                    {item.label}
+                    <PhoneCall size={13} style={{ color: "#F55036", flexShrink: 0 }} />
+                    {contact.secondaryPhone}
                   </a>
                 </li>
-              ))}
+              )}
+              <li>
+                <span
+                  className="text-sm flex items-center gap-2 cursor-default"
+                  style={{ color: "#6B7280" }}
+                >
+                  <MapPin size={13} style={{ color: "#F55036", flexShrink: 0 }} />
+                  {contact.location}
+                </span>
+              </li>
             </ul>
           </div>
 

@@ -6,14 +6,14 @@ import { useSession } from "@/lib/auth-client";
 import { authClient } from "@/lib/auth-client";
 import {
   Loader2, User, Lock, Palette, Camera, ShieldAlert, Monitor, Sun, Moon, Laptop, CheckCircle, Eye, EyeOff,
-  Bot, Zap, Shield, RefreshCw, FlaskConical, Save,
+  Bot, Zap, Shield, RefreshCw, FlaskConical, Save, PhoneCall, Phone, MapPin, Mail, Clock,
 } from "lucide-react";
 
 export default function SettingsPage() {
   const { data: session, isPending, refetch } = useSession();
   const { theme, setTheme } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<"profile" | "security" | "appearance" | "ai">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "contact" | "security" | "appearance" | "ai">("profile");
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -25,6 +25,19 @@ export default function SettingsPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+
+  // ─── Contact Details State (Admin & Super Admin) ──────────────────────────
+  const [contactForm, setContactForm] = useState({
+    email: "",
+    phone: "",
+    secondaryPhone: "",
+    location: "",
+    supportEmail: "",
+    workingHours: "",
+  });
+  const [contactSaving, setContactSaving] = useState(false);
+  const [contactMsg, setContactMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [contactLoaded, setContactLoaded] = useState(false);
 
   // ─── AI Copilot State (Super Admin Only) ──────────────────────────────────
   const [aiSettings, setAiSettings] = useState({
@@ -60,6 +73,27 @@ export default function SettingsPage() {
       });
     }
   }, [session]);
+
+  // ─── Load Contact Details (Admin & Super Admin) ───────────────────────────
+  useEffect(() => {
+    if (contactLoaded) return;
+    fetch("/api/admin/contact-settings")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.error) {
+          setContactForm({
+            email: data.email || "",
+            phone: data.phone || "",
+            secondaryPhone: data.secondaryPhone || "",
+            location: data.location || "",
+            supportEmail: data.supportEmail || "",
+            workingHours: data.workingHours || "",
+          });
+          setContactLoaded(true);
+        }
+      })
+      .catch(() => {});
+  }, [contactLoaded]);
 
   // ─── Load AI Settings (Super Admin Only) ──────────────────────────────────
   useEffect(() => {
@@ -150,6 +184,33 @@ export default function SettingsPage() {
       setAiMsg({ type: "error", text: "Network error while fetching models." });
     } finally {
       setFetchingModels(false);
+    }
+  };
+
+  // ─── Contact Details Update (Admin & Super Admin) ─────────────────────────
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setContactSaving(true);
+    setContactMsg(null);
+    try {
+      const res = await fetch("/api/admin/contact-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contactForm),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setContactMsg({ type: "success", text: data.message || "Contact details updated successfully!" });
+        if (data.settings) {
+          setContactForm(data.settings);
+        }
+      } else {
+        setContactMsg({ type: "error", text: data.error || "Failed to save contact details." });
+      }
+    } catch {
+      setContactMsg({ type: "error", text: "Network error. Please try again." });
+    } finally {
+      setContactSaving(false);
     }
   };
 
@@ -298,6 +359,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "profile", label: "General", icon: User, desc: "Personal info and avatar" },
+    { id: "contact", label: "Contact Info", icon: PhoneCall, desc: "Phones, email & location" },
     { id: "security", label: "Security", icon: Lock, desc: "Passwords and authentication" },
     { id: "appearance", label: "Appearance", icon: Palette, desc: "Theme and interface" },
     ...(isSuperAdmin ? [{ id: "ai", label: "AI Copilot", icon: Bot, desc: "LLM engine & configuration" }] : []),
@@ -454,6 +516,197 @@ export default function SettingsPage() {
                   >
                     {profileLoading && <Loader2 size={16} className="animate-spin" />}
                     Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* ─── CONTACT DETAILS TAB (ADMIN & SUPER ADMIN) ─────────────────── */}
+          {activeTab === "contact" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+
+              {/* Status Banner */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-card to-background border border-border p-6 sm:p-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                    <PhoneCall size={22} className="text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground mb-1 font-display">Business & Contact Information</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Manage phone numbers, emails, and location displayed across the Contact page, Footer, and Invoices.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {contactMsg && (
+                <div className={`p-4 rounded-xl text-sm font-medium border flex items-center gap-3 ${
+                  contactMsg.type === "error"
+                    ? "bg-destructive/10 border-destructive/20 text-destructive"
+                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                }`}>
+                  {contactMsg.type === "error" ? <ShieldAlert size={18} /> : <CheckCircle size={18} />}
+                  {contactMsg.text}
+                </div>
+              )}
+
+              <form onSubmit={handleContactSubmit} className="bg-card rounded-2xl border border-border overflow-hidden">
+                <div className="p-6 sm:p-8 space-y-6">
+
+                  {/* Section 1: Phone Numbers */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Phone size={16} className="text-primary" />
+                      <h3 className="text-base font-bold text-foreground">Phone Numbers</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">Direct calling lines for sales, clients, and technical support.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Primary Phone Number *</label>
+                        <input
+                          type="text"
+                          required
+                          value={contactForm.phone}
+                          onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
+                          placeholder="+1 (415) 123-4567 or +92 300 1234567"
+                        />
+                        <p className="text-[11px] text-muted-foreground">Displayed as main contact line in the header & footer.</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Secondary Phone Number (Optional)</label>
+                        <input
+                          type="text"
+                          value={contactForm.secondaryPhone}
+                          onChange={(e) => setContactForm({ ...contactForm, secondaryPhone: e.target.value })}
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
+                          placeholder="+92 321 7654321 (WhatsApp / Backup Line)"
+                        />
+                        <p className="text-[11px] text-muted-foreground">Alternative or WhatsApp direct support number.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Email Addresses */}
+                  <div className="pt-6 border-t border-border/50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Mail size={16} className="text-primary" />
+                      <h3 className="text-base font-bold text-foreground">Email Addresses</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">Inboxes where project inquiries, RFPs, and billing queries are routed.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Primary Contact Email *</label>
+                        <input
+                          type="email"
+                          required
+                          value={contactForm.email}
+                          onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
+                          placeholder="hello@anthrix.dev"
+                        />
+                        <p className="text-[11px] text-muted-foreground">Main inquiry email shown on the Contact page & Footer.</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Support & Billing Email</label>
+                        <input
+                          type="email"
+                          value={contactForm.supportEmail}
+                          onChange={(e) => setContactForm({ ...contactForm, supportEmail: e.target.value })}
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
+                          placeholder="contact@anthrix.com"
+                        />
+                        <p className="text-[11px] text-muted-foreground">Used on invoices and client portal receipts.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Location & Hours */}
+                  <div className="pt-6 border-t border-border/50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MapPin size={16} className="text-primary" />
+                      <h3 className="text-base font-bold text-foreground">Studio Location & Working Hours</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">Location information and operational availability hours.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Operating Location *</label>
+                        <input
+                          type="text"
+                          required
+                          value={contactForm.location}
+                          onChange={(e) => setContactForm({ ...contactForm, location: e.target.value })}
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
+                          placeholder="San Francisco, CA or Lahore, Pakistan"
+                        />
+                        <p className="text-[11px] text-muted-foreground">City and region displayed on the Contact page and Footer.</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Working / Support Hours</label>
+                        <input
+                          type="text"
+                          value={contactForm.workingHours}
+                          onChange={(e) => setContactForm({ ...contactForm, workingHours: e.target.value })}
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
+                          placeholder="Mon - Fri: 9:00 AM - 6:00 PM"
+                        />
+                        <p className="text-[11px] text-muted-foreground">Operating schedule shown to prospective clients.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live Preview of Chips */}
+                  <div className="pt-6 border-t border-border/50">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Live Preview (How it appears to visitors)</p>
+                    <div className="flex flex-wrap gap-3 p-4 rounded-xl bg-background/50 border border-border">
+                      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-xs">
+                        <Mail size={13} className="text-primary" />
+                        <span className="text-muted-foreground">Email:</span>
+                        <span className="font-semibold text-foreground">{contactForm.email || "hello@anthrix.dev"}</span>
+                      </div>
+                      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-xs">
+                        <Phone size={13} className="text-primary" />
+                        <span className="text-muted-foreground">Phone:</span>
+                        <span className="font-semibold text-foreground">{contactForm.phone || "+1 (415) 123-4567"}</span>
+                      </div>
+                      {contactForm.secondaryPhone && (
+                        <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-xs">
+                          <PhoneCall size={13} className="text-emerald-500" />
+                          <span className="text-muted-foreground">Secondary:</span>
+                          <span className="font-semibold text-foreground">{contactForm.secondaryPhone}</span>
+                        </div>
+                      )}
+                      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-xs">
+                        <MapPin size={13} className="text-primary" />
+                        <span className="text-muted-foreground">Location:</span>
+                        <span className="font-semibold text-foreground">{contactForm.location || "San Francisco, CA"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Footer Save Button */}
+                <div className="bg-background/50 p-4 sm:px-8 border-t border-border flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CheckCircle size={14} className="text-emerald-500" />
+                    <span>Available to both Admins and Super Admins</span>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={contactSaving}
+                    className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold rounded-lg transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-primary/20"
+                  >
+                    {contactSaving && <Loader2 size={16} className="animate-spin" />}
+                    Save Contact Details
                   </button>
                 </div>
               </form>
