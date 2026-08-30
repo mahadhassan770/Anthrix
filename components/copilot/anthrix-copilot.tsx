@@ -85,13 +85,18 @@ export default function AnthrixCopilot() {
   const [hasGreeted, setHasGreeted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1); // teaser badge
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, []);
 
-  useEffect(() => { scrollToBottom(); }, [messages, isThinking, scrollToBottom]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isThinking, scrollToBottom]);
 
   // Auto-greeting when opened for first time
   useEffect(() => {
@@ -102,7 +107,7 @@ export default function AnthrixCopilot() {
         {
           id: "greeting",
           role: "assistant",
-          text: "Hey there! 👋 I'm A-OS, the Anthrix AI assistant.\n\nI can answer questions about our services, pricing, and technology — or help you get in touch with the team. What's on your mind?",
+          text: "Hey there! 👋 I'm **A-OS**, the Anthrix AI Copilot.\n\nI can help you explore our **work**, get an instant **project estimate**, or answer any questions about **what we build**.\n\n*What's on your mind?*",
         },
       ]);
     } else if (isOpen) {
@@ -205,6 +210,7 @@ export default function AnthrixCopilot() {
       {/* ── HUD Window ─────────────────────────────────────────────────────── */}
       {isOpen && (
         <div
+          data-lenis-prevent="true"
           className={`fixed bottom-6 right-6 z-50 flex flex-col rounded-2xl border border-white/10 bg-[#080B12] shadow-[0_0_80px_rgba(0,0,0,0.8),0_0_40px_rgba(245,80,54,0.1)] transition-all duration-300 overflow-hidden ${
             isMinimized ? "w-80 h-14" : "w-[380px] h-[580px] sm:w-[420px]"
           }`}
@@ -254,7 +260,11 @@ export default function AnthrixCopilot() {
           {!isMinimized && (
             <>
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+              <div
+                ref={messagesContainerRef}
+                data-lenis-prevent="true"
+                className="copilot-scroll flex-1 min-h-0 px-4 py-4 space-y-1"
+              >
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex items-end gap-2 mb-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
                     {/* Avatar */}
