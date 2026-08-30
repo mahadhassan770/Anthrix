@@ -1,15 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import Image from "next/image";
 import {
   X, Send, Loader2, Bot, Minimize2, Maximize2,
-  Zap, Navigation, Calculator, ChevronRight, Sparkles,
-  MessageSquare,
+  Sparkles, MessageSquare, Zap, HelpCircle,
 } from "lucide-react";
-import QuoteScopeCard from "./quote-scope-card";
 import MarkdownMessage from "./markdown-message";
-import { executeAutopilotAction, getCurrentPageContext, type AutopilotAction } from "@/lib/copilot-autopilot";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -17,24 +13,15 @@ type Message = {
   id: string;
   role: "user" | "assistant";
   text: string;
-  action?: AutopilotAction | null;
-  quote?: {
-    tier: string;
-    budgetRange: string;
-    budgetRangePKR?: string;
-    weeks: string;
-    deliverables: string[];
-    summary: string;
-  } | null;
 };
 
 // ─── Quick Prompt Chips ─────────────────────────────────────────────────────
 
 const QUICK_PROMPTS = [
-  { label: "Show me your work", icon: Navigation, color: "text-blue-400 border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10" },
-  { label: "Get a project estimate", icon: Calculator, color: "text-[#F55036] border-[#F55036]/30 bg-[#F55036]/5 hover:bg-[#F55036]/10" },
   { label: "What services do you offer?", icon: Sparkles, color: "text-violet-400 border-violet-500/30 bg-violet-500/5 hover:bg-violet-500/10" },
-  { label: "Book a discovery call", icon: MessageSquare, color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10" },
+  { label: "I have a project in mind", icon: Zap, color: "text-[#F55036] border-[#F55036]/30 bg-[#F55036]/5 hover:bg-[#F55036]/10" },
+  { label: "How much does it cost?", icon: HelpCircle, color: "text-blue-400 border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10" },
+  { label: "I want to get in touch", icon: MessageSquare, color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10" },
 ];
 
 // ─── Waveform Animation ─────────────────────────────────────────────────────
@@ -115,9 +102,7 @@ export default function AnthrixCopilot() {
         {
           id: "greeting",
           role: "assistant",
-          text: "Hey there! 👋 I'm A-OS, the Anthrix AI Copilot.\n\nI can help you explore our work, get an instant project estimate, or answer any questions about what we build. What's on your mind?",
-          action: null,
-          quote: null,
+          text: "Hey there! 👋 I'm A-OS, the Anthrix AI assistant.\n\nI can answer questions about our services, pricing, and technology — or help you get in touch with the team. What's on your mind?",
         },
       ]);
     } else if (isOpen) {
@@ -139,7 +124,6 @@ export default function AnthrixCopilot() {
     setIsThinking(true);
 
     try {
-      const pageContext = getCurrentPageContext();
       const history = [...messages, userMsg].map((m) => ({
         role: m.role,
         content: m.text,
@@ -148,7 +132,7 @@ export default function AnthrixCopilot() {
       const res = await fetch("/api/copilot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history, pageContext }),
+        body: JSON.stringify({ messages: history }),
       });
 
       const data = await res.json();
@@ -157,18 +141,9 @@ export default function AnthrixCopilot() {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         text: data.text || "I'm here to help!",
-        action: data.action || null,
-        quote: data.quote || null,
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
-
-      // Execute any autopilot action with a short delay for UX
-      if (data.action) {
-        setTimeout(() => {
-          executeAutopilotAction(data.action);
-        }, 800);
-      }
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -176,8 +151,6 @@ export default function AnthrixCopilot() {
           id: (Date.now() + 1).toString(),
           role: "assistant",
           text: "Sorry, I had a connectivity issue. Please try again in a moment.",
-          action: null,
-          quote: null,
         },
       ]);
     } finally {
@@ -306,28 +279,6 @@ export default function AnthrixCopilot() {
                           msg.text
                         )}
                       </div>
-
-                      {/* Quote Card */}
-                      {msg.role === "assistant" && msg.quote && (
-                        <div className="w-full">
-                          <QuoteScopeCard quote={msg.quote} userMessage={messages.find(m => m.role === "user")?.text || ""} />
-                        </div>
-                      )}
-
-                      {/* Action Chip */}
-                      {msg.role === "assistant" && msg.action && (
-                        <button
-                          onClick={() => executeAutopilotAction(msg.action!)}
-                          className="flex items-center gap-1.5 mt-1 text-[11px] text-[#F55036] hover:text-white transition-colors"
-                        >
-                          <ChevronRight size={12} />
-                          <span>
-                            {msg.action.type === "navigate" ? `Go to ${msg.action.target}` :
-                             msg.action.type === "scroll_to" ? `Scroll to ${msg.action.target}` :
-                             msg.action.type === "open_contact" ? "Open contact form" : "Take action"}
-                          </span>
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))}

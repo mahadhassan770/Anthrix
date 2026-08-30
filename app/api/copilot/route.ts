@@ -10,17 +10,17 @@ You are A-OS (Autonomous Operating System), the AI Copilot of Anthrix — a prem
 - **Specialty**: AI automation (n8n, LangChain, RAG systems), full-stack web development (Next.js, React, Node.js, FastAPI), and business process automation.
 - **Stack**: Next.js 16, React, TypeScript, Python, FastAPI, PostgreSQL, Neon DB, Prisma, Tailwind CSS, LangChain, OpenAI, Groq, n8n, Stripe, WhatsApp Business API.
 - **Location**: Pakistan-based, serving clients globally.
-- **Contact**: Use the website's contact form at /contact, or email via the site.
+- **Contact**: Visitors can reach us through the website's contact form or by sharing their project details here.
 
-## Services & Pricing Tiers
-1. **Basic / MVP** ($500–$2,000 / PKR 140K–560K): Landing pages, portfolio sites, simple SaaS apps, basic automation workflows. Timeline: 1–3 weeks.
-2. **Professional** ($2,000–$8,000 / PKR 560K–2.2M): Full SaaS platforms, AI chatbots, CRM systems, e-commerce stores with custom logic. Timeline: 3–8 weeks.
-3. **Enterprise / AI-Heavy** ($8,000–$25,000+ / PKR 2.2M+): Complex AI agent systems, multi-tenant SaaS, ERP integrations, WhatsApp/CRM/invoice automation pipelines, RAG systems. Timeline: 8–20 weeks.
+## Services & Pricing Overview
+1. **Basic / MVP** ($500–$2,000): Landing pages, portfolio sites, simple SaaS apps, basic automation workflows. Timeline: 1–3 weeks.
+2. **Professional** ($2,000–$8,000): Full SaaS platforms, AI chatbots, CRM systems, e-commerce stores with custom logic. Timeline: 3–8 weeks.
+3. **Enterprise / AI-Heavy** ($8,000–$25,000+): Complex AI agent systems, multi-tenant SaaS, ERP integrations, WhatsApp/CRM/invoice automation pipelines, RAG systems. Timeline: 8–20 weeks.
 
 ## Key Capabilities
 - Full-Stack Web Apps (Next.js, React, Node.js)
 - AI Agent Systems & RAG Pipelines
-- Business Process Automation (n8n, Zapier-alternative)
+- Business Process Automation (n8n)
 - WhatsApp & CRM Integration
 - Invoice & Payment Automation
 - SaaS Platform Development
@@ -28,34 +28,29 @@ You are A-OS (Autonomous Operating System), the AI Copilot of Anthrix — a prem
 - Database Design & Architecture
 
 ## How to Handle User Requests
-- If someone asks about cost/pricing: Generate a structured project scope estimate with budgetRange, weeks, tier, and deliverables.
-- If someone asks about our work/portfolio: Suggest navigating to /work.
-- If someone wants to get in touch or book a call: Suggest going to /contact.
-- If someone asks about services: Navigate to /services or explain them.
-- If someone asks general questions: Answer helpfully and professionally.
+- Answer questions about Anthrix services, capabilities, pricing, and technology clearly and helpfully.
+- When someone describes a project or asks about cost/timelines, give them a friendly, informative answer with ballpark pricing based on the tiers above.
+- When someone expresses interest in working together or wants a proposal, warmly encourage them to share: their name, project idea, and contact email so the team can follow up.
+- Collect leads naturally in conversation — ask for name, project description, and email when someone shows buying intent.
+- Always be professional, concise, and friendly. Never be pushy.
+- Do NOT navigate the user to other pages. Do NOT redirect or scroll. Stay in the chat.
 
-## Navigation Actions
-You can guide the user with structured actions:
-- navigate: to navigate to a URL (e.g., /work, /services, /contact)
-- scroll_to: to scroll to a section ID (e.g., "projects", "services", "contact")
-- open_contact: to open the contact/booking form
+## Lead Generation
+When a user shows interest (asks about pricing, says they have a project, asks how to get started), gently ask:
+1. What they're looking to build
+2. Their name
+3. Their email so the team can reach out with a custom proposal
 
 ## Response Format
 Respond with a JSON object in this EXACT format:
 {
-  "text": "Your friendly, concise response text here",
-  "action": null OR { "type": "navigate" | "scroll_to" | "open_contact", "target": "/work" OR "projects" OR null },
-  "quote": null OR {
-    "tier": "Basic / MVP" | "Professional" | "Enterprise / AI-Heavy",
-    "budgetRange": "$X,000 – $Y,000",
-    "budgetRangePKR": "Rs X lakh – Rs Y lakh",
-    "weeks": "X–Y weeks",
-    "deliverables": ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
-    "summary": "One sentence describing what will be built"
-  }
+  "text": "Your friendly, helpful response here. Use markdown for formatting when appropriate (bold, lists, etc).",
+  "action": null,
+  "quote": null
 }
 
-CRITICAL: Always respond with valid JSON only. No markdown. No extra text outside the JSON.
+IMPORTANT: action and quote must always be null. Never set them to anything else.
+CRITICAL: Always respond with valid JSON only. No markdown outside the JSON. No extra text outside the JSON.
 `;
 
 function cleanThinking(str: string): string {
@@ -111,9 +106,80 @@ function extractJSON(raw: string) {
   return null;
 }
 
+// ─── Automatic Lead Capture ──────────────────────────────────────────────────
+async function tryCaptureLead(messages: any[]) {
+  try {
+    if (!Array.isArray(messages) || messages.length === 0) return;
+
+    // Look for email pattern in all user messages
+    const userMessages = messages.filter((m) => m.role === "user" || m.role === undefined);
+    const allUserText = userMessages
+      .map((m) => (typeof m.content === "string" ? m.content : typeof m.text === "string" ? m.text : ""))
+      .join(" ");
+
+    const emailMatch = allUserText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    if (!emailMatch) return;
+
+    const email = emailMatch[0].toLowerCase();
+
+    // Check if this lead was already captured in the last 15 minutes
+    const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const existing = await db.message.findFirst({
+      where: {
+        email,
+        createdAt: { gte: fifteenMinsAgo },
+        subject: { startsWith: "[AI Assistant Lead]" },
+      },
+    });
+
+    if (existing) return;
+
+    // Try extracting name if provided (e.g. "my name is Alex", "I'm Sarah")
+    const nameMatch = allUserText.match(/(?:my name is|i am|i'm|name\s*[:=])\s+([A-Za-z\s]{2,30})/i);
+    const name = nameMatch ? nameMatch[1].trim() : "Website Visitor (AI Lead)";
+
+    // Format chat transcript for the admin inbox
+    const transcript = messages
+      .map((m: any) => {
+        const role = m.role === "assistant" ? "AI Assistant (A-OS)" : "User";
+        const text = typeof m.content === "string" ? m.content : typeof m.text === "string" ? m.text : "";
+        return `${role}:\n${text}`;
+      })
+      .join("\n\n");
+
+    const body = `
+🤖 New Lead Captured by AI Assistant
+
+👤 Contact Name: ${name}
+📧 Email: ${email}
+
+💬 Conversation Transcript:
+--------------------------------------------------
+${transcript}
+--------------------------------------------------
+Source: Anthrix AI Assistant
+    `.trim();
+
+    await db.message.create({
+      data: {
+        name,
+        email,
+        subject: `[AI Assistant Lead] Inquiry from ${name}`,
+        body,
+        read: false,
+      },
+    });
+  } catch (err) {
+    console.error("Auto lead capture error (non-fatal):", err);
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { messages, pageContext } = await req.json();
+
+    // Trigger non-blocking lead capture if user provided contact info
+    tryCaptureLead(messages);
 
     // Fetch API key & model from DB (fallback to env)
     const [keyRecord, modelRecord] = await Promise.all([
