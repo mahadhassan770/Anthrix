@@ -51,18 +51,34 @@ export default function SettingsPage() {
   const [aiTesting, setAiTesting] = useState(false);
   const [aiMsg, setAiMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [aiLoaded, setAiLoaded] = useState(false);
-  const [modelsList] = useState<string[]>([
-    "llama-3.3-70b-versatile",
-    "llama-3.1-70b-versatile",
-    "llama-3.1-8b-instant",
-    "llama3-70b-8192",
-    "llama3-8b-8192",
-    "mixtral-8x7b-32768",
-    "deepseek-r1-distill-llama-70b",
-    "gemma2-9b-it",
-    "qwen-2.5-32b",
-    "llama-guard-3-8b",
-  ]);
+  const GROQ_MODEL_GROUPS = [
+    {
+      category: "Production Models",
+      models: [
+        { id: "openai/gpt-oss-120b", name: "OpenAI GPT-OSS 120B", desc: "Flagship Reasoning · ~500 tps" },
+        { id: "openai/gpt-oss-20b", name: "OpenAI GPT-OSS 20B", desc: "Ultra-fast · ~1000 tps" },
+        { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B Enterprise", desc: "~280 tps" },
+        { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B Enterprise", desc: "~560 tps" },
+      ],
+    },
+    {
+      category: "Production Systems (Agentic AI)",
+      models: [
+        { id: "groq/compound", name: "Groq Compound", desc: "Agentic AI with Web Search & Tools · ~450 tps" },
+        { id: "groq/compound-mini", name: "Groq Compound Mini", desc: "Fast Agentic System · ~450 tps" },
+      ],
+    },
+    {
+      category: "Preview & Multimodal Models",
+      models: [
+        { id: "qwen/qwen3.6-27b", name: "Qwen 3.6 27B", desc: "Multimodal · ~500 tps" },
+        { id: "qwen/qwen3.8-27b", name: "Qwen 3.8 27B", desc: "Multimodal · ~450 tps" },
+        { id: "minimaxai/minimax-m2.7", name: "MiniMax M2.7 Enterprise", desc: "~260 tps" },
+        { id: "openai/gpt-oss-safeguard-20b", name: "Safety GPT OSS 20B", desc: "~1000 tps" },
+        { id: "allam-2-7b", name: "Allam 2 7B", desc: "Arabic & English Bilingual" },
+      ],
+    },
+  ];
 
   // Sync form with session once loaded
   useEffect(() => {
@@ -911,16 +927,20 @@ export default function SettingsPage() {
                       <select
                         value={aiSettings.groqModel}
                         onChange={(e) => setAiSettings({ ...aiSettings, groqModel: e.target.value })}
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
                       >
-                        {modelsList.map((m) => (
-                          <option key={m} value={m}>
-                            {m}
-                          </option>
+                        {GROQ_MODEL_GROUPS.map((group) => (
+                          <optgroup key={group.category} label={group.category} className="bg-card text-foreground font-bold">
+                            {group.models.map((m) => (
+                              <option key={m.id} value={m.id} className="bg-background text-foreground font-normal py-1.5 font-mono">
+                                {m.id} — {m.name} ({m.desc})
+                              </option>
+                            ))}
+                          </optgroup>
                         ))}
                       </select>
                       <p className="text-xs text-muted-foreground">
-                        Select the inference model for the public Anthrix AI Copilot.
+                        Select a verified production or preview model for the Anthrix AI Assistant.
                       </p>
                     </div>
 

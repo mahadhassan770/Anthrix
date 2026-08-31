@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
     ]);
 
     const apiKey = (keyRecord?.value || process.env.GROQ_API_KEY || "").trim();
-    const configuredModel = (modelRecord?.value || "llama-3.1-70b-versatile").trim();
+    const configuredModel = (modelRecord?.value || "openai/gpt-oss-120b").trim();
 
     // Check if copilot is enabled
     const enabledRecord = await db.systemSetting.findUnique({ where: { key: "copilot_enabled" } });
@@ -214,17 +214,7 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = ANTHRIX_CONTEXT + customPrompt + (pageContext ? `\n\n## Current Page Context\nUser is currently on: ${pageContext}` : "");
 
-    // Build candidate models list
-    let candidateModels = Array.from(new Set([
-      configuredModel,
-      "llama-3.1-70b-versatile",
-      "llama-3.1-8b-instant",
-      "llama3-70b-8192",
-      "llama3-8b-8192",
-      "mixtral-8x7b-32768",
-      "gemma2-9b-it",
-    ]));
-
+    // Use ONLY the model selected in the Admin Settings dropdown — no hardcoded fallbacks
     // Format chat history
     const formattedMessages = [
       { role: "system", content: systemPrompt },
@@ -237,79 +227,40 @@ export async function POST(req: NextRequest) {
     let rawContent = "";
     let lastError = "";
 
-    // 1. Try candidate models
-    for (const m of candidateModels) {
-      // Try first with standard JSON instruction, fallback without json_object header if rejected
-      for (const useJsonFormat of [true, false]) {
-        try {
-          const bodyPayload: any = {
-            model: m,
-            messages: formattedMessages,
-            max_tokens: 3072,
-            temperature: 0.7,
-          };
-          if (useJsonFormat) {
-            bodyPayload.response_format = { type: "json_object" };
-          }
-
-          const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(bodyPayload),
-          });
-
-          if (groqRes.ok) {
-            const groqData = await groqRes.json();
-            rawContent = groqData.choices?.[0]?.message?.content || "";
-            if (rawContent) break;
-          } else {
-            const errData = await groqRes.json().catch(() => ({}));
-            lastError = errData.error?.message || `Status ${groqRes.status}`;
-          }
-        } catch (err: any) {
-          lastError = err.message;
+    // Try with json_object response format first; some models don't support it so retry without
+    for (const useJsonFormat of [true, false]) {
+      try {
+        const bodyPayload: any = {
+          model: configuredModel,
+          messages: formattedMessages,
+          max_tokens: 3072,
+          temperature: 0.7,
+        };
+        if (useJsonFormat) {
+          bodyPayload.response_format = { type: "json_object" };
         }
+
+        const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bodyPayload),
+        });
+
+        if (groqRes.ok) {
+          const groqData = await groqRes.json();
+          rawContent = groqData.choices?.[0]?.message?.content || "";
+          if (rawContent) break;
+        } else {
+          const errData = await groqRes.json().catch(() => ({}));
+          lastError = errData.error?.message || `Status ${groqRes.status}`;
+        }
+      } catch (err: any) {
+        lastError = err.message;
       }
       if (rawContent) break;
-    }
-
-    // 2. If candidates failed, dynamically discover models available on this API key
-    if (!rawContent) {
-      try {
-        const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
-          headers: { "Authorization": `Bearer ${apiKey}` },
-        });
-        if (modelsRes.ok) {
-          const mData = await modelsRes.json();
-          const liveModels = (mData.data || [])
-            .map((item: any) => item.id)
-            .filter((id: string) => !id.includes("whisper") && !id.includes("tts") && !id.includes("safeguard"));
-
-          for (const liveM of liveModels.slice(0, 3)) {
-            const retryRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model: liveM,
-                messages: formattedMessages,
-                max_tokens: 3072,
-                temperature: 0.7,
-              }),
-            });
-            if (retryRes.ok) {
-              const retryData = await retryRes.json();
-              rawContent = retryData.choices?.[0]?.message?.content || "";
-              if (rawContent) break;
-            }
-          }
-        }
-      } catch {}
     }
 
     if (!rawContent) {
