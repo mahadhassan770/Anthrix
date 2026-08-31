@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 // Exclude non-chat models (STT, TTS, safety-only, etc.)
