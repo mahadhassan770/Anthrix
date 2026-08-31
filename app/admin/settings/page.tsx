@@ -51,34 +51,25 @@ export default function SettingsPage() {
   const [aiTesting, setAiTesting] = useState(false);
   const [aiMsg, setAiMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [aiLoaded, setAiLoaded] = useState(false);
-  const GROQ_MODEL_GROUPS = [
-    {
-      category: "Production Models",
-      models: [
-        { id: "openai/gpt-oss-120b", name: "OpenAI GPT-OSS 120B", desc: "Flagship Reasoning · ~500 tps" },
-        { id: "openai/gpt-oss-20b", name: "OpenAI GPT-OSS 20B", desc: "Ultra-fast · ~1000 tps" },
-        { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B Enterprise", desc: "~280 tps" },
-        { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B Enterprise", desc: "~560 tps" },
-      ],
-    },
-    {
-      category: "Production Systems (Agentic AI)",
-      models: [
-        { id: "groq/compound", name: "Groq Compound", desc: "Agentic AI with Web Search & Tools · ~450 tps" },
-        { id: "groq/compound-mini", name: "Groq Compound Mini", desc: "Fast Agentic System · ~450 tps" },
-      ],
-    },
-    {
-      category: "Preview & Multimodal Models",
-      models: [
-        { id: "qwen/qwen3.6-27b", name: "Qwen 3.6 27B", desc: "Multimodal · ~500 tps" },
-        { id: "qwen/qwen3.8-27b", name: "Qwen 3.8 27B", desc: "Multimodal · ~450 tps" },
-        { id: "minimaxai/minimax-m2.7", name: "MiniMax M2.7 Enterprise", desc: "~260 tps" },
-        { id: "openai/gpt-oss-safeguard-20b", name: "Safety GPT OSS 20B", desc: "~1000 tps" },
-        { id: "allam-2-7b", name: "Allam 2 7B", desc: "Arabic & English Bilingual" },
-      ],
-    },
-  ];
+
+  // Live models fetched from Groq using the saved API key
+  const [liveModels, setLiveModels] = useState<string[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+
+  const fetchLiveModels = async () => {
+    setModelsLoading(true);
+    try {
+      const res = await fetch("/api/admin/groq-models");
+      const data = await res.json();
+      if (data.models && data.models.length > 0) {
+        setLiveModels(data.models);
+      }
+    } catch {
+      // silently fail — dropdown stays empty until key is saved and page refreshes
+    } finally {
+      setModelsLoading(false);
+    }
+  };
 
   // Sync form with session once loaded
   useEffect(() => {
@@ -120,11 +111,13 @@ export default function SettingsPage() {
         if (!data.error) {
           setAiSettings({
             groqApiKey: data.groqApiKey || "",
-            groqModel: data.groqModel || "llama-3.3-70b-versatile",
+            groqModel: data.groqModel || "openai/gpt-oss-120b",
             copilotEnabled: data.copilotEnabled !== false,
             systemPrompt: data.systemPrompt || "",
           });
           setAiLoaded(true);
+          // Fetch live models once settings are loaded
+          fetchLiveModels();
         }
       })
       .catch(() => {});
@@ -166,6 +159,8 @@ export default function SettingsPage() {
         type: data.success ? "success" : "error",
         text: data.message || (data.success ? "Connection successful!" : "Connection failed."),
       });
+      // Auto-refresh live models list on any test (success or failure shows what's available)
+      fetchLiveModels();
     } catch {
       setAiMsg({ type: "error", text: "Network error during connection test." });
     } finally {
@@ -923,24 +918,41 @@ export default function SettingsPage() {
 
                     {/* Model Selection */}
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">LLM Model</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-semibold text-foreground">LLM Model</label>
+                        <button
+                          type="button"
+                          onClick={fetchLiveModels}
+                          disabled={modelsLoading}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+                          title="Refresh models from Groq API"
+                        >
+                          {modelsLoading
+                            ? <Loader2 size={12} className="animate-spin" />
+                            : <RefreshCw size={12} />}
+                          {modelsLoading ? "Loading..." : "Refresh"}
+                        </button>
+                      </div>
                       <select
                         value={aiSettings.groqModel}
                         onChange={(e) => setAiSettings({ ...aiSettings, groqModel: e.target.value })}
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
+                        disabled={modelsLoading}
                       >
-                        {GROQ_MODEL_GROUPS.map((group) => (
-                          <optgroup key={group.category} label={group.category} className="bg-card text-foreground font-bold">
-                            {group.models.map((m) => (
-                              <option key={m.id} value={m.id} className="bg-background text-foreground font-normal py-1.5 font-mono">
-                                {m.id} — {m.name} ({m.desc})
-                              </option>
-                            ))}
-                          </optgroup>
-                        ))}
+                        {liveModels.length === 0 ? (
+                          <option value={aiSettings.groqModel}>{aiSettings.groqModel || "Save API key first, then refresh"}</option>
+                        ) : (
+                          liveModels.map((modelId) => (
+                            <option key={modelId} value={modelId}>
+                              {modelId}
+                            </option>
+                          ))
+                        )}
                       </select>
                       <p className="text-xs text-muted-foreground">
-                        Select a verified production or preview model for the Anthrix AI Assistant.
+                        {liveModels.length > 0
+                          ? `${liveModels.length} models available on your API key.`
+                          : "Save your API key and click Refresh to load available models."}
                       </p>
                     </div>
 
