@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/projects", label: "Projects", icon: FolderKanban },
-  { href: "/admin/blog", label: "Blog / Case Studies", icon: FileText },
+  { href: "/admin/blog", label: "Blog", icon: FileText },
   { href: "/admin/services", label: "Services", icon: Briefcase },
   { href: "/admin/clients", label: "Clients", icon: Users },
   { href: "/admin/invoices", label: "Invoices", icon: Receipt },

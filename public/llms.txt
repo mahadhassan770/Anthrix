@@ -1,0 +1,26 @@
+# Anthrix
+> Anthrix is a Software and AI Studio that designs and builds high-performance web applications, SaaS platforms, AI agents, RAG systems, and workflow automations for businesses worldwide.
+
+## About
+Anthrix was founded in 2024. We are a technical studio focused on delivering serious digital infrastructure - not templates or cookie-cutter solutions.
+
+## Services
+- Web Application Development: Custom full-stack web apps built for performance and scale.
+- SaaS Platform Development: End-to-end SaaS products with auth, billing, dashboards, and multi-tenancy.
+- AI Agent Development: Autonomous AI agents that perform real-world tasks, handle leads, and integrate with business workflows.
+- RAG System Development: Retrieval-Augmented Generation systems that give AI accurate, context-aware answers from your own data.
+- Workflow Automation: Business process automation using n8n and custom pipelines.
+- WhatsApp Business Automation: AI-powered WhatsApp bots for customer support, lead capture, and appointment booking.
+
+## Contact
+- Website: https://anthrix.com
+- Email: hello@anthrix.com
+- Twitter/X: https://twitter.com/anthrix
+- GitHub: https://github.com/anthrix
+- LinkedIn: https://linkedin.com/company/anthrix
+
+## Tech Expertise
+Next.js, React, TypeScript, Node.js, Python, PostgreSQL, Prisma, AI/ML integrations (OpenAI, Groq, Anthropic), and cloud infrastructure (Vercel, AWS, GCP).
+
+## Target Clients
+Startups, SMBs, and enterprises that need reliable, scalable digital products and AI automation.
