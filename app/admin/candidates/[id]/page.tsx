@@ -21,7 +21,8 @@ import {
   AlertCircle,
   Copy,
   Check,
-  Award
+  Award,
+  Trash2
 } from "lucide-react";
 import { ATS_EMAIL_TEMPLATES, EmailTemplate } from "@/lib/ats-email-templates";
 
@@ -36,6 +37,7 @@ export default function CandidateDetailPage() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
   const [rating, setRating] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   // Email Drawer state
   const [emailModalOpen, setEmailModalOpen] = useState(false);
@@ -111,6 +113,26 @@ export default function CandidateDetailPage() {
       alert("Failed to save notes");
     } finally {
       setSavingNotes(false);
+    }
+  };
+
+  const handleDeleteCandidate = async () => {
+    if (!confirm(`Are you sure you want to permanently delete ${candidate?.name || "this candidate"}'s application? This action cannot be undone.`)) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/careers/candidates/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to delete candidate application");
+      }
+      router.push("/admin/candidates");
+    } catch (err: any) {
+      alert(err.message || "Failed to delete candidate");
+      setDeleting(false);
     }
   };
 
@@ -257,7 +279,7 @@ export default function CandidateDetailPage() {
           <select
             value={candidate.stage}
             onChange={(e) => handleStageChange(e.target.value)}
-            className="bg-primary text-white font-bold rounded-xl px-3.5 py-2 text-xs shadow-[0_0_15px_rgba(245,80,54,0.3)] outline-none"
+            className="bg-primary text-white font-bold rounded-xl px-3.5 py-2 text-xs shadow-[0_0_15px_rgba(245,80,54,0.3)] outline-none cursor-pointer"
           >
             <option value="APPLIED">Stage: Applied</option>
             <option value="SCREENING">Stage: Screening</option>
@@ -266,6 +288,16 @@ export default function CandidateDetailPage() {
             <option value="HIRED">Stage: Hired</option>
             <option value="REJECTED">Stage: Rejected</option>
           </select>
+
+          <button
+            onClick={handleDeleteCandidate}
+            disabled={deleting}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-semibold hover:bg-red-500/20 hover:border-red-500/50 transition-all disabled:opacity-50 cursor-pointer"
+            title="Permanently delete this application"
+          >
+            {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+            {deleting ? "Deleting..." : "Delete"}
+          </button>
         </div>
       </div>
 

@@ -33,7 +33,7 @@ export async function sendEmail({
 
     const smtpHost = (config["smtp_host"] || process.env.SMTP_HOST || "").trim();
     const smtpUser = (config["smtp_user"] || process.env.SMTP_USER || "").trim();
-    const smtpPass = (config["smtp_pass"] || process.env.SMTP_PASS || "").trim();
+    const smtpPass = (config["smtp_pass"] || process.env.SMTP_PASS || "").replace(/\s+/g, "");
     const smtpPort = parseInt(config["smtp_port"] || process.env.SMTP_PORT || "465", 10);
     const smtpSecure = config["smtp_secure"] !== undefined ? config["smtp_secure"] === "true" : (smtpPort === 465 || process.env.SMTP_SECURE === "true");
     const fromAddress = (config["smtp_from"] || process.env.EMAIL_FROM || `"${fromName}" <${fromEmail}>`).trim();

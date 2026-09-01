@@ -17,7 +17,8 @@ import {
   Layers,
   ArrowUpDown,
   Mail,
-  FileText
+  FileText,
+  Trash2
 } from "lucide-react";
 
 const STAGES = [
@@ -82,6 +83,28 @@ function CandidatesAdminInner() {
       );
     } catch (err) {
       alert("Failed to update stage");
+    }
+  };
+
+  const handleDeleteCandidate = async (e: React.MouseEvent, candidateId: string, candidateName: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!confirm(`Are you sure you want to permanently delete ${candidateName}'s application? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/careers/candidates/${candidateId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to delete candidate application");
+      }
+      setCandidates((prev) => prev.filter((c) => c.id !== candidateId));
+    } catch (err: any) {
+      alert(err.message || "Failed to delete candidate");
     }
   };
 
@@ -354,6 +377,14 @@ function CandidatesAdminInner() {
                     AI Dossier & Resume
                     <ChevronRight size={14} />
                   </Link>
+
+                  <button
+                    onClick={(e) => handleDeleteCandidate(e, candidate.id, candidate.name)}
+                    className="p-2 rounded-xl border border-red-500/20 text-muted-foreground hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/10 transition-all cursor-pointer"
+                    title={`Delete application for ${candidate.name}`}
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
             );
@@ -387,9 +418,18 @@ function CandidatesAdminInner() {
                         <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">
                           {cand.name}
                         </span>
-                        <span className="text-[10px] font-mono font-bold text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10">
-                          {cand.evaluation?.score ?? 0}%
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-mono font-bold text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10">
+                            {cand.evaluation?.score ?? 0}%
+                          </span>
+                          <button
+                            onClick={(e) => handleDeleteCandidate(e, cand.id, cand.name)}
+                            className="text-muted-foreground/50 hover:text-red-400 p-0.5 rounded hover:bg-red-500/10 transition-colors cursor-pointer"
+                            title={`Delete application for ${cand.name}`}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-[11px] text-muted-foreground truncate">{cand.job?.title}</p>
                     </Link>

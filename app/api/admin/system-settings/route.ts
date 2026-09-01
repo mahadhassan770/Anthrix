@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       const host = (body.smtpHost || "").trim();
       const port = parseInt(body.smtpPort || "465", 10);
       const user = (body.smtpUser || "").trim();
-      const pass = (body.smtpPass || "").trim();
+      const pass = (body.smtpPass || "").replace(/\s+/g, "");
       const secure = body.smtpSecure !== false && port === 465;
 
       if (!host || !user || !pass) {
@@ -204,7 +204,7 @@ export async function POST(req: NextRequest) {
     if (typeof body.smtpHost === "string") updates.push({ key: "smtp_host", value: body.smtpHost.trim() });
     if (typeof body.smtpPort === "string") updates.push({ key: "smtp_port", value: body.smtpPort.trim() });
     if (typeof body.smtpUser === "string") updates.push({ key: "smtp_user", value: body.smtpUser.trim() });
-    if (typeof body.smtpPass === "string") updates.push({ key: "smtp_pass", value: body.smtpPass.trim() });
+    if (typeof body.smtpPass === "string") updates.push({ key: "smtp_pass", value: body.smtpPass.replace(/\s+/g, "") });
     if (typeof body.smtpFrom === "string") updates.push({ key: "smtp_from", value: body.smtpFrom.trim() });
     if (typeof body.smtpSecure === "boolean") updates.push({ key: "smtp_secure", value: body.smtpSecure ? "true" : "false" });
 
