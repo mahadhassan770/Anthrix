@@ -12,6 +12,19 @@ import {
 
 
 
+
+const DEFAULT_COPILOT_PROMPT = `You are the Anthrix AI Solutions Architect & Client Advisor.
+- Represent Anthrix Technologies: an elite engineering agency specializing in Autonomous AI Agents, RAG Pipelines, Multi-Tenant SaaS, and Full-Stack Web Architecture.
+- Tone: Highly technical, confident, articulate, transparent, and solution-focused.
+- Objective: Understand the visitor's product vision, discuss technical feasibility, suggest optimal architectures (Next.js, FastAPI, vector search, n8n), and guide them to schedule a discovery call or request a project quotation.
+- Avoid generic buzzwords; provide concrete architectural insights.`;
+
+const DEFAULT_ATS_PROMPT = `You are the Principal Talent Intelligence & Evaluation Engine for Anthrix.
+- Domain Agility: Accurately evaluate candidates across ALL departments (Engineering, AI, Sales, Marketing, Video Editing, HR, Finance, Operations, Design, Executive).
+- Scoring Standards: Apply a strict, uninflated 5-dimension rubric (Skills Alignment, Experience Depth, Career Trajectory, Quantified Accomplishments, Role Fit).
+- Evidence-Based: Reward explicit metrics ($ revenue, % growth, scale, leadership), verify continuous tenure, and penalize keyword stuffing or generic claims.
+- Output: Deliver sharp, unbiased summaries, highlighting verified strengths, specific gaps, and clear hiring recommendations.`;
+
 export default function SettingsPage() {
   const { data: session, isPending, refetch } = useSession();
   const { theme, setTheme } = useTheme();
@@ -75,6 +88,7 @@ export default function SettingsPage() {
     systemPrompt: "",
     atsGroqApiKey: "",
     atsGroqModel: "llama-3.3-70b-versatile",
+    atsSystemPrompt: "",
   });
   const [atsShowKey, setAtsShowKey] = useState(false);
   const [atsTesting, setAtsTesting] = useState(false);
@@ -88,10 +102,12 @@ export default function SettingsPage() {
   const [liveModels, setLiveModels] = useState<string[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [mainModelMsg, setMainModelMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [mainTestMsg, setMainTestMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const [atsLiveModels, setAtsLiveModels] = useState<string[]>([]);
   const [atsModelsLoading, setAtsModelsLoading] = useState(false);
   const [atsModelMsg, setAtsModelMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [atsTestMsg, setAtsTestMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const fetchLiveModels = async () => {
     setModelsLoading(true);
@@ -201,6 +217,7 @@ export default function SettingsPage() {
               systemPrompt: data.systemPrompt || "",
               atsGroqApiKey: data.atsGroqApiKey || "",
               atsGroqModel: data.atsGroqModel || "llama-3.3-70b-versatile",
+              atsSystemPrompt: data.atsSystemPrompt || "",
             });
             setAiLoaded(true);
             fetchLiveModels();
@@ -278,7 +295,7 @@ export default function SettingsPage() {
 
   const handleAiTest = async () => {
     setAiTesting(true);
-    setAiMsg(null);
+    setMainTestMsg(null);
     try {
       const res = await fetch("/api/admin/system-settings", {
         method: "POST",
@@ -286,14 +303,15 @@ export default function SettingsPage() {
         body: JSON.stringify({ action: "test_connection", ...aiSettings }),
       });
       const data = await res.json();
-      setAiMsg({
+      setMainTestMsg({
         type: data.success ? "success" : "error",
-        text: data.message || (data.success ? "Connection successful!" : "Connection failed."),
+        text: data.message || (data.success ? "Copilot LLM connection successful!" : "Connection failed."),
       });
-      // Auto-refresh live models list on any test (success or failure shows what's available)
-      fetchLiveModels();
+      if (data.success) {
+        fetchLiveModels();
+      }
     } catch {
-      setAiMsg({ type: "error", text: "Network error during connection test." });
+      setMainTestMsg({ type: "error", text: "Network error during connection test." });
     } finally {
       setAiTesting(false);
     }
@@ -301,7 +319,7 @@ export default function SettingsPage() {
 
   const handleAtsTest = async () => {
     setAtsTesting(true);
-    setAiMsg(null);
+    setAtsTestMsg(null);
     try {
       const res = await fetch("/api/admin/system-settings", {
         method: "POST",
@@ -309,13 +327,15 @@ export default function SettingsPage() {
         body: JSON.stringify({ action: "test_ats_connection", ...aiSettings }),
       });
       const data = await res.json();
-      setAiMsg({
+      setAtsTestMsg({
         type: data.success ? "success" : "error",
-        text: data.message || (data.success ? "ATS Connection successful!" : "ATS Connection failed."),
+        text: data.message || (data.success ? "ATS LLM connection successful!" : "ATS Connection failed."),
       });
-      fetchAtsLiveModels();
+      if (data.success) {
+        fetchAtsLiveModels();
+      }
     } catch {
-      setAiMsg({ type: "error", text: "Network error during ATS connection test." });
+      setAtsTestMsg({ type: "error", text: "Network error during ATS connection test." });
     } finally {
       setAtsTesting(false);
     }
@@ -1322,6 +1342,54 @@ export default function SettingsPage() {
                         <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${aiSettings.copilotEnabled ? "translate-x-6" : "translate-x-0"}`} />
                       </button>
                     </div>
+
+                    {/* Copilot Custom System Prompt */}
+                    <div className="space-y-2 pt-2 border-t border-border/50">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-semibold text-foreground">Custom Copilot System Prompt</label>
+                        <button
+                          type="button"
+                          onClick={() => setAiSettings((prev) => ({ ...prev, systemPrompt: DEFAULT_COPILOT_PROMPT }))}
+                          className="text-xs text-primary hover:underline font-medium cursor-pointer"
+                        >
+                          Use Recommended Prompt
+                        </button>
+                      </div>
+                      <textarea
+                        value={aiSettings.systemPrompt}
+                        onChange={(e) => setAiSettings({ ...aiSettings, systemPrompt: e.target.value })}
+                        rows={4}
+                        placeholder={DEFAULT_COPILOT_PROMPT}
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-xs font-mono resize-none leading-relaxed"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Custom instructions appended to the website sales advisor copilot.
+                      </p>
+                    </div>
+
+                    {/* Test Copilot LLM Connection Button */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={handleAiTest}
+                        disabled={aiTesting}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-400 text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+                      >
+                        {aiTesting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                        {aiTesting ? "Testing Copilot Connection..." : "Test LLM Connection"}
+                      </button>
+                    </div>
+
+                    {mainTestMsg && (
+                      <div className={`p-3 rounded-xl text-xs font-medium border flex items-center gap-2 ${
+                        mainTestMsg.type === "success"
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                          : "bg-red-500/10 border-red-500/30 text-red-400"
+                      }`}>
+                        {mainTestMsg.type === "success" ? <CheckCircle size={15} /> : <ShieldAlert size={15} />}
+                        <span>{mainTestMsg.text}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1419,61 +1487,72 @@ export default function SettingsPage() {
                       </p>
                     </div>
 
+                    {/* ATS Custom Evaluation Directives */}
+                    <div className="space-y-2 pt-2 border-t border-border/50">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-semibold text-foreground">Custom ATS Evaluation Directives</label>
+                        <button
+                          type="button"
+                          onClick={() => setAiSettings((prev) => ({ ...prev, atsSystemPrompt: DEFAULT_ATS_PROMPT }))}
+                          className="text-xs text-emerald-400 hover:underline font-medium cursor-pointer"
+                        >
+                          Use Recommended Directives
+                        </button>
+                      </div>
+                      <textarea
+                        value={aiSettings.atsSystemPrompt}
+                        onChange={(e) => setAiSettings({ ...aiSettings, atsSystemPrompt: e.target.value })}
+                        rows={4}
+                        placeholder={DEFAULT_ATS_PROMPT}
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-xs font-mono resize-none leading-relaxed"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Custom hiring standards & evaluation directives injected into the ATS resume scoring engine.
+                      </p>
+                    </div>
+
                     {/* Test ATS Button */}
                     <div className="pt-2">
                       <button
                         type="button"
                         onClick={handleAtsTest}
                         disabled={atsTesting}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
                       >
                         {atsTesting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                         {atsTesting ? "Testing ATS Connection..." : "Test ATS LLM Connection"}
                       </button>
                     </div>
+
+                    {atsTestMsg && (
+                      <div className={`p-3 rounded-xl text-xs font-medium border flex items-center gap-2 ${
+                        atsTestMsg.type === "success"
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                          : "bg-red-500/10 border-red-500/30 text-red-400"
+                      }`}>
+                        {atsTestMsg.type === "success" ? <CheckCircle size={15} /> : <ShieldAlert size={15} />}
+                        <span>{atsTestMsg.text}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* System Prompt */}
-              <div className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="p-6 sm:p-8 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-                      <FlaskConical size={15} className="text-violet-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-foreground">Custom System Prompt</h3>
-                      <p className="text-xs text-muted-foreground">Supplementary instructions appended to the Anthrix agency context</p>
-                    </div>
-                  </div>
-                  <textarea
-                    value={aiSettings.systemPrompt}
-                    onChange={(e) => setAiSettings({ ...aiSettings, systemPrompt: e.target.value })}
-                    rows={5}
-                    placeholder="e.g. Always respond in a formal, professional tone. Highlight our specialization in AI automation and SaaS development..."
-                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm resize-none"
-                  />
-                </div>
-              </div>
+
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                <button
-                  onClick={handleAiTest}
-                  disabled={aiTesting || !aiSettings.groqApiKey}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-400 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {aiTesting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                  {aiTesting ? "Testing Connection..." : "Test LLM Connection"}
-                </button>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-2xl bg-card border border-border">
+                <div>
+                  <h4 className="text-sm font-bold text-foreground">Save Configuration</h4>
+                  <p className="text-xs text-muted-foreground">Persist API keys, selected models, and system prompts to your database.</p>
+                </div>
                 <button
                   onClick={handleAiSave}
                   disabled={aiLoading}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#F55036] hover:bg-[#E04025] text-white text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(245,80,54,0.3)]"
+                  className="flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-[#F55036] hover:bg-[#E04025] text-white text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(245,80,54,0.3)] cursor-pointer"
                 >
                   {aiLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  {aiLoading ? "Saving..." : "Save AI Settings"}
+                  {aiLoading ? "Saving Settings..." : "Save AI Settings"}
                 </button>
               </div>
 

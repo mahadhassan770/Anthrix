@@ -261,7 +261,8 @@ function buildLLMPrompts(
   cleanedResume: string,
   jobTitle: string,
   jobDescription: string,
-  jobRequirements: string[]
+  jobRequirements?: string[],
+  customAtsPrompt?: string
 ): { systemPrompt: string; userPrompt: string } {
   const systemPrompt = `You are a senior ATS Talent Intelligence engine conducting a rigorous, calibrated candidate evaluation for Anthrix — a technology solutions company that hires across ALL professional domains: Software Engineering, AI/ML, UI/UX Design, Marketing, Business Development/Sales, Operations, Video/Media Production, Content Writing, HR, Finance, and Management.
 
@@ -294,7 +295,10 @@ Calibration anchors:
 - Do NOT give benefit of the doubt for vague statements like "worked on projects". Only score what is explicitly evidenced.
 - Score what is ON the resume, not what you imagine the candidate might know.
 
-## OUTPUT FORMAT
+${customAtsPrompt ? `## CUSTOM ATS EVALUATION DIRECTIVES (COMPANY POLICY)
+${customAtsPrompt.trim()}
+
+` : ""}## OUTPUT FORMAT
 You MUST return ONLY a single valid JSON object. No markdown, no explanation, no prose outside the JSON.
 
 {
@@ -362,10 +366,11 @@ export async function scoreCandidateResume({
 }): Promise<AiScoringResult> {
   const cleanedResume = cleanResumeText(resumeText);
 
-  // Fetch API keys & model from DB (ATS key only — strict isolation)
-  const [atsKeyRecord, atsModelRecord, mainKeyRecord, mainModelRecord] = await Promise.all([
+  // Fetch API keys, model & custom ATS prompt from DB (ATS key only — strict isolation)
+  const [atsKeyRecord, atsModelRecord, atsPromptRecord, mainKeyRecord, mainModelRecord] = await Promise.all([
     db.systemSetting.findUnique({ where: { key: "ats_groq_api_key" } }),
     db.systemSetting.findUnique({ where: { key: "ats_groq_model" } }),
+    db.systemSetting.findUnique({ where: { key: "ats_system_prompt" } }),
     db.systemSetting.findUnique({ where: { key: "groq_api_key" } }),
     db.systemSetting.findUnique({ where: { key: "groq_model" } }),
   ]);
@@ -386,7 +391,7 @@ export async function scoreCandidateResume({
   }
 
   const { systemPrompt, userPrompt } = buildLLMPrompts(
-    candidateName, cleanedResume, jobTitle, jobDescription, jobRequirements
+    candidateName, cleanedResume, jobTitle, jobDescription, jobRequirements, atsPromptRecord?.value
   );
 
   // Exponential Backoff Retry Loop — up to 3 attempts

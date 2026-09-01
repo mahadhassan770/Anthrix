@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
       systemPrompt: configMap["copilot_system_prompt"] || "",
       atsGroqApiKey: configMap["ats_groq_api_key"] || process.env.ATS_GROQ_API_KEY || "",
       atsGroqModel: configMap["ats_groq_model"] || "llama-3.3-70b-versatile",
+      atsSystemPrompt: configMap["ats_system_prompt"] || "",
       // SMTP settings
       smtpHost: configMap["smtp_host"] || process.env.SMTP_HOST || "",
       smtpPort: configMap["smtp_port"] || process.env.SMTP_PORT || "465",
