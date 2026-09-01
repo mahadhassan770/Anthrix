@@ -82,6 +82,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(job, { status: 201 });
   } catch (error: any) {
     console.error("Error creating ATS job:", error);
-    return NextResponse.json({ error: "Failed to create job" }, { status: 500 });
+    // Return actual error to help diagnose (e.g. missing ATS_DATABASE_URL on Vercel)
+    return NextResponse.json(
+      { error: error?.message || "Failed to create job" },
+      { status: 500 }
+    );
   }
 }
