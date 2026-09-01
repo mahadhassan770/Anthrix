@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma/ats-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("ATS_DATABASE_URL")
+}
+
+model Job {
+  id              String       @id @default(cuid())
+  title           String
+  slug            String       @unique
+  department      String
+  location        String       @default("Remote")
+  type            String       @default("Full-time")
+  experienceLevel String?
+  salaryRange     String?
+  description     String       @db.Text
+  requirements    String[]
+  niceToHave      String[]
+  status          String       @default("OPEN")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  candidates      Candidate[]
+
+  @@map("jobs")
+}
+
+model Candidate {
+  id              String        @id @default(cuid())
+  jobId           String
+  job             Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  name            String
+  email           String
+  phone           String?
+  linkedin        String?
+  github          String?
+  portfolio       String?
+  resumeUrl       String
+  resumePublicId  String?
+  resumeText      String?       @db.Text
+  coverNote       String?       @db.Text
+  stage           String        @default("APPLIED")
+  rating          Int?          @default(0)
+  adminNotes      String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  evaluation      AiEvaluation?
+  emails          CandidateEmail[]
+
+  @@map("candidates")
+}
+
+model AiEvaluation {
+  id              String    @id @default(cuid())
+  candidateId     String    @unique
+  candidate       Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  score           Int
+  recommendation  String
+  summary         String    @db.Text
+  matchedSkills   String[]
+  missingSkills   String[]
+  pros            String[]
+  cons            String[]
+  rawEvaluation   Json?
+  createdAt       DateTime  @default(now())
+
+  @@map("ai_evaluations")
+}
+
+model CandidateEmail {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  subject     String
+  body        String    @db.Text
+  type        String
+  sentAt      DateTime  @default(now())
+
+  @@map("candidate_emails")
+}

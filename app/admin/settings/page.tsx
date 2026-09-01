@@ -13,7 +13,7 @@ export default function SettingsPage() {
   const { data: session, isPending, refetch } = useSession();
   const { theme, setTheme } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<"profile" | "contact" | "security" | "appearance" | "ai">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "contact" | "smtp" | "security" | "appearance" | "ai">("profile");
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -25,6 +25,31 @@ export default function SettingsPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+
+  // ─── SMTP Email State (Admin & Super Admin) ──────────────────────────────
+  const [smtpSettings, setSmtpSettings] = useState({
+    smtpHost: "smtp.gmail.com",
+    smtpPort: "465",
+    smtpUser: "",
+    smtpPass: "",
+    smtpFrom: "",
+    smtpSecure: true,
+  });
+  const [smtpShowPass, setSmtpShowPass] = useState(false);
+  const [smtpLoading, setSmtpLoading] = useState(false);
+  const [smtpTesting, setSmtpTesting] = useState(false);
+  const [smtpMsg, setSmtpMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [smtpLoaded, setSmtpLoaded] = useState(false);
+
+  const fillGmailPresets = () => {
+    setSmtpSettings((prev) => ({
+      ...prev,
+      smtpHost: "smtp.gmail.com",
+      smtpPort: "465",
+      smtpSecure: true,
+      smtpFrom: prev.smtpUser ? `Anthrix Technologies <${prev.smtpUser}>` : prev.smtpFrom || "Anthrix Technologies <yourgmail@gmail.com>",
+    }));
+  };
 
   // ─── Contact Details State (Admin & Super Admin) ──────────────────────────
   const [contactForm, setContactForm] = useState({
@@ -45,7 +70,13 @@ export default function SettingsPage() {
     groqModel: "llama-3.3-70b-versatile",
     copilotEnabled: true,
     systemPrompt: "",
+    atsGroqApiKey: "",
+    atsGroqModel: "llama-3.3-70b-versatile",
   });
+  const [atsShowKey, setAtsShowKey] = useState(false);
+  const [atsTesting, setAtsTesting] = useState(false);
+  const [atsLiveModels, setAtsLiveModels] = useState<string[]>([]);
+  const [atsModelsLoading, setAtsModelsLoading] = useState(false);
   const [aiShowKey, setAiShowKey] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiTesting, setAiTesting] = useState(false);
@@ -68,6 +99,21 @@ export default function SettingsPage() {
       // silently fail — dropdown stays empty until key is saved and page refreshes
     } finally {
       setModelsLoading(false);
+    }
+  };
+
+  const fetchAtsLiveModels = async () => {
+    setAtsModelsLoading(true);
+    try {
+      const res = await fetch("/api/admin/groq-models?type=ats");
+      const data = await res.json();
+      if (data.models && data.models.length > 0) {
+        setAtsLiveModels(data.models);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setAtsModelsLoading(false);
     }
   };
 
@@ -102,26 +148,83 @@ export default function SettingsPage() {
       .catch(() => {});
   }, [contactLoaded]);
 
-  // ─── Load AI Settings (Super Admin Only) ──────────────────────────────────
+  // ─── Load System & SMTP Settings ──────────────────────────────────────────
   useEffect(() => {
-    if (session?.user?.role !== "super_admin" || aiLoaded) return;
+    if (smtpLoaded) return;
     fetch("/api/admin/system-settings")
       .then((r) => r.json())
       .then((data) => {
         if (!data.error) {
-          setAiSettings({
-            groqApiKey: data.groqApiKey || "",
-            groqModel: data.groqModel || "openai/gpt-oss-120b",
-            copilotEnabled: data.copilotEnabled !== false,
-            systemPrompt: data.systemPrompt || "",
+          setSmtpSettings({
+            smtpHost: data.smtpHost || "smtp.gmail.com",
+            smtpPort: data.smtpPort || "465",
+            smtpUser: data.smtpUser || "",
+            smtpPass: data.smtpPass || "",
+            smtpFrom: data.smtpFrom || "",
+            smtpSecure: data.smtpSecure !== false,
           });
-          setAiLoaded(true);
-          // Fetch live models once settings are loaded
-          fetchLiveModels();
+          setSmtpLoaded(true);
+
+          if (session?.user?.role === "super_admin") {
+            setAiSettings({
+              groqApiKey: data.groqApiKey || "",
+              groqModel: data.groqModel || "llama-3.3-70b-versatile",
+              copilotEnabled: data.copilotEnabled !== false,
+              systemPrompt: data.systemPrompt || "",
+              atsGroqApiKey: data.atsGroqApiKey || "",
+              atsGroqModel: data.atsGroqModel || "llama-3.3-70b-versatile",
+            });
+            setAiLoaded(true);
+            fetchLiveModels();
+            fetchAtsLiveModels();
+          }
         }
       })
       .catch(() => {});
-  }, [session, aiLoaded]);
+  }, [session, smtpLoaded]);
+
+  const handleSmtpSave = async () => {
+    setSmtpLoading(true);
+    setSmtpMsg(null);
+    try {
+      const res = await fetch("/api/admin/system-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(smtpSettings),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSmtpMsg({ type: "success", text: "SMTP configuration saved successfully!" });
+      } else {
+        setSmtpMsg({ type: "error", text: data.error || "Failed to save SMTP settings." });
+      }
+    } catch {
+      setSmtpMsg({ type: "error", text: "Network error. Please try again." });
+    } finally {
+      setSmtpLoading(false);
+    }
+  };
+
+  const handleSmtpTest = async () => {
+    setSmtpTesting(true);
+    setSmtpMsg(null);
+    try {
+      const res = await fetch("/api/admin/system-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test_smtp_connection", ...smtpSettings }),
+      });
+      const data = await res.json();
+      setSmtpMsg({
+        type: data.success ? "success" : "error",
+        text: data.message || (data.success ? "SMTP connection verified!" : "SMTP connection failed."),
+      });
+    } catch {
+      setSmtpMsg({ type: "error", text: "Network error during SMTP connection test." });
+    } finally {
+      setSmtpTesting(false);
+    }
+  };
 
   const handleAiSave = async () => {
     setAiLoading(true);
@@ -165,6 +268,28 @@ export default function SettingsPage() {
       setAiMsg({ type: "error", text: "Network error during connection test." });
     } finally {
       setAiTesting(false);
+    }
+  };
+
+  const handleAtsTest = async () => {
+    setAtsTesting(true);
+    setAiMsg(null);
+    try {
+      const res = await fetch("/api/admin/system-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test_ats_connection", ...aiSettings }),
+      });
+      const data = await res.json();
+      setAiMsg({
+        type: data.success ? "success" : "error",
+        text: data.message || (data.success ? "ATS Connection successful!" : "ATS Connection failed."),
+      });
+      fetchAtsLiveModels();
+    } catch {
+      setAiMsg({ type: "error", text: "Network error during ATS connection test." });
+    } finally {
+      setAtsTesting(false);
     }
   };
 
@@ -341,6 +466,7 @@ export default function SettingsPage() {
   const tabs = [
     { id: "profile", label: "General", icon: User, desc: "Personal info and avatar" },
     { id: "contact", label: "Contact Info", icon: PhoneCall, desc: "Phones, email & location" },
+    { id: "smtp", label: "Email & SMTP", icon: Mail, desc: "Gmail / SMTP email dispatch" },
     { id: "security", label: "Security", icon: Lock, desc: "Passwords and authentication" },
     { id: "appearance", label: "Appearance", icon: Palette, desc: "Theme and interface" },
     ...(isSuperAdmin ? [{ id: "ai", label: "AI Copilot", icon: Bot, desc: "LLM engine & configuration" }] : []),
@@ -694,6 +820,192 @@ export default function SettingsPage() {
             </div>
           )}
 
+          {/* ─── EMAIL & SMTP TAB ─────────────────────────────────────────── */}
+          {activeTab === "smtp" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+
+              {/* Status Banner */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-card to-background border border-border p-6 sm:p-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 text-primary">
+                      <Mail size={22} />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-foreground mb-1 font-display">Email & SMTP Delivery Engine</h2>
+                      <p className="text-sm text-muted-foreground">
+                        Configure Gmail or custom SMTP to send automated candidate confirmations, interview invites, and offers.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={fillGmailPresets}
+                    className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/30 text-primary text-xs font-bold hover:bg-primary/20 transition-all active:scale-95"
+                  >
+                    <Zap size={14} /> Fill with Gmail Presets
+                  </button>
+                </div>
+              </div>
+
+              {/* Feedback Message */}
+              {smtpMsg && (
+                <div className={`p-4 rounded-xl text-sm font-medium border flex items-center gap-3 ${
+                  smtpMsg.type === "error"
+                    ? "bg-destructive/10 border-destructive/20 text-destructive"
+                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                }`}>
+                  {smtpMsg.type === "error" ? <ShieldAlert size={18} /> : <CheckCircle size={18} />}
+                  {smtpMsg.text}
+                </div>
+              )}
+
+              {/* Gmail App Password Setup Instructions Alert */}
+              <div className="p-5 rounded-2xl bg-primary/[0.03] border border-primary/20 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-primary">
+                  <Shield size={15} /> How to connect your Gmail (Free & Takes 1 Minute)
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-muted-foreground leading-relaxed">
+                  <div className="p-3 rounded-xl bg-background border border-border">
+                    <strong className="text-foreground block mb-1">1. Enable 2-Step Verification</strong>
+                    Turn on 2-Step Verification in your Google Account security settings.
+                  </div>
+                  <div className="p-3 rounded-xl bg-background border border-border">
+                    <strong className="text-foreground block mb-1">2. Generate App Password</strong>
+                    Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="text-primary underline">Google App Passwords</a>, name it <code className="text-primary font-mono font-bold">Anthrix ATS</code>, and generate a 16-character key.
+                  </div>
+                  <div className="p-3 rounded-xl bg-background border border-border">
+                    <strong className="text-foreground block mb-1">3. Paste Below & Test</strong>
+                    Enter your Gmail address, paste the 16-character key below, and click <strong className="text-foreground">Test Connection</strong>!
+                  </div>
+                </div>
+              </div>
+
+              {/* SMTP Form */}
+              <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                <div className="p-6 sm:p-8 space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* SMTP Host */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-foreground">SMTP Host Server *</label>
+                      <input
+                        type="text"
+                        required
+                        value={smtpSettings.smtpHost}
+                        onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpHost: e.target.value })}
+                        placeholder="smtp.gmail.com or smtp.hostinger.com"
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
+                      />
+                      <p className="text-[11px] text-muted-foreground">For Gmail, use <code className="font-mono text-foreground">smtp.gmail.com</code>.</p>
+                    </div>
+
+                    {/* SMTP Port & Security */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">SMTP Port *</label>
+                        <input
+                          type="text"
+                          required
+                          value={smtpSettings.smtpPort}
+                          onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpPort: e.target.value })}
+                          placeholder="465"
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
+                        />
+                        <p className="text-[11px] text-muted-foreground">465 (SSL) or 587 (TLS).</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">SSL / TLS</label>
+                        <select
+                          value={smtpSettings.smtpSecure ? "true" : "false"}
+                          onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpSecure: e.target.value === "true" })}
+                          className="w-full bg-background border border-border rounded-xl px-3 py-3 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
+                        >
+                          <option value="true">SSL (Port 465)</option>
+                          <option value="false">TLS / STARTTLS (Port 587)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* SMTP Username / Email */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-foreground">SMTP Username / Gmail Address *</label>
+                      <input
+                        type="email"
+                        required
+                        value={smtpSettings.smtpUser}
+                        onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpUser: e.target.value })}
+                        placeholder="yourname@gmail.com"
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
+                      />
+                      <p className="text-[11px] text-muted-foreground">Your full email address used for login.</p>
+                    </div>
+
+                    {/* SMTP Password / Google App Password */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Password / Google App Password *</label>
+                      <div className="relative">
+                        <input
+                          type={smtpShowPass ? "text" : "password"}
+                          required
+                          value={smtpSettings.smtpPass}
+                          onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpPass: e.target.value })}
+                          placeholder="16-character Google App Password"
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-12 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSmtpShowPass(!smtpShowPass)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {smtpShowPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">For Gmail, paste your 16-character App Password.</p>
+                    </div>
+
+                    {/* Sender 'From' Header */}
+                    <div className="space-y-2 sm:col-span-2">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Sender "From" Header</label>
+                      <input
+                        type="text"
+                        value={smtpSettings.smtpFrom}
+                        onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpFrom: e.target.value })}
+                        placeholder='Anthrix Technologies <yourname@gmail.com>'
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
+                      />
+                      <p className="text-[11px] text-muted-foreground">The display name and sender address candidates see in their inbox.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions Footer */}
+                <div className="bg-background/50 p-4 sm:px-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSmtpTest}
+                    disabled={smtpTesting || !smtpSettings.smtpHost || !smtpSettings.smtpUser || !smtpSettings.smtpPass}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-400 text-xs font-semibold transition-all disabled:opacity-50"
+                  >
+                    {smtpTesting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                    {smtpTesting ? "Testing SMTP Authentication..." : "Test SMTP Connection"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSmtpSave}
+                    disabled={smtpLoading}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
+                  >
+                    {smtpLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    Save SMTP Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ─── SECURITY TAB ─────────────────────────────────────────────────── */}
           {activeTab === "security" && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -968,6 +1280,101 @@ export default function SettingsPage() {
                         className={`relative w-12 h-6 rounded-full transition-colors ${aiSettings.copilotEnabled ? "bg-primary" : "bg-border"}`}
                       >
                         <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${aiSettings.copilotEnabled ? "translate-x-6" : "translate-x-0"}`} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dedicated ATS & Talent Intake AI Engine Card */}
+              <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                <div className="p-6 sm:p-8 space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                        <Bot size={16} />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-foreground">ATS & Talent Intake AI Engine</h3>
+                        <p className="text-xs text-muted-foreground">Dedicated LLM API key and model for resume scoring and candidate pipelines</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                      Isolated ATS Model
+                    </span>
+                  </div>
+
+                  <div className="space-y-4 pt-4 border-t border-border/50">
+                    {/* ATS API Key */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-semibold text-foreground">ATS Groq API Key</label>
+                        <span className="text-[11px] text-muted-foreground">Optional · Falls back to Copilot key if empty</span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={atsShowKey ? "text" : "password"}
+                          value={aiSettings.atsGroqApiKey}
+                          onChange={(e) => setAiSettings({ ...aiSettings, atsGroqApiKey: e.target.value })}
+                          className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-12 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
+                          placeholder="Separate Groq API Key for ATS (e.g. gsk_...)"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setAtsShowKey(!atsShowKey)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {atsShowKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* ATS Model Selection */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-semibold text-foreground">ATS Evaluation Model</label>
+                        <button
+                          type="button"
+                          onClick={fetchAtsLiveModels}
+                          disabled={atsModelsLoading}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+                          title="Refresh models from Groq API"
+                        >
+                          {atsModelsLoading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                          {atsModelsLoading ? "Loading..." : "Refresh"}
+                        </button>
+                      </div>
+                      <select
+                        value={aiSettings.atsGroqModel}
+                        onChange={(e) => setAiSettings({ ...aiSettings, atsGroqModel: e.target.value })}
+                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
+                        disabled={atsModelsLoading}
+                      >
+                        {atsLiveModels.length === 0 ? (
+                          <option value={aiSettings.atsGroqModel}>{aiSettings.atsGroqModel || "llama-3.3-70b-versatile"}</option>
+                        ) : (
+                          atsLiveModels.map((modelId) => (
+                            <option key={modelId} value={modelId}>
+                              {modelId}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      <p className="text-xs text-muted-foreground">
+                        Used to parse resumes against requirements, calculate 0–100 match scores, and auto-generate candidate emails.
+                      </p>
+                    </div>
+
+                    {/* Test ATS Button */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={handleAtsTest}
+                        disabled={atsTesting}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all disabled:opacity-50"
+                      >
+                        {atsTesting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                        {atsTesting ? "Testing ATS Connection..." : "Test ATS LLM Connection"}
                       </button>
                     </div>
                   </div>

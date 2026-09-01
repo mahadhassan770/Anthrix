@@ -13,6 +13,7 @@ const navLinks = [
   { name: "Services", href: "/services" },
   { name: "Work", href: "/work" },
   { name: "Blog", href: "/blog" },
+  { name: "Careers", href: "/careers" },
   { name: "Contact", href: "/contact" },
 ];
 
