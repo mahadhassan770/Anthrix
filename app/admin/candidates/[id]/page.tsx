@@ -22,9 +22,87 @@ import {
   Copy,
   Check,
   Award,
-  Trash2
+  Trash2,
+  X,
+  Calendar,
+  Video,
+  MapPin,
+  Link2,
 } from "lucide-react";
 import { ATS_EMAIL_TEMPLATES, EmailTemplate } from "@/lib/ats-email-templates";
+
+interface InterviewDetails {
+  dateTime: string;
+  type: "video" | "in-person" | "phone";
+  location: string;
+  meetingLink: string;
+}
+
+function InterviewModal({ candidate, onClose, onConfirm }: { candidate: any; onClose: () => void; onConfirm: (d: InterviewDetails) => Promise<void> }) {
+  const [details, setDetails] = useState<InterviewDetails>({ dateTime: "", type: "video", location: "", meetingLink: "" });
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!details.dateTime) { alert("Please select a date and time."); return; }
+    if (details.type === "video" && !details.meetingLink) { alert("Please provide a meeting link."); return; }
+    if (details.type === "in-person" && !details.location) { alert("Please provide the interview location."); return; }
+    setSending(true);
+    await onConfirm(details);
+    setSending(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <div>
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2"><Calendar size={16} className="text-primary" />Schedule Interview</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Invite <strong className="text-foreground">{candidate?.name}</strong> for <strong className="text-foreground">{candidate?.job?.title}</strong></p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted/50 text-muted-foreground transition-colors"><X size={16} /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div>
+            <label className="text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5 block">Interview Date & Time *</label>
+            <input type="datetime-local" required value={details.dateTime} onChange={(e) => setDetails((p) => ({ ...p, dateTime: e.target.value }))} className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:border-primary outline-none transition-colors" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-foreground uppercase tracking-wider mb-2 block">Interview Type *</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["video", "in-person", "phone"] as const).map((t) => (
+                <button key={t} type="button" onClick={() => setDetails((p) => ({ ...p, type: t }))}
+                  className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border text-xs font-semibold transition-all ${details.type === t ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}>
+                  {t === "video" ? <Video size={16} /> : t === "in-person" ? <MapPin size={16} /> : <Mail size={16} />}
+                  {t === "video" ? "Video Call" : t === "in-person" ? "In-Person" : "Phone Call"}
+                </button>
+              ))}
+            </div>
+          </div>
+          {details.type === "video" && (
+            <div>
+              <label className="text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5 block">Meeting Link *</label>
+              <input type="url" placeholder="https://meet.google.com/..." value={details.meetingLink} onChange={(e) => setDetails((p) => ({ ...p, meetingLink: e.target.value }))} className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:border-primary outline-none transition-colors placeholder:text-muted-foreground" />
+            </div>
+          )}
+          {details.type === "in-person" && (
+            <div>
+              <label className="text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5 block">Location / Address *</label>
+              <input type="text" placeholder="Office address or location details..." value={details.location} onChange={(e) => setDetails((p) => ({ ...p, location: e.target.value }))} className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:border-primary outline-none transition-colors placeholder:text-muted-foreground" />
+            </div>
+          )}
+          <div className="flex items-center gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all">Cancel</button>
+            <button type="submit" disabled={sending} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+              {sending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+              {sending ? "Sending..." : "Confirm & Send Email"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default function CandidateDetailPage() {
   const params = useParams();
@@ -38,6 +116,7 @@ export default function CandidateDetailPage() {
   const [adminNotes, setAdminNotes] = useState("");
   const [rating, setRating] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const [showInterviewModal, setShowInterviewModal] = useState(false);
 
   // Email Drawer state
   const [emailModalOpen, setEmailModalOpen] = useState(false);
@@ -87,7 +166,7 @@ export default function CandidateDetailPage() {
     setEmailModalOpen(true);
   };
 
-  const handleStageChange = async (newStage: string) => {
+  const doStageUpdate = async (newStage: string) => {
     try {
       const res = await fetch(`/api/admin/careers/candidates/${id}`, {
         method: "PATCH",
@@ -96,9 +175,69 @@ export default function CandidateDetailPage() {
       });
       if (!res.ok) throw new Error("Failed to update stage");
       setCandidate((prev: any) => ({ ...prev, stage: newStage }));
-    } catch (err) {
+    } catch {
       alert("Failed to update stage");
     }
+  };
+
+  const sendAutoEmail = async (type: "INTERVIEW" | "REJECTED", interviewDetails?: InterviewDetails) => {
+    if (!candidate) return;
+    const name = candidate.name;
+    const jobTitle = candidate.job?.title || "the position";
+    let subject = "";
+    let body = "";
+
+    if (type === "INTERVIEW" && interviewDetails) {
+      const dt = new Date(interviewDetails.dateTime).toLocaleString("en-US", {
+        weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
+      });
+      const locationLine =
+        interviewDetails.type === "video" ? `Meeting Link: ${interviewDetails.meetingLink}`
+        : interviewDetails.type === "in-person" ? `Location: ${interviewDetails.location}`
+        : "We will call you at the phone number you provided.";
+      const typeLabel = interviewDetails.type === "video" ? "Video Call Interview" : interviewDetails.type === "in-person" ? "In-Person Interview" : "Phone Interview";
+      subject = `Interview Invitation: ${jobTitle} at Anthrix`;
+      body = `Hi ${name},\n\nThank you for your interest in the ${jobTitle} position at Anthrix. After reviewing your application, we are pleased to invite you for an interview.\n\nInterview Details:\n- Type: ${typeLabel}\n- Date & Time: ${dt}\n- ${locationLine}\n\nPlease confirm your attendance by replying to this email. If the time does not work for you, let us know and we will find an alternative.\n\nLooking forward to speaking with you!\n\nBest regards,\nAnthrix Hiring Team\nhttps://anthrix.com`;
+    }
+
+    if (type === "REJECTED") {
+      subject = `Update regarding your application for ${jobTitle} at Anthrix`;
+      body = `Hi ${name},\n\nThank you for taking the time to apply for the ${jobTitle} position at Anthrix and for sharing your background with us.\n\nAfter careful review, we have decided to move forward with other candidates whose experience more closely matches our immediate project requirements at this time.\n\nWe were genuinely impressed by your qualifications and will keep your profile in our talent network for future opportunities that align with your skillset.\n\nWe wish you every success in your ongoing job search and career endeavors.\n\nWarm regards,\nAnthrix Hiring Team\nhttps://anthrix.com`;
+    }
+
+    try {
+      await fetch(`/api/admin/careers/candidates/${id}/send-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject, body, type }),
+      });
+    } catch {
+      console.error("Failed to send automated email");
+    }
+  };
+
+  const handleStageChange = async (newStage: string) => {
+    if (newStage === "INTERVIEW") {
+      setShowInterviewModal(true);
+      return;
+    }
+    if (newStage === "REJECTED") {
+      if (!confirm(`Are you sure you want to reject ${candidate?.name}?\n\nA rejection email will automatically be sent to them.`)) return;
+      await doStageUpdate("REJECTED");
+      await sendAutoEmail("REJECTED");
+      return;
+    }
+    if (newStage === "OFFER" || newStage === "HIRED") {
+      alert("Offer and Hire stages are not yet active.");
+      return;
+    }
+    await doStageUpdate(newStage);
+  };
+
+  const handleInterviewConfirm = async (details: InterviewDetails) => {
+    await doStageUpdate("INTERVIEW");
+    await sendAutoEmail("INTERVIEW", details);
+    setShowInterviewModal(false);
   };
 
   const handleSaveNotes = async () => {
@@ -212,6 +351,15 @@ export default function CandidateDetailPage() {
 
   return (
     <div className="w-full space-y-6">
+      {/* Interview Modal */}
+      {showInterviewModal && (
+        <InterviewModal
+          candidate={candidate}
+          onClose={() => setShowInterviewModal(false)}
+          onConfirm={handleInterviewConfirm}
+        />
+      )}
+
       {/* Top Breadcrumb & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -256,24 +404,30 @@ export default function CandidateDetailPage() {
           </button>
 
           <button
-            onClick={() => handleOpenEmailModal("interview_invite")}
+            onClick={() => setShowInterviewModal(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-all"
           >
-            <Mail size={13} /> Invite
+            <Mail size={13} /> Invite to Interview
           </button>
 
           <button
             onClick={() => handleOpenEmailModal("job_offer")}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-bold hover:bg-purple-500/20 transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-bold hover:bg-purple-500/20 transition-all opacity-50 cursor-not-allowed"
+            disabled
+            title="Offer stage not yet active"
           >
             <Award size={13} /> Send Offer
           </button>
 
           <button
-            onClick={() => handleOpenEmailModal("polite_rejection")}
+            onClick={async () => {
+              if (!confirm(`Are you sure you want to reject ${candidate.name}?\n\nA rejection email will automatically be sent to them.`)) return;
+              await doStageUpdate("REJECTED");
+              await sendAutoEmail("REJECTED");
+            }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-500/20 text-red-400 text-xs font-semibold hover:bg-red-500/10 transition-all"
           >
-            Reject
+            Reject & Notify
           </button>
 
           <select
@@ -282,10 +436,9 @@ export default function CandidateDetailPage() {
             className="bg-primary text-white font-bold rounded-xl px-3.5 py-2 text-xs shadow-[0_0_15px_rgba(245,80,54,0.3)] outline-none cursor-pointer"
           >
             <option value="APPLIED">Stage: Applied</option>
-            <option value="SCREENING">Stage: Screening</option>
             <option value="INTERVIEW">Stage: Interview</option>
-            <option value="OFFER">Stage: Offer</option>
-            <option value="HIRED">Stage: Hired</option>
+            <option value="OFFER" disabled>Stage: Offer (Coming Soon)</option>
+            <option value="HIRED" disabled>Stage: Hired (Coming Soon)</option>
             <option value="REJECTED">Stage: Rejected</option>
           </select>
 
