@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { services } from "@/lib/content/services";
+import { PrismaClient } from "@prisma/client";
+import { services } from "../lib/content/services";
+
+const db = new PrismaClient();
 
 const capabilities = [
   {
+    id: "build",
     code: "01",
     tag: "ENGINEERING",
     title: "Software & SaaS",
@@ -20,6 +21,7 @@ const capabilities = [
     stack: ["Next.js", "React", "Node.js", "PostgreSQL"],
   },
   {
+    id: "intelligence",
     code: "02",
     tag: "AUTONOMOUS AI",
     title: "AI Agents & RAG",
@@ -35,6 +37,7 @@ const capabilities = [
     stack: ["LLM Agents", "Vector DBs", "RAG Pipelines"],
   },
   {
+    id: "automate",
     code: "03",
     tag: "AUTOMATION",
     title: "Workflow Pipelines",
@@ -50,6 +53,7 @@ const capabilities = [
     stack: ["n8n", "Zapier", "API Connectors", "ETL"],
   },
   {
+    id: "bots",
     code: "04",
     tag: "SALES & SUPPORT",
     title: "WhatsApp & Bots",
@@ -125,127 +129,96 @@ const projects = [
   },
 ];
 
-export async function GET(req: Request) {
-  try {
-    // 1. Upsert Admin Accounts safely (won't throw if exists)
-    const existingMahad = await db.user.findUnique({ where: { email: "mahadhassan095@gmail.com" } });
-    if (!existingMahad) {
-      await auth.api.signUpEmail({
-        body: {
-          email: "mahadhassan095@gmail.com",
-          password: "Mahad@6225425",
-          name: "Mahad Hassan",
-        },
-      }).catch(() => {});
-    }
+async function masterRestore() {
+  console.log("Starting master database restoration...");
 
-    const existingHaseeb = await db.user.findUnique({ where: { email: "abdulhaseeb7134@gmail.com" } });
-    if (!existingHaseeb) {
-      await auth.api.signUpEmail({
-        body: {
-          email: "abdulhaseeb7134@gmail.com",
-          password: "Admin@1234",
-          name: "Abdul Haseeb",
-        },
-      }).catch(() => {});
-    }
+  // 1. Restore Projects
+  console.log("Restoring projects...");
+  for (const p of projects) {
+    await db.project.upsert({
+      where: { slug: p.slug },
+      update: p,
+      create: p,
+    });
+  }
 
-    await db.user.updateMany({
-      where: {
-        email: { in: ["mahadhassan095@gmail.com", "abdulhaseeb7134@gmail.com"] },
-      },
+  // 2. Restore Services
+  console.log("Restoring services & capabilities...");
+  await db.serviceOffering.deleteMany().catch(() => {});
+  await db.service.deleteMany().catch(() => {});
+  await db.capability.deleteMany().catch(() => {});
+
+  let serviceOrder = 0;
+  for (const s of services) {
+    serviceOrder++;
+    const newService = await db.service.create({
       data: {
-        role: "admin",
-        emailVerified: true,
+        title: s.pillar,
+        slug: s.id,
+        tagline: s.tagline,
+        description: s.description,
+        icon: s.icon,
+        order: serviceOrder,
       },
     });
 
-    // 2. Upsert Projects
-    for (const p of projects) {
-      await db.project.upsert({
-        where: { slug: p.slug },
-        update: p,
-        create: p,
+    let offeringOrder = 0;
+    for (const off of s.offerings) {
+      offeringOrder++;
+      await db.serviceOffering.create({
+        data: {
+          name: off.name,
+          slug: off.id,
+          description: off.description,
+          problem: off.problem,
+          icon: off.icon,
+          useCases: off.useCases,
+          order: offeringOrder,
+          serviceId: newService.id,
+        },
       });
     }
+  }
 
-    // 3. Upsert Services if empty
-    const currentServices = await db.service.count();
-    if (currentServices === 0) {
-      let serviceOrder = 0;
-      for (const s of services) {
-        serviceOrder++;
-        const newService = await db.service.create({
-          data: {
-            title: s.pillar,
-            slug: s.id,
-            tagline: s.tagline,
-            description: s.description,
-            icon: s.icon,
-            order: serviceOrder,
-          },
-        });
-
-        let offeringOrder = 0;
-        for (const off of s.offerings) {
-          offeringOrder++;
-          await db.serviceOffering.create({
-            data: {
-              name: off.name,
-              slug: off.id,
-              description: off.description,
-              problem: off.problem,
-              icon: off.icon,
-              useCases: off.useCases,
-              order: offeringOrder,
-              serviceId: newService.id,
-            },
-          });
-        }
-      }
-    }
-
-    // 4. Upsert Capabilities if empty
-    const currentCaps = await db.capability.count();
-    if (currentCaps === 0) {
-      let capOrder = 0;
-      for (const cap of capabilities) {
-        capOrder++;
-        await db.capability.create({
-          data: {
-            code: cap.code,
-            tag: cap.tag,
-            title: cap.title,
-            subtitle: cap.subtitle,
-            description: cap.description,
-            icon: cap.icon,
-            features: cap.features,
-            stack: cap.stack,
-            order: capOrder,
-          },
-        });
-      }
-    }
-
-    const [projectCount, serviceCount, capCount, userCount] = await Promise.all([
-      db.project.count(),
-      db.service.count(),
-      db.capability.count(),
-      db.user.count(),
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      message: "Database seeded & restored safely!",
-      stats: {
-        projects: projectCount,
-        services: serviceCount,
-        capabilities: capCount,
-        adminUsers: userCount,
+  let capOrder = 0;
+  for (const cap of capabilities) {
+    capOrder++;
+    await db.capability.create({
+      data: {
+        code: cap.code,
+        tag: cap.tag,
+        title: cap.title,
+        subtitle: cap.subtitle,
+        description: cap.description,
+        icon: cap.icon,
+        features: cap.features,
+        stack: cap.stack,
+        order: capOrder,
       },
     });
-  } catch (error: any) {
-    console.error("Seed error:", error);
-    return NextResponse.json({ success: false, error: error.message || String(error) }, { status: 500 });
   }
+
+  // 3. Check counts
+  const [projectCount, serviceCount, capCount, userCount] = await Promise.all([
+    db.project.count(),
+    db.service.count(),
+    db.capability.count(),
+    db.user.count(),
+  ]);
+
+  console.log(`Master restore complete!
+- Projects: ${projectCount}
+- Services: ${serviceCount}
+- Capabilities: ${capCount}
+- Admin Users: ${userCount}`);
 }
+
+masterRestore()
+  .catch((e) => {
+    console.error("Restore failed:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await db.$disconnect();
+    process.exit(0);
+  });

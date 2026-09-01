@@ -467,13 +467,14 @@ export default function CandidateDetailPage() {
               </div>
             </div>
 
-            {/* Embedded Resume Viewer */}
+            {/* Embedded Resume Viewer — Google Docs viewer handles all formats */}
             <div className="flex-1 bg-background border border-border rounded-xl overflow-hidden relative">
-              {candidate.resumeUrl.endsWith(".pdf") ? (
+              {candidate.resumeUrl ? (
                 <iframe
-                  src={`${candidate.resumeUrl}#toolbar=0&navpanes=0`}
+                  src={`https://docs.google.com/gview?url=${encodeURIComponent(candidate.resumeUrl)}&embedded=true`}
                   className="w-full h-full border-none"
                   title="Resume PDF"
+                  loading="lazy"
                 />
               ) : (
                 <div className="p-6 h-full overflow-y-auto space-y-3 font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
