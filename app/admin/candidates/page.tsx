@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -30,7 +30,7 @@ const STAGES = [
   { key: "REJECTED", label: "Rejected" },
 ];
 
-export default function CandidatesAdminPage() {
+function CandidatesAdminInner() {
   const searchParams = useSearchParams();
   const initialJobId = searchParams.get("jobId") || "all";
 
@@ -401,5 +401,17 @@ export default function CandidatesAdminPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CandidatesAdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 size={28} className="animate-spin text-primary" />
+      </div>
+    }>
+      <CandidatesAdminInner />
+    </Suspense>
   );
 }
