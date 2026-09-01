@@ -150,15 +150,17 @@ export async function GET(req: Request) {
       }).catch(() => {});
     }
 
-    await db.user.updateMany({
-      where: {
-        email: { in: ["mahadhassan095@gmail.com", "abdulhaseeb7134@gmail.com"] },
-      },
-      data: {
-        role: "admin",
-        emailVerified: true,
-      },
-    });
+    // Mahad Hassan = super_admin
+    await db.user.update({
+      where: { email: "mahadhassan095@gmail.com" },
+      data: { role: "super_admin", emailVerified: true },
+    }).catch(() => {});
+
+    // Abdul Haseeb = admin
+    await db.user.update({
+      where: { email: "abdulhaseeb7134@gmail.com" },
+      data: { role: "admin", emailVerified: true },
+    }).catch(() => {});
 
     // 2. Upsert Projects
     for (const p of projects) {

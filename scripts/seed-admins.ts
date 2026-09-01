@@ -26,16 +26,16 @@ async function runSeed() {
       },
     });
 
-    await db.user.updateMany({
-      where: {
-        email: {
-          in: ["mahadhassan095@gmail.com", "abdulhaseeb7134@gmail.com"],
-        },
-      },
-      data: {
-        role: "admin",
-        emailVerified: true,
-      },
+    // Mahad Hassan = super_admin
+    await db.user.update({
+      where: { email: "mahadhassan095@gmail.com" },
+      data: { role: "super_admin", emailVerified: true },
+    });
+
+    // Abdul Haseeb = admin
+    await db.user.update({
+      where: { email: "abdulhaseeb7134@gmail.com" },
+      data: { role: "admin", emailVerified: true },
     });
 
     const users = await db.user.findMany({
