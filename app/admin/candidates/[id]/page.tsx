@@ -531,32 +531,13 @@ export default function CandidateDetailPage() {
                   {candidate.resumeText || "No resume uploaded for this candidate."}
                 </div>
               ) : resumeViewMode === "embed" ? (
-                <object
-                  data={candidate.resumeUrl}
-                  type="application/pdf"
-                  className="w-full h-full"
-                >
-                  <div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
-                    <FileText size={36} className="text-muted-foreground/40" />
-                    <p className="text-sm text-muted-foreground">
-                      Browser cannot embed this file directly.
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setResumeViewMode("gdocs")}
-                        className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors cursor-pointer"
-                      >
-                        Try Google Viewer
-                      </button>
-                      <button
-                        onClick={() => setResumeViewMode("text")}
-                        className="px-4 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                      >
-                        Show Raw Text
-                      </button>
-                    </div>
-                  </div>
-                </object>
+                /* Use server-side proxy to strip Content-Disposition: attachment from Cloudinary URLs */
+                <iframe
+                  key={`embed-${candidate.id}`}
+                  src={`/api/admin/proxy-resume?url=${encodeURIComponent(candidate.resumeUrl)}`}
+                  className="w-full h-full border-none"
+                  title="Resume — Direct Preview"
+                />
               ) : resumeViewMode === "gdocs" ? (
                 <iframe
                   key={`gdocs-${candidate.id}`}
