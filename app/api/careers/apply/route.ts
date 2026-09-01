@@ -4,8 +4,9 @@ import { atsCloudinary } from "@/lib/ats-cloudinary";
 import { scoreCandidateResume } from "@/lib/ats-ai-scorer";
 import { sendEmail } from "@/lib/email-service";
 import { ATS_EMAIL_TEMPLATES } from "@/lib/ats-email-templates";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
+
+// Mark this route as Node.js runtime so native modules work at request time
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,6 +48,9 @@ export async function POST(req: NextRequest) {
     let extractedText = "";
     try {
       if (resumeFile.name.endsWith(".pdf") || resumeFile.type === "application/pdf") {
+        // Dynamic require — runs at request time only, never at build time
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
         const pdfData = await pdfParse(buffer);
         extractedText = pdfData.text || "";
       } else {
