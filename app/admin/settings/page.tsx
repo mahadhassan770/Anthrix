@@ -9,6 +9,9 @@ import {
   Bot, Zap, Shield, RefreshCw, FlaskConical, Save, PhoneCall, Phone, MapPin, Mail, Clock,
 } from "lucide-react";
 
+
+
+
 export default function SettingsPage() {
   const { data: session, isPending, refetch } = useSession();
   const { theme, setTheme } = useTheme();
@@ -75,28 +78,42 @@ export default function SettingsPage() {
   });
   const [atsShowKey, setAtsShowKey] = useState(false);
   const [atsTesting, setAtsTesting] = useState(false);
-  const [atsLiveModels, setAtsLiveModels] = useState<string[]>([]);
-  const [atsModelsLoading, setAtsModelsLoading] = useState(false);
   const [aiShowKey, setAiShowKey] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiTesting, setAiTesting] = useState(false);
   const [aiMsg, setAiMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [aiLoaded, setAiLoaded] = useState(false);
 
-  // Live models fetched from Groq using the saved API key
+  // Live models fetched dynamically from Groq API
   const [liveModels, setLiveModels] = useState<string[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
+  const [mainModelMsg, setMainModelMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const [atsLiveModels, setAtsLiveModels] = useState<string[]>([]);
+  const [atsModelsLoading, setAtsModelsLoading] = useState(false);
+  const [atsModelMsg, setAtsModelMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const fetchLiveModels = async () => {
     setModelsLoading(true);
+    setMainModelMsg(null);
     try {
-      const res = await fetch("/api/admin/groq-models");
+      const res = await fetch("/api/admin/groq-models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: aiSettings.groqApiKey, type: "main" }),
+      });
       const data = await res.json();
-      if (data.models && data.models.length > 0) {
+      if (res.ok && data.models && data.models.length > 0) {
         setLiveModels(data.models);
+        if (!data.models.includes(aiSettings.groqModel)) {
+          setAiSettings((prev) => ({ ...prev, groqModel: data.models[0] }));
+        }
+        setMainModelMsg({ type: "success", text: `Successfully loaded ${data.models.length} active models directly from Groq!` });
+      } else {
+        setMainModelMsg({ type: "error", text: data.error || "Failed to fetch live models. Check API key." });
       }
-    } catch {
-      // silently fail — dropdown stays empty until key is saved and page refreshes
+    } catch (err: any) {
+      setMainModelMsg({ type: "error", text: err.message || "Network error fetching models from Groq." });
     } finally {
       setModelsLoading(false);
     }
@@ -104,14 +121,25 @@ export default function SettingsPage() {
 
   const fetchAtsLiveModels = async () => {
     setAtsModelsLoading(true);
+    setAtsModelMsg(null);
     try {
-      const res = await fetch("/api/admin/groq-models?type=ats");
+      const res = await fetch("/api/admin/groq-models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: aiSettings.atsGroqApiKey || aiSettings.groqApiKey, type: "ats" }),
+      });
       const data = await res.json();
-      if (data.models && data.models.length > 0) {
+      if (res.ok && data.models && data.models.length > 0) {
         setAtsLiveModels(data.models);
+        if (!data.models.includes(aiSettings.atsGroqModel)) {
+          setAiSettings((prev) => ({ ...prev, atsGroqModel: data.models[0] }));
+        }
+        setAtsModelMsg({ type: "success", text: `Successfully loaded ${data.models.length} active ATS models directly from Groq!` });
+      } else {
+        setAtsModelMsg({ type: "error", text: data.error || "Failed to fetch ATS models. Check API key." });
       }
-    } catch {
-      // silently fail
+    } catch (err: any) {
+      setAtsModelMsg({ type: "error", text: err.message || "Network error fetching models from Groq." });
     } finally {
       setAtsModelsLoading(false);
     }
@@ -1228,23 +1256,33 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    {/* Model Selection */}
-                    <div className="space-y-2">
+                    {/* Model Selection with Dedicated Fetch Button */}
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-foreground">LLM Model</label>
+                        <label className="text-sm font-semibold text-foreground">Copilot LLM Model</label>
                         <button
                           type="button"
                           onClick={fetchLiveModels}
                           disabled={modelsLoading}
-                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
-                          title="Refresh models from Groq API"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+                          title="Fetch all live active models from Groq API"
                         >
-                          {modelsLoading
-                            ? <Loader2 size={12} className="animate-spin" />
-                            : <RefreshCw size={12} />}
-                          {modelsLoading ? "Loading..." : "Refresh"}
+                          {modelsLoading ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
+                          {modelsLoading ? "Fetching Models..." : "⚡ Fetch Available Models"}
                         </button>
                       </div>
+
+                      {mainModelMsg && (
+                        <div className={`p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2 ${
+                          mainModelMsg.type === "success"
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                            : "bg-red-500/10 border-red-500/30 text-red-400"
+                        }`}>
+                          {mainModelMsg.type === "success" ? <CheckCircle size={14} /> : <ShieldAlert size={14} />}
+                          <span>{mainModelMsg.text}</span>
+                        </div>
+                      )}
+
                       <select
                         value={aiSettings.groqModel}
                         onChange={(e) => setAiSettings({ ...aiSettings, groqModel: e.target.value })}
@@ -1252,19 +1290,21 @@ export default function SettingsPage() {
                         disabled={modelsLoading}
                       >
                         {liveModels.length === 0 ? (
-                          <option value={aiSettings.groqModel}>{aiSettings.groqModel || "Save API key first, then refresh"}</option>
+                          <option value={aiSettings.groqModel || "llama-3.3-70b-versatile"}>
+                            {aiSettings.groqModel ? `${aiSettings.groqModel} (Click Fetch to refresh list)` : "Click '⚡ Fetch Available Models' above"}
+                          </option>
                         ) : (
                           liveModels.map((modelId) => (
                             <option key={modelId} value={modelId}>
-                              {modelId}
+                              {modelId}{modelId === "llama-3.3-70b-versatile" ? " (Recommended Flagship)" : ""}
                             </option>
                           ))
                         )}
                       </select>
                       <p className="text-xs text-muted-foreground">
                         {liveModels.length > 0
-                          ? `${liveModels.length} models available on your API key.`
-                          : "Save your API key and click Refresh to load available models."}
+                          ? `Showing ${liveModels.length} active models. Click "⚡ Fetch Available Models" to refresh live from Groq.`
+                          : "Click the Fetch button above to load all live models from your Groq account."}
                       </p>
                     </div>
 
@@ -1329,21 +1369,33 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    {/* ATS Model Selection */}
-                    <div className="space-y-2">
+                    {/* ATS Model Selection with Dedicated Fetch Button */}
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-semibold text-foreground">ATS Evaluation Model</label>
                         <button
                           type="button"
                           onClick={fetchAtsLiveModels}
                           disabled={atsModelsLoading}
-                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
-                          title="Refresh models from Groq API"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+                          title="Fetch all live active models for ATS from Groq API"
                         >
-                          {atsModelsLoading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                          {atsModelsLoading ? "Loading..." : "Refresh"}
+                          {atsModelsLoading ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
+                          {atsModelsLoading ? "Fetching Models..." : "⚡ Fetch Available Models"}
                         </button>
                       </div>
+
+                      {atsModelMsg && (
+                        <div className={`p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2 ${
+                          atsModelMsg.type === "success"
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                            : "bg-red-500/10 border-red-500/30 text-red-400"
+                        }`}>
+                          {atsModelMsg.type === "success" ? <CheckCircle size={14} /> : <ShieldAlert size={14} />}
+                          <span>{atsModelMsg.text}</span>
+                        </div>
+                      )}
+
                       <select
                         value={aiSettings.atsGroqModel}
                         onChange={(e) => setAiSettings({ ...aiSettings, atsGroqModel: e.target.value })}
@@ -1351,11 +1403,13 @@ export default function SettingsPage() {
                         disabled={atsModelsLoading}
                       >
                         {atsLiveModels.length === 0 ? (
-                          <option value={aiSettings.atsGroqModel}>{aiSettings.atsGroqModel || "llama-3.3-70b-versatile"}</option>
+                          <option value={aiSettings.atsGroqModel || "llama-3.3-70b-versatile"}>
+                            {aiSettings.atsGroqModel ? `${aiSettings.atsGroqModel} (Click Fetch to refresh list)` : "Click '⚡ Fetch Available Models' above"}
+                          </option>
                         ) : (
                           atsLiveModels.map((modelId) => (
                             <option key={modelId} value={modelId}>
-                              {modelId}
+                              {modelId}{modelId === "llama-3.3-70b-versatile" ? " (Recommended for ATS)" : ""}
                             </option>
                           ))
                         )}
