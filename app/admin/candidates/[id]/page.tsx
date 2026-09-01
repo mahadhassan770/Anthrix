@@ -37,6 +37,7 @@ export default function CandidateDetailPage() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
   const [rating, setRating] = useState(0);
+  const [resumeViewMode, setResumeViewMode] = useState<"embed" | "gdocs" | "text">("embed");
   const [deleting, setDeleting] = useState(false);
 
   // Email Drawer state
@@ -499,17 +500,73 @@ export default function CandidateDetailPage() {
               </div>
             </div>
 
-            {/* Embedded Resume Viewer — Google Docs viewer handles all formats */}
-            <div className="flex-1 bg-background border border-border rounded-xl overflow-hidden relative">
-              {candidate.resumeUrl ? (
+            {/* Resume Viewer mode toggle */}
+            <div className="flex gap-1.5 flex-shrink-0">
+              {(
+                [
+                  { mode: "embed" as const, label: "Direct Embed" },
+                  { mode: "gdocs" as const, label: "Google Viewer" },
+                  { mode: "text"  as const, label: "Raw Text" },
+                ] as { mode: "embed" | "gdocs" | "text"; label: string }[]
+              ).map(({ mode, label }) => (
+                <button
+                  key={mode}
+                  onClick={() => setResumeViewMode(mode)}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                    resumeViewMode === mode
+                      ? "bg-primary text-white shadow-sm"
+                      : "border border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Viewer panel */}
+            <div className="flex-1 bg-background border border-border rounded-xl overflow-hidden relative min-h-0">
+              {!candidate.resumeUrl ? (
+                <div className="p-6 h-full overflow-y-auto font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                  <p className="font-bold text-foreground mb-2">Raw Resume Text Extraction:</p>
+                  {candidate.resumeText || "No resume uploaded for this candidate."}
+                </div>
+              ) : resumeViewMode === "embed" ? (
+                <object
+                  data={candidate.resumeUrl}
+                  type="application/pdf"
+                  className="w-full h-full"
+                >
+                  <div className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center">
+                    <FileText size={36} className="text-muted-foreground/40" />
+                    <p className="text-sm text-muted-foreground">
+                      Browser cannot embed this file directly.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setResumeViewMode("gdocs")}
+                        className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors cursor-pointer"
+                      >
+                        Try Google Viewer
+                      </button>
+                      <button
+                        onClick={() => setResumeViewMode("text")}
+                        className="px-4 py-2 rounded-xl border border-border text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      >
+                        Show Raw Text
+                      </button>
+                    </div>
+                  </div>
+                </object>
+              ) : resumeViewMode === "gdocs" ? (
                 <iframe
+                  key={`gdocs-${candidate.id}`}
                   src={`https://docs.google.com/gview?url=${encodeURIComponent(candidate.resumeUrl)}&embedded=true`}
                   className="w-full h-full border-none"
-                  title="Resume PDF"
+                  title="Resume — Google Docs Viewer"
                   loading="lazy"
                 />
               ) : (
-                <div className="p-6 h-full overflow-y-auto space-y-3 font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                <div className="p-6 h-full overflow-y-auto font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
                   <p className="font-bold text-foreground mb-2">Raw Resume Text Extraction:</p>
                   {candidate.resumeText || "No text could be extracted from this document."}
                 </div>
