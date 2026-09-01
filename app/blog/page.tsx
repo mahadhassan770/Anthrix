@@ -23,7 +23,7 @@ export default async function BlogPage() {
   const posts = await db.post.findMany({
     where: { published: true },
     orderBy: { createdAt: "desc" },
-  });
+  }).catch(() => []);
 
   return (
     <div className="relative min-h-screen bg-[#080B12] text-[#EDEDED] overflow-hidden pt-24 pb-28">

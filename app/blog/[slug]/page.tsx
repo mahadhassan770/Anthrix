@@ -54,7 +54,7 @@ export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
   const post = await db.post.findUnique({
     where: { slug },
-  });
+  }).catch(() => null);
 
   if (!post || !post.published) {
     notFound();
