@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
     const stage = searchParams.get("stage");
 
     const where: any = {};
-    if (jobId && jobId !== "all") where.jobId = jobId;
-    if (stage && stage !== "all") where.stage = stage;
+    if (jobId && jobId.toLowerCase() !== "all") where.jobId = jobId;
+    if (stage && stage.toLowerCase() !== "all") where.stage = stage.toUpperCase();
 
     const candidates = await atsDb.candidate.findMany({
       where,
