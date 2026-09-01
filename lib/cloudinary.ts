@@ -1,13 +1,15 @@
 import { v2 as cloudinary } from "cloudinary";
 
-cloudinary.config({
+/**
+ * Main Agency Website Cloudinary Configuration
+ * Used for portfolio images, agency project assets, avatars, etc.
+ */
+export const getMainCloudinaryConfig = () => ({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,
 });
-
-export { cloudinary };
 
 export interface CloudinaryUploadResult {
   public_id: string;
@@ -19,7 +21,7 @@ export interface CloudinaryUploadResult {
 }
 
 /**
- * Upload a file buffer to Cloudinary
+ * Upload a file buffer to Main Website Cloudinary
  */
 export async function uploadToCloudinary(
   buffer: Buffer,
@@ -29,9 +31,11 @@ export async function uploadToCloudinary(
     transformation?: object[];
   } = {}
 ): Promise<CloudinaryUploadResult> {
+  const config = getMainCloudinaryConfig();
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
+        ...config,
         folder: options.folder ?? "agency_portfolio",
         public_id: options.filename,
         overwrite: true,
@@ -47,8 +51,11 @@ export async function uploadToCloudinary(
 }
 
 /**
- * Delete an asset from Cloudinary by public_id
+ * Delete an asset from Main Website Cloudinary by public_id
  */
 export async function deleteFromCloudinary(publicId: string): Promise<void> {
-  await cloudinary.uploader.destroy(publicId);
+  const config = getMainCloudinaryConfig();
+  await cloudinary.uploader.destroy(publicId, config as any);
 }
+
+export { cloudinary };

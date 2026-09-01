@@ -31,7 +31,7 @@ export async function GET(req: Request) {
       asResponse: true,
     });
 
-    // 4. Update both to have the "admin" role (signUpEmail defaults to user)
+    // 4. Update both to have the "admin" role
     await db.user.updateMany({
       where: {
         email: {

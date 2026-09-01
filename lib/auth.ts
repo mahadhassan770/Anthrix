@@ -22,9 +22,7 @@ export const auth = betterAuth({
   },
 
   plugins: [
-    admin({
-      adminRoles: ["admin"],      // only "admin" role can access admin plugin APIs
-    }),
+    admin(),
   ],
 
   trustedOrigins: [

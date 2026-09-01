@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { atsDb } from "@/lib/ats-db";
-import { atsCloudinary } from "@/lib/ats-cloudinary";
+import { uploadAtsResume } from "@/lib/ats-cloudinary";
 import { scoreCandidateResume } from "@/lib/ats-ai-scorer";
 import { sendEmail } from "@/lib/email-service";
 import { ATS_EMAIL_TEMPLATES } from "@/lib/ats-email-templates";
@@ -61,24 +61,13 @@ export async function POST(req: NextRequest) {
       extractedText = `Resume file uploaded: ${resumeFile.name}`;
     }
 
-    // 4. Upload to Cloudinary (resource_type: auto / raw)
+    // 4. Upload to dedicated ATS Cloudinary
     let resumeUrl = "";
     let resumePublicId = "";
 
     try {
-      const uploadRes: any = await new Promise((resolve, reject) => {
-        const uploadStream = atsCloudinary.uploader.upload_stream(
-          {
-            folder: "anthrix-ats/resumes",
-            resource_type: "auto",
-            public_id: `${name.toLowerCase().replace(/[^a-z0-9]/g, "_")}_${Date.now()}`,
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(buffer);
+      const uploadRes = await uploadAtsResume(buffer, {
+        public_id: `${name.toLowerCase().replace(/[^a-z0-9]/g, "_")}_${Date.now()}`,
       });
 
       resumeUrl = uploadRes.secure_url || uploadRes.url;
