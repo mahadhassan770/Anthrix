@@ -6,7 +6,13 @@ export const metadata = {
   title: "Candidate Resume Viewer | Anthrix Admin",
 };
 
-export default function CandidateResumePage() {
+export default async function CandidateResumePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
   return (
     <Suspense
       fallback={
@@ -16,7 +22,7 @@ export default function CandidateResumePage() {
         </div>
       }
     >
-      <CandidateResumeViewerClient />
+      <CandidateResumeViewerClient id={id} />
     </Suspense>
   );
 }

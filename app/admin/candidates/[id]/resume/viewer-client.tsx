@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -16,10 +16,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-export default function CandidateResumeViewerClient() {
-  const params = useParams();
+export default function CandidateResumeViewerClient({ id }: { id: string }) {
   const router = useRouter();
-  const id = params?.id as string;
 
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
