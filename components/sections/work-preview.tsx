@@ -2,261 +2,177 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, ExternalLink } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import type { PortfolioProject } from "@/components/work/project-card";
 
-function resolveImage(p: PortfolioProject): string {
+const DEFAULT_FEATURED_PROJECTS = [
+  {
+    id: "finova-saas",
+    slug: "finova-saas",
+    title: "Finova SaaS",
+    category: "SaaS Platform",
+    description:
+      "A modern fintech SaaS platform handling millions of transactions securely and at scale.",
+    image:
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+    liveUrl: undefined,
+  },
+  {
+    id: "healthsync",
+    slug: "healthsync",
+    title: "HealthSync",
+    category: "Web Application",
+    description:
+      "A health tech platform connecting patients and providers with real-time data and insights.",
+    image:
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80",
+    liveUrl: undefined,
+  },
+  {
+    id: "insightai",
+    slug: "insightai",
+    title: "InsightAI",
+    category: "AI Solution",
+    description:
+      "An AI-powered analytics platform that turns complex data into actionable business insights.",
+    image:
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+    liveUrl: undefined,
+  },
+];
+
+function resolveImage(p: PortfolioProject | any, idx: number): string {
   return (
-    p.image ||
     p.coverImage ||
-    `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80`
+    p.image ||
+    DEFAULT_FEATURED_PROJECTS[idx % DEFAULT_FEATURED_PROJECTS.length].image
   );
 }
 
 export function WorkPreview({ projects = [] }: { projects?: PortfolioProject[] }) {
-  if (!projects || projects.length === 0) return null;
-
-  const featured = projects.find((p) => p.featured) || projects[0];
-  const secondary = projects.filter((p) => p.id !== featured.id).slice(0, 3);
+  // Use database projects or fallback to exact design projects
+  const displayProjects =
+    projects && projects.length >= 3
+      ? projects.slice(0, 3).map((p, idx) => ({
+          id: p.id,
+          slug: p.slug,
+          title: p.title,
+          category: p.tags?.[0] || (p as any).subtitle || DEFAULT_FEATURED_PROJECTS[idx].category,
+          description: p.description,
+          image: resolveImage(p, idx),
+          liveUrl: p.liveUrl,
+        }))
+      : DEFAULT_FEATURED_PROJECTS;
 
   return (
-    <section
-      className="py-24 md:py-32 relative overflow-hidden"
-      style={{
-        background: "#080B12",
-        borderTop: "1px solid rgba(255,255,255,0.05)",
-      }}
-    >
-      {/* Ambient glow */}
+    <section className="py-24 md:py-32 relative overflow-hidden bg-[#05080D] border-t border-white/10">
+      {/* Background Ambience */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none w-[900px] h-[500px]"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(245,80,54,0.05) 0%, transparent 70%)",
-          filter: "blur(40px)",
+          backgroundImage: `
+            linear-gradient(rgba(245,80,54,0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(245,80,54,0.02) 1px, transparent 1px)
+          `,
+          backgroundSize: "64px 64px",
         }}
       />
+      <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-[#F55036]/[0.035] blur-[120px] pointer-events-none rounded-full" />
 
-      <div className="container mx-auto px-6 relative z-10">
-
-        {/* ── Section Header ── */}
-        <Reveal>
-          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-14">
-            <div>
-              <p
-                className="text-xs font-mono uppercase tracking-widest mb-3"
-                style={{ color: "#F55036" }}
-              >
-                / Selected Work
-              </p>
-              <h2
-                className="font-bold leading-tight"
+      <div className="container mx-auto px-6 relative z-10 max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-10 items-center">
+          {/* ── Left Column: Section Headline & Action ── */}
+          <div className="lg:col-span-4 xl:col-span-3.5 space-y-6">
+            <Reveal>
+              {/* Tag / Pill */}
+              <div
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 mb-6 rounded-full"
                 style={{
-                  fontSize: "clamp(2rem, 4vw, 2.8rem)",
-                  color: "#EDEDED",
-                  letterSpacing: "-0.025em",
+                  border: "1px solid rgba(245, 80, 54, 0.4)",
+                  background: "rgba(245, 80, 54, 0.08)",
                 }}
               >
-                Real systems,{" "}
-                <span style={{ color: "#F55036" }}>shipped.</span>
+                <span className="text-[11px] font-mono tracking-widest text-[#F55036] uppercase font-bold">
+                  FEATURED WORK
+                </span>
+              </div>
+
+              {/* Main Heading */}
+              <h2 className="font-display text-4xl sm:text-5xl lg:text-[44px] xl:text-5xl font-bold tracking-tight text-white leading-[1.14] mb-8">
+                Real projects.<br />
+                Real <span className="text-[#F55036]">impact.</span>
               </h2>
-            </div>
-            <Link
-              href="/work"
-              className="group inline-flex items-center gap-2 text-sm font-medium transition-all duration-200"
-              style={{ color: "#F55036" }}
-            >
-              See all projects
-              <ArrowRight
-                size={15}
-                className="transition-transform group-hover:translate-x-1"
-              />
-            </Link>
-          </div>
-        </Reveal>
 
-        {/* ── Featured Card ── */}
-        <Reveal>
-          <div className="mb-4">
-            <Link
-              href={featured.liveUrl || `/work/${featured.slug}`}
-              target={featured.liveUrl ? "_blank" : undefined}
-              rel={featured.liveUrl ? "noopener noreferrer" : undefined}
-              className="group grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] rounded-2xl overflow-hidden transition-all duration-400 block"
-              style={{
-                background: "#0d0f14",
-                border: "1px solid rgba(255,255,255,0.07)",
-              }}
-            >
-              {/* Image */}
-              <div className="relative h-[260px] lg:h-[320px] overflow-hidden">
-                <Image
-                  src={resolveImage(featured)}
-                  alt={featured.title}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 60vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#0d0f14] hidden lg:block" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d0f14] to-transparent lg:hidden" />
-              </div>
-
-              {/* Content */}
-              <div className="flex flex-col justify-center p-8 lg:p-10">
-                <span
-                  className="text-[10px] font-mono uppercase tracking-widest mb-3"
-                  style={{ color: "#F55036" }}
+              {/* Action Link */}
+              <div>
+                <Link
+                  href="/work"
+                  className="group inline-flex items-center gap-2 text-base font-semibold text-[#F55036] hover:text-[#ff6b54] transition-all duration-200"
                 >
-                  ✦ Featured
-                </span>
-                <h3
-                  className="font-bold leading-tight mb-1"
-                  style={{ fontSize: "1.5rem", color: "#EDEDED" }}
-                >
-                  {featured.title}
-                </h3>
-                <p className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
-                  {featured.subtitle}
-                </p>
-                <p
-                  className="text-sm leading-relaxed mb-6"
-                  style={{ color: "#6B7280" }}
-                >
-                  {featured.description}
-                </p>
-                <div className="flex flex-wrap gap-2 mb-7">
-                  {(featured.techStack ?? featured.tags).slice(0, 5).map((tech) => (
-                    <span
-                      key={tech}
-                      className="text-[10px] px-2.5 py-1 rounded-md font-mono"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.09)",
-                        color: "rgba(255,255,255,0.45)",
-                      }}
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-                <span
-                  className="inline-flex items-center gap-2 text-sm font-semibold group-hover:gap-3 transition-all duration-200"
-                  style={{ color: "#F55036" }}
-                >
-                  {featured.liveUrl ? "View Live Project" : "View Case Study"}
-                  {featured.liveUrl ? (
-                    <ExternalLink size={14} className="transition-transform group-hover:translate-x-1" />
-                  ) : (
-                    <ArrowUpRight size={14} />
-                  )}
-                </span>
-              </div>
-            </Link>
-          </div>
-        </Reveal>
-
-        {/* ── 3-column secondary grid ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-          {secondary.map((project, i) => (
-            <Reveal key={project.id}>
-              <Link
-                href={project.liveUrl || `/work/${project.slug}`}
-                target={project.liveUrl ? "_blank" : undefined}
-                rel={project.liveUrl ? "noopener noreferrer" : undefined}
-                className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 h-full block"
-                style={{
-                  background: "#0d0f14",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                }}
-              >
-                {/* Image */}
-                <div className="relative h-[180px] overflow-hidden flex-shrink-0">
-                  <Image
-                    src={resolveImage(project)}
-                    alt={project.title}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  <span>View All Projects</span>
+                  <ArrowRight
+                    size={16}
+                    className="transition-transform group-hover:translate-x-1.5"
                   />
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        "linear-gradient(to top, #0d0f14 0%, transparent 60%)",
-                    }}
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-col flex-1 p-5">
-                  <h3
-                    className="font-bold mb-1 leading-snug"
-                    style={{ fontSize: "1rem", color: "#EDEDED" }}
-                  >
-                    {project.title}
-                  </h3>
-                  <p
-                    className="text-xs mb-3"
-                    style={{ color: "rgba(255,255,255,0.35)" }}
-                  >
-                    {project.subtitle}
-                  </p>
-                  <p
-                    className="text-xs leading-relaxed mb-4 flex-1 line-clamp-2"
-                    style={{ color: "#6B7280" }}
-                  >
-                    {project.description}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {(project.techStack ?? project.tags).slice(0, 3).map((tech) => (
-                      <span
-                        key={tech}
-                        className="text-[10px] px-2 py-0.5 rounded font-mono"
-                        style={{
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.09)",
-                          color: "rgba(255,255,255,0.4)",
-                        }}
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                  <span
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold group-hover:gap-2 transition-all duration-200"
-                    style={{ color: "#F55036" }}
-                  >
-                    {project.liveUrl ? "View Live" : "View Project"}
-                    {project.liveUrl ? (
-                      <ExternalLink size={12} />
-                    ) : (
-                      <ArrowUpRight size={12} />
-                    )}
-                  </span>
-                </div>
-              </Link>
+                </Link>
+              </div>
             </Reveal>
-          ))}
+          </div>
+
+          {/* ── Right Column: 3 Project Cards ── */}
+          <div className="lg:col-span-8 xl:col-span-8.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-5">
+              {displayProjects.map((project, idx) => (
+                <Reveal key={project.id || idx}>
+                  <Link
+                    href={project.liveUrl || `/work/${project.slug}`}
+                    target={project.liveUrl ? "_blank" : undefined}
+                    rel={project.liveUrl ? "noopener noreferrer" : undefined}
+                    className="group relative h-full flex flex-col justify-between p-4 sm:p-5 rounded-[22px] bg-[#080B11] border border-white/[0.08] transition-all duration-300 hover:border-[#F55036]/50 hover:bg-[#0c101a] hover:-translate-y-1 shadow-lg block overflow-hidden"
+                  >
+                    {/* Top Image Container */}
+                    <div className="relative w-full h-[180px] sm:h-[190px] rounded-2xl overflow-hidden mb-4 bg-[#121520] border border-white/[0.04]">
+                      <Image
+                        src={project.image}
+                        alt={project.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#080B11]/40 to-transparent pointer-events-none" />
+                    </div>
+
+                    {/* Card Content & Action Button */}
+                    <div className="flex items-end justify-between gap-3 pt-1">
+                      <div className="flex-1">
+                        <span className="text-[11px] text-zinc-400 font-medium block mb-1 uppercase tracking-wider font-mono">
+                          {project.category}
+                        </span>
+                        <h3 className="font-display text-lg sm:text-xl font-bold text-white tracking-tight leading-snug mb-1.5 group-hover:text-white transition-colors">
+                          {project.title}
+                        </h3>
+                        <p className="text-zinc-400 text-xs leading-relaxed line-clamp-2">
+                          {project.description}
+                        </p>
+                      </div>
+
+                      {/* Bottom-right action button */}
+                      <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-zinc-300 group-hover:border-[#F55036] group-hover:text-[#F55036] group-hover:bg-[#F55036]/10 transition-all duration-300 shrink-0 mb-0.5">
+                        <ArrowUpRight
+                          size={15}
+                          className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300"
+                        />
+                      </div>
+                    </div>
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
+          </div>
         </div>
-
-        {/* ── View All CTA ── */}
-        <Reveal className="flex justify-center">
-          <Link
-            href="/work"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white/70 hover:text-white text-sm font-medium transition-all duration-200 hover:scale-[1.02]"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
-            View Full Portfolio
-            <ArrowRight size={15} />
-          </Link>
-        </Reveal>
-
       </div>
     </section>
   );
 }
+

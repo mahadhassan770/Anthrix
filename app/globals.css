@@ -223,3 +223,22 @@
 .copilot-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(245, 80, 54, 0.8);
 }
+
+/* ============================================
+   INFINITE MARQUEE ANIMATION
+   ============================================ */
+@keyframes infinite-marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-infinite-marquee {
+  display: flex;
+  width: max-content;
+  animation: infinite-marquee 28s linear infinite;
+  will-change: transform;
+}

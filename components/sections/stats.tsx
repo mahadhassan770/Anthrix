@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
+import { Users, Rocket, Globe, Trophy, ArrowUpRight } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -8,42 +10,34 @@ import { Reveal } from "@/components/motion/reveal";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const telemetryStats = [
+const statsData = [
   {
-    id: "01",
-    tag: "METRIC_01 // VELOCITY",
-    value: 48,
-    suffix: "h",
-    label: "Max Initial Turnaround",
-    description: "From concept scoping to initial functional prototype.",
-    watermark: "48H",
-  },
-  {
-    id: "02",
-    tag: "METRIC_02 // ECOSYSTEM",
-    value: 10,
+    id: "projects",
+    icon: Users,
+    value: 50,
     suffix: "+",
-    label: "Core Integrations Mastered",
-    description: "Stripe, Supabase, n8n, OpenAI, WhatsApp & cloud APIs.",
-    watermark: "10+",
+    label: "Projects Delivered",
   },
   {
-    id: "03",
-    tag: "METRIC_03 // DIRECT_LEAD",
-    value: 2,
-    suffix: "",
-    label: "Dedicated Founders",
-    description: "Direct collaboration with senior builders, zero middle managers.",
-    watermark: "02",
+    id: "clients",
+    icon: Rocket,
+    value: 30,
+    suffix: "+",
+    label: "Happy Clients",
   },
   {
-    id: "04",
-    tag: "METRIC_04 // ENGINEERING",
-    value: 100,
-    suffix: "%",
-    label: "Custom Architecture",
-    description: "Tailored codebases engineered for performance, security & scale.",
-    watermark: "100%",
+    id: "industries",
+    icon: Globe,
+    value: 12,
+    suffix: "+",
+    label: "Industries Served",
+  },
+  {
+    id: "years",
+    icon: Trophy,
+    value: 5,
+    suffix: "+",
+    label: "Years of Impact",
   },
 ];
 
@@ -59,12 +53,12 @@ export function Stats() {
       numberRefs.current.forEach((el, index) => {
         if (!el) return;
 
-        const targetValue = telemetryStats[index].value;
+        const targetValue = statsData[index].value;
         const obj = { val: 0 };
 
         gsap.to(obj, {
           val: targetValue,
-          duration: 2.2,
+          duration: 2,
           ease: "power3.out",
           scrollTrigger: {
             trigger: el,
@@ -83,111 +77,117 @@ export function Stats() {
   return (
     <section
       ref={container}
-      className="py-24 md:py-32 relative overflow-hidden"
-      style={{
-        background: "#080B12",
-        borderTop: "1px solid rgba(255,255,255,0.06)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-      }}
+      className="py-24 md:py-32 relative overflow-hidden bg-[#05080D] border-t border-b border-white/10"
     >
-      {/* ── Background Grid & Lighting ── */}
+      {/* Background Ambience */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(245,80,54,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(245,80,54,0.03) 1px, transparent 1px)
+            linear-gradient(rgba(245,80,54,0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(245,80,54,0.02) 1px, transparent 1px)
           `,
-          backgroundSize: "48px 48px",
+          backgroundSize: "64px 64px",
         }}
       />
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-        style={{
-          width: "800px",
-          height: "300px",
-          background: "radial-gradient(ellipse, rgba(245,80,54,0.06) 0%, transparent 70%)",
-          filter: "blur(60px)",
-        }}
-      />
+      <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-[#F55036]/[0.04] blur-[100px] pointer-events-none rounded-full" />
 
-      <div className="container mx-auto px-6 relative z-10">
+      <div className="container mx-auto px-6 relative z-10 max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          {/* ── Left Column: About Anthrix Story ── */}
+          <div className="lg:col-span-6 space-y-6">
+            <Reveal>
+              {/* Tag / Pill */}
+              <div
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 mb-6 rounded-full"
+                style={{
+                  border: "1px solid rgba(245, 80, 54, 0.4)",
+                  background: "rgba(245, 80, 54, 0.08)",
+                }}
+              >
+                <span className="text-[11px] font-mono tracking-widest text-[#F55036] uppercase font-bold">
+                  ABOUT ANTHRIX
+                </span>
+              </div>
 
-        {/* ── Top Bar Telemetry Status ── */}
-        <Reveal>
-          <div className="flex items-center justify-between pb-8 mb-12 border-b border-white/5">
-            <div className="flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-[#F55036] animate-ping" />
-              <span className="text-xs font-mono uppercase tracking-widest text-[#F55036]">
-                STUDIO TELEMETRY // BENCHMARKS
-              </span>
-            </div>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-white/40 hidden sm:inline-block">
-              ENGINEERED FOR PRODUCTION
-            </span>
-          </div>
-        </Reveal>
+              {/* Main Heading */}
+              <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[46px] xl:text-5xl font-bold tracking-tight text-white leading-[1.18] mb-6">
+                Engineering the future with clarity, speed, and{" "}
+                <span className="text-[#F55036]">precision.</span>
+              </h2>
 
-        {/* ── 4-Column Futuristic Telemetry Matrix ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-0 lg:divide-x divide-white/10 relative">
-          {telemetryStats.map((stat, i) => (
-            <Reveal key={stat.id}>
-              <div className="group relative lg:px-8 flex flex-col justify-between h-full transition-all duration-300">
+              {/* Body Description */}
+              <p className="text-zinc-400 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal">
+                Anthrix is a software and AI architecture company focused on building robust systems
+                that empower businesses to grow, operate, and lead in the digital era.
+              </p>
 
-                {/* Background Large Holographic Watermark */}
-                <div
-                  className="absolute -top-6 right-4 font-[family-name:var(--font-orbitron)] font-black text-6xl md:text-7xl pointer-events-none select-none opacity-[0.035] group-hover:opacity-[0.08] transition-opacity duration-500 text-white"
+              {/* CTA Action Button */}
+              <div>
+                <Link
+                  href="/about"
+                  className="group inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#F55036] text-white text-sm font-semibold transition-all duration-300 hover:bg-[#F55036]/10"
                 >
-                  {stat.watermark}
-                </div>
-
-                {/* Top Corner Crosshair Marker */}
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-[10px] font-mono tracking-widest text-[#8B929B] uppercase">
-                    {stat.tag}
-                  </span>
-                  <span className="text-[#F55036]/40 font-mono text-xs group-hover:text-[#F55036] transition-colors">
-                    +
-                  </span>
-                </div>
-
-                {/* Giant Metric Display */}
-                <div className="mb-4">
-                  <div className="flex items-baseline gap-1">
-                    <span
-                      ref={(el) => {
-                        numberRefs.current[i] = el;
-                      }}
-                      className="font-[family-name:var(--font-orbitron)] font-extrabold text-5xl md:text-6xl lg:text-7xl text-white tracking-tight leading-none drop-shadow-[0_0_24px_rgba(245,80,54,0.3)] group-hover:text-[#F55036] transition-colors duration-300"
-                    >
-                      {stat.value}
-                    </span>
-                    {stat.suffix && (
-                      <span className="font-[family-name:var(--font-orbitron)] font-bold text-3xl md:text-4xl text-[#F55036]">
-                        {stat.suffix}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Metric Label */}
-                <h4 className="font-bold text-base md:text-lg text-white mb-2 tracking-tight group-hover:text-white transition-colors">
-                  {stat.label}
-                </h4>
-
-                {/* Description */}
-                <p className="text-xs leading-relaxed text-[#8B929B] mb-6">
-                  {stat.description}
-                </p>
-
-                {/* Bottom Interactive Laser Accent */}
-                <div className="w-8 h-[2px] bg-[#F55036]/30 group-hover:w-full group-hover:bg-[#F55036] transition-all duration-500 rounded-full shadow-[0_0_8px_rgba(245,80,54,0.4)]" />
+                  <span>Learn More About Us</span>
+                  <ArrowUpRight
+                    size={15}
+                    className="text-[#F55036] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300"
+                  />
+                </Link>
               </div>
             </Reveal>
-          ))}
-        </div>
+          </div>
 
+          {/* ── Center Glowing Optical Beam (Hidden on Mobile) ── */}
+          <div className="hidden lg:flex lg:col-span-1 items-center justify-center relative">
+            <div className="w-[1px] h-[380px] bg-gradient-to-b from-transparent via-[#F55036]/30 to-transparent relative">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#F55036] shadow-[0_0_24px_8px_rgba(245,80,54,0.9),0_0_50px_16px_rgba(245,80,54,0.5)]" />
+            </div>
+          </div>
+
+          {/* ── Right Column: 2x2 Metric Stat Cards Grid ── */}
+          <div className="lg:col-span-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              {statsData.map((stat, i) => {
+                const Icon = stat.icon;
+                return (
+                  <Reveal key={stat.id}>
+                    <div className="group relative p-6 sm:p-7 rounded-[22px] bg-[#080B11] border border-white/[0.08] transition-all duration-300 hover:border-[#F55036]/50 hover:bg-[#0c101a] hover:-translate-y-1 shadow-lg flex flex-col justify-between min-h-[170px]">
+                      {/* Top Icon Box */}
+                      <div className="w-11 h-11 rounded-xl bg-[#121520] border border-[#F55036] flex items-center justify-center text-[#F55036] mb-6 shadow-[0_0_15px_rgba(245,80,54,0.12)] group-hover:scale-105 transition-transform duration-300">
+                        <Icon size={20} className="text-[#F55036]" />
+                      </div>
+
+                      {/* Number & Suffix */}
+                      <div className="mt-auto">
+                        <div className="flex items-baseline gap-0.5 mb-1.5">
+                          <span
+                            ref={(el) => {
+                              numberRefs.current[i] = el;
+                            }}
+                            className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight leading-none"
+                          >
+                            {stat.value}
+                          </span>
+                          <span className="font-display font-bold text-2xl sm:text-3xl text-white">
+                            {stat.suffix}
+                          </span>
+                        </div>
+
+                        {/* Metric Label */}
+                        <p className="text-sm font-medium text-zinc-400">
+                          {stat.label}
+                        </p>
+                      </div>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
+

@@ -5,14 +5,14 @@ const db = new PrismaClient();
 
 const capabilities = [
   {
-    id: "build",
+    id: "saas",
     code: "01",
     tag: "ENGINEERING",
-    title: "Software & SaaS",
-    subtitle: "Web & Application Architecture",
+    title: "SaaS Platform Engineering",
+    subtitle: "Scalable Multi-Tenant Platforms",
     description:
-      "High-throughput digital products—from Next.js web apps to multi-tenant SaaS platforms engineered to scale.",
-    icon: "Code2",
+      "Secure, multi-tenant SaaS platforms built for performance, scalability, and growth.",
+    icon: "Cloud",
     features: [
       "High-Performance Web Applications",
       "Multi-Tenant SaaS Infrastructure",
@@ -21,30 +21,30 @@ const capabilities = [
     stack: ["Next.js", "React", "Node.js", "PostgreSQL"],
   },
   {
-    id: "intelligence",
+    id: "web-app",
     code: "02",
-    tag: "AUTONOMOUS AI",
-    title: "AI Agents & RAG",
-    subtitle: "Intelligent Reasoning Systems",
+    tag: "DEVELOPMENT",
+    title: "Web & App Development",
+    subtitle: "Fast & Intuitive Experiences",
     description:
-      "Autonomous LLM agents and RAG pipelines that query internal docs and automate complex multi-step reasoning.",
-    icon: "Bot",
+      "Modern web and mobile experiences that are fast, intuitive, and built to convert.",
+    icon: "AppWindow",
     features: [
-      "Autonomous Multi-Step AI Agents",
-      "Secure Enterprise Knowledge RAG",
-      "AI-Driven Decision Layers",
+      "Modern Responsive Web Apps",
+      "Mobile-Optimized UX & UI",
+      "High-Conversion Architecture",
     ],
-    stack: ["LLM Agents", "Vector DBs", "RAG Pipelines"],
+    stack: ["Next.js", "TypeScript", "Tailwind CSS", "React"],
   },
   {
-    id: "automate",
+    id: "automation",
     code: "03",
     tag: "AUTOMATION",
-    title: "Workflow Pipelines",
-    subtitle: "End-to-End Task Elimination",
+    title: "Automation & Integrations",
+    subtitle: "End-to-End Workflow Optimization",
     description:
-      "Systematically eliminate manual tasks using n8n, custom webhooks, and automated data processing pipelines.",
-    icon: "Workflow",
+      "Streamline operations with powerful automation and seamless third-party integrations.",
+    icon: "Zap",
     features: [
       "n8n & Custom API Pipelines",
       "Cross-Tool Workflow Automation",
@@ -53,20 +53,20 @@ const capabilities = [
     stack: ["n8n", "Zapier", "API Connectors", "ETL"],
   },
   {
-    id: "bots",
+    id: "ai-solutions",
     code: "04",
-    tag: "SALES & SUPPORT",
-    title: "WhatsApp & Bots",
-    subtitle: "24/7 Conversational AI",
+    tag: "AUTONOMOUS AI",
+    title: "AI Agents & Solutions",
+    subtitle: "Adaptive Learning Systems",
     description:
-      "AI-powered WhatsApp bots that qualify leads, answer FAQs, book calls, and follow up—operating around the clock.",
-    icon: "MessageSquare",
+      "Build intelligent AI agents and custom solutions that learn, adapt, and scale with your business.",
+    icon: "Cpu",
     features: [
-      "24/7 AI WhatsApp Sales Bots",
-      "Lead Qualification & Booking",
-      "Automated Support & Follow-Up",
+      "Autonomous Multi-Step AI Agents",
+      "Secure Enterprise Knowledge RAG",
+      "AI-Driven Decision Layers",
     ],
-    stack: ["WhatsApp API", "LLM", "CRM Connectors"],
+    stack: ["LLM Agents", "Vector DBs", "RAG Pipelines"],
   },
 ];
 

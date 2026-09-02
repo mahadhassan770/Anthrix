@@ -93,12 +93,11 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <article className="relative min-h-screen bg-[#080B12] text-[#EDEDED] overflow-hidden pt-24 pb-28">
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
-        />
-      </head>
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
 
       {/* Cyber Grid & Background Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[400px] bg-gradient-to-b from-[#F55036]/10 via-transparent to-transparent blur-3xl pointer-events-none" />
