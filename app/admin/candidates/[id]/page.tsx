@@ -622,52 +622,77 @@ export default function CandidateDetailPage() {
           </div>
         </div>
 
-        {/* RIGHT PANE: Resume Preview & Document Viewer (6 Cols) */}
+        {/* RIGHT PANE: Resume & Document */}
         <div className="lg:col-span-6 space-y-6">
-          <div className="bg-card border border-border rounded-2xl p-6 space-y-4 flex flex-col h-[750px]">
-            <div className="flex items-center justify-between border-b border-border/50 pb-3 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <FileText size={16} className="text-primary" />
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
-                  Resume Document
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <a
-                  href={candidate.resumeUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ExternalLink size={13} /> Open in Tab
-                </a>
-                <a
-                  href={candidate.resumeUrl}
-                  download
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm"
-                >
-                  <Download size={13} /> Download
-                </a>
-              </div>
+          <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+            <div className="flex items-center gap-2 border-b border-border/50 pb-4">
+              <FileText size={16} className="text-primary" />
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
+                Resume Document
+              </span>
             </div>
 
-            {/* Embedded Resume Viewer — Google Docs viewer handles all formats */}
-            <div className="flex-1 bg-background border border-border rounded-xl overflow-hidden relative">
-              {candidate.resumeUrl ? (
-                <iframe
-                  src={`https://docs.google.com/gview?url=${encodeURIComponent(candidate.resumeUrl)}&embedded=true`}
-                  className="w-full h-full border-none"
-                  title="Resume PDF"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="p-6 h-full overflow-y-auto space-y-3 font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                  <p className="font-bold text-foreground mb-2">Raw Resume Text Extraction:</p>
-                  {candidate.resumeText || "No text could be extracted from this document."}
+            {candidate.resumeUrl ? (
+              <div className="space-y-4">
+                {/* Visual resume card */}
+                <div className="flex flex-col items-center justify-center gap-5 py-12 bg-background border border-border rounded-2xl">
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <FileText size={28} className="text-primary" />
+                  </div>
+                  <div className="text-center space-y-1">
+                    <p className="text-sm font-bold text-foreground">{candidate.name}&apos;s Resume</p>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {candidate.resumeUrl.split("/").pop()?.split("?")[0] || "resume.pdf"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={candidate.resumeUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-primary/90 transition-all"
+                    >
+                      <ExternalLink size={15} />
+                      View Resume
+                    </a>
+                    <a
+                      href={candidate.resumeUrl}
+                      download
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all"
+                    >
+                      <Download size={15} />
+                      Download
+                    </a>
+                  </div>
                 </div>
-              )}
-            </div>
+
+                {/* Raw extracted text fallback */}
+                {candidate.resumeText && (
+                  <div className="bg-background border border-border rounded-xl p-4 space-y-2">
+                    <p className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
+                      Extracted Resume Text
+                    </p>
+                    <div className="max-h-64 overflow-y-auto font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                      {candidate.resumeText}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-4 py-16 bg-background border border-dashed border-border rounded-2xl text-center">
+                <FileText size={32} className="text-muted-foreground/40" />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">No resume uploaded</p>
+                  <p className="text-xs text-muted-foreground mt-1">This candidate did not attach a resume document.</p>
+                </div>
+                {candidate.resumeText && (
+                  <div className="w-full px-4 text-left bg-card border border-border rounded-xl p-4 space-y-2 max-h-48 overflow-y-auto">
+                    <p className="text-xs font-mono font-bold text-muted-foreground uppercase">Raw Text</p>
+                    <p className="font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">{candidate.resumeText}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
