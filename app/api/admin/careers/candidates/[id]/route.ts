@@ -118,7 +118,8 @@ export async function PATCH(
               const pdfBuf = unzipSinglePdf(zipBuf);
               // eslint-disable-next-line @typescript-eslint/no-require-imports
               const { PDFParse } = require("pdf-parse");
-              const parser = new PDFParse({ data: new Uint8Array(pdfBuf) });
+              const parser = new PDFParse({ verbosity: -1 });
+              await parser.load(pdfBuf);
               const parsed = await parser.getText();
               if (parsed.text && parsed.text.trim()) {
                 resumeText = parsed.text.trim();
