@@ -45,42 +45,28 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await resumeFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 3. Extract text from resume (PDF, DOCX, DOC, or TXT)
+    // 3. Extract text for Word docs from raw buffer (works reliably)
     let extractedText = "";
     const lowerFileName = (resumeFile.name || "").toLowerCase();
 
     try {
-      if (lowerFileName.endsWith(".pdf") || resumeFile.type === "application/pdf") {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { PDFParse } = require("pdf-parse");
-        const parser = new PDFParse({ data: buffer });
-        const parsed = await parser.getText();
-        extractedText = parsed.text || "";
-        await parser.destroy().catch(() => {});
-      } else if (lowerFileName.endsWith(".docx") || resumeFile.type.includes("wordprocessingml")) {
+      if (lowerFileName.endsWith(".docx") || resumeFile.type.includes("wordprocessingml")) {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const mammoth = require("mammoth");
         const result = await mammoth.extractRawText({ buffer });
-        extractedText = result.value || "";
+        extractedText = (result.value || "").replace(/\0/g, "").trim();
       } else if (lowerFileName.endsWith(".doc")) {
         const binStr = buffer.toString("binary");
         const matches = binStr.match(/[\x20-\x7E\t\r\n]{4,}/g);
         if (matches && matches.length > 0) {
-          extractedText = matches.join(" ");
+          extractedText = matches.join(" ").replace(/\0/g, "").trim();
         }
       } else if (lowerFileName.endsWith(".txt")) {
-        extractedText = buffer.toString("utf-8");
+        extractedText = buffer.toString("utf-8").replace(/\0/g, "").trim();
       }
+      // Note: PDFs are handled AFTER Cloudinary upload via authenticated archive URL
     } catch (parseErr) {
-      console.warn("Could not extract full text from resume:", parseErr);
-    }
-
-    // Always sanitize text and remove null bytes (\0) which crash PostgreSQL
-    extractedText = (extractedText || "").replace(/\0/g, "").trim();
-
-    if (!extractedText || extractedText.length < 20) {
-      const safeFilename = resumeFile.name.replace(/[^\w.-]/g, "_");
-      extractedText = `Resume file uploaded: ${safeFilename}`;
+      console.warn("Could not extract text from non-PDF resume:", parseErr);
     }
 
     // 4. Upload to dedicated ATS Cloudinary
@@ -107,7 +93,73 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Create Candidate Record
+    // 5. For PDFs: extract text via authenticated Cloudinary archive download
+    //    This is far more reliable than parsing in the Next.js/Turbopack bundled context.
+    if (!extractedText && (lowerFileName.endsWith(".pdf") || resumeFile.type === "application/pdf")) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { getAtsCloudinary } = require("@/lib/ats-cloudinary");
+        const atsCloud = getAtsCloudinary();
+        const archiveUrl = atsCloud.utils.download_archive_url({
+          public_ids: [resumePublicId],
+          resource_type: "image",
+          target_format: "zip",
+        });
+        const archiveRes = await fetch(archiveUrl);
+        if (archiveRes.ok) {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const zlib = require("zlib");
+          const zipBuf = Buffer.from(await archiveRes.arrayBuffer());
+
+          // Unzip the single PDF file
+          let pdfBuf: Buffer | null = null;
+          let offset = 0;
+          while (offset < zipBuf.length - 4) {
+            const sig = zipBuf.readUInt32LE(offset);
+            if (sig === 0x04034b50) {
+              const compMethod = zipBuf.readUInt16LE(offset + 8);
+              let compSize = zipBuf.readUInt32LE(offset + 18);
+              const fnameLen = zipBuf.readUInt16LE(offset + 26);
+              const extraLen = zipBuf.readUInt16LE(offset + 28);
+              const dataOffset = offset + 30 + fnameLen + extraLen;
+              if (compSize === 0) {
+                let nextSig = dataOffset;
+                while (nextSig < zipBuf.length - 4) {
+                  const s = zipBuf.readUInt32LE(nextSig);
+                  if (s === 0x08074b50 || s === 0x02014b50 || s === 0x04034b50) break;
+                  nextSig++;
+                }
+                compSize = nextSig - dataOffset;
+              }
+              const compData = zipBuf.slice(dataOffset, dataOffset + compSize);
+              pdfBuf = compMethod === 0 ? compData : zlib.inflateRawSync(compData);
+              break;
+            }
+            offset++;
+          }
+
+          if (pdfBuf && pdfBuf.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const { PDFParse } = require("pdf-parse");
+            const parser = new PDFParse({ data: pdfBuf });
+            const parsed = await parser.getText();
+            await parser.destroy().catch(() => {});
+            extractedText = (parsed?.text || "").replace(/\0/g, "").trim();
+          }
+        }
+      } catch (pdfErr) {
+        console.warn("PDF text extraction via archive failed:", pdfErr);
+      }
+    }
+
+    // Fallback placeholder if extraction failed or yielded too little text
+    if (!extractedText || extractedText.length < 20) {
+      const safeFilename = resumeFile.name.replace(/[^\w.-]/g, "_");
+      extractedText = `Resume file uploaded: ${safeFilename}`;
+    }
+
+
+    // 6. Create Candidate Record
     const candidate = await atsDb.candidate.create({
       data: {
         jobId: job.id,
