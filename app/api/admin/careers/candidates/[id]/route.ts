@@ -2,6 +2,40 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { atsDb } from "@/lib/ats-db";
 import { scoreCandidateResume } from "@/lib/ats-ai-scorer";
+import { atsCloudinary } from "@/lib/ats-cloudinary";
+import { PDFParse } from "pdf-parse";
+import zlib from "zlib";
+
+function unzipSinglePdf(zipBuffer: Buffer): Buffer {
+  let offset = 0;
+  while (offset < zipBuffer.length - 4) {
+    const sig = zipBuffer.readUInt32LE(offset);
+    if (sig === 0x04034b50) {
+      const compMethod = zipBuffer.readUInt16LE(offset + 8);
+      let compSize = zipBuffer.readUInt32LE(offset + 18);
+      const fnameLen = zipBuffer.readUInt16LE(offset + 26);
+      const extraLen = zipBuffer.readUInt16LE(offset + 28);
+      const dataOffset = offset + 30 + fnameLen + extraLen;
+
+      if (compSize === 0) {
+        let nextSigOffset = dataOffset;
+        while (nextSigOffset < zipBuffer.length - 4) {
+          const s = zipBuffer.readUInt32LE(nextSigOffset);
+          if (s === 0x08074b50 || s === 0x02014b50 || s === 0x04034b50) break;
+          nextSigOffset++;
+        }
+        compSize = nextSigOffset - dataOffset;
+      }
+
+      const compData = zipBuffer.slice(dataOffset, dataOffset + compSize);
+      if (compMethod === 0) return compData;
+      if (compMethod === 8) return zlib.inflateRawSync(compData);
+    }
+    offset++;
+  }
+  throw new Error("Could not extract PDF from zip");
+}
+
 
 // GET single candidate with evaluation & emails
 export async function GET(
@@ -59,9 +93,40 @@ export async function PATCH(
         return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
       }
 
+      let resumeText = candidate.resumeText || "";
+
+      // If text wasn't previously extracted, extract from Cloudinary on demand
+      if (!resumeText || resumeText.startsWith("Resume file uploaded:")) {
+        try {
+          if (candidate.resumePublicId) {
+            const archiveUrl = atsCloudinary.utils.download_archive_url({
+              public_ids: [candidate.resumePublicId],
+              resource_type: "image",
+              target_format: "zip",
+            });
+            const res = await fetch(archiveUrl);
+            if (res.ok) {
+              const zipBuf = Buffer.from(await res.arrayBuffer());
+              const pdfBuf = unzipSinglePdf(zipBuf);
+              const parser = new PDFParse({ data: new Uint8Array(pdfBuf) });
+              const parsed = await parser.getText();
+              if (parsed.text && parsed.text.trim()) {
+                resumeText = parsed.text.trim();
+                await atsDb.candidate.update({
+                  where: { id: candidate.id },
+                  data: { resumeText },
+                });
+              }
+            }
+          }
+        } catch (extractErr) {
+          console.warn("Could not re-extract resume text:", extractErr);
+        }
+      }
+
       const evalResult = await scoreCandidateResume({
         candidateName: candidate.name,
-        resumeText: candidate.resumeText || "",
+        resumeText: resumeText,
         jobTitle: candidate.job.title,
         jobDescription: candidate.job.description,
         jobRequirements: candidate.job.requirements,

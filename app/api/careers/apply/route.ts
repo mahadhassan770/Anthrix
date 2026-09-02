@@ -48,11 +48,11 @@ export async function POST(req: NextRequest) {
     let extractedText = "";
     try {
       if (resumeFile.name.endsWith(".pdf") || resumeFile.type === "application/pdf") {
-        // Dynamic require — runs at request time only, never at build time
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
-        const pdfData = await pdfParse(buffer);
-        extractedText = pdfData.text || "";
+        const { PDFParse } = require("pdf-parse");
+        const parser = new PDFParse({ data: new Uint8Array(buffer) });
+        const parsed = await parser.getText();
+        extractedText = parsed.text || "";
       } else {
         extractedText = buffer.toString("utf-8");
       }
