@@ -183,6 +183,8 @@ function CandidatesAdminInner() {
   const [scoreFilter, setScoreFilter] = useState<"ALL" | "TOP" | "MID" | "LOW">("ALL");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"LEADERBOARD" | "KANBAN">("LEADERBOARD");
+  const [atsAiEnabled, setAtsAiEnabled] = useState(true);
+  const [togglingAi, setTogglingAi] = useState(false);
 
   const [interviewCandidate, setInterviewCandidate] = useState<any>(null);
 
@@ -197,10 +199,35 @@ function CandidatesAdminInner() {
       setCandidates(Array.isArray(candData.candidates) ? candData.candidates : []);
       setStats(candData.stats || {});
       setJobs(Array.isArray(jobsData) ? jobsData : []);
+      if (candData.atsAiEnabled !== undefined) {
+        setAtsAiEnabled(candData.atsAiEnabled);
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleAtsAi = async () => {
+    setTogglingAi(true);
+    const nextVal = !atsAiEnabled;
+    try {
+      const res = await fetch("/api/admin/careers/candidates", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ atsAiEnabled: nextVal }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAtsAiEnabled(nextVal);
+      } else {
+        alert(data.error || "Failed to toggle AI scoring setting.");
+      }
+    } catch (err: any) {
+      alert("Network error: " + err.message);
+    } finally {
+      setTogglingAi(false);
     }
   };
 
@@ -365,7 +392,37 @@ function CandidatesAdminInner() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">Candidates & AI Rankings</h1>
           <p className="text-sm text-muted-foreground mt-1">Intelligent candidate scoring, resume dossiers, and automated recruitment stages.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Real AI Scoring & Processing Master Toggle */}
+          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-card border border-border shadow-sm">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full transition-colors ${atsAiEnabled ? "bg-emerald-400 animate-pulse" : "bg-zinc-500"}`} />
+              <span className="text-xs font-mono font-bold text-foreground">AI Scoring</span>
+              <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${
+                atsAiEnabled
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  : "bg-zinc-500/10 border-zinc-500/30 text-zinc-400"
+              }`}>
+                {atsAiEnabled ? "ACTIVE" : "PAUSED"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleAtsAi}
+              disabled={togglingAi}
+              className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer shrink-0 disabled:opacity-50 ${
+                atsAiEnabled ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" : "bg-zinc-700"
+              }`}
+              title={atsAiEnabled ? "Click to turn OFF AI processing & scoring" : "Click to turn ON AI processing & scoring"}
+            >
+              <span
+                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all shadow-sm ${
+                  atsAiEnabled ? "left-4.5" : "left-0.5"
+                }`}
+              />
+            </button>
+          </div>
+
           <div className="flex items-center bg-card border border-border rounded-xl p-1">
             <button
               onClick={() => setViewMode("LEADERBOARD")}
@@ -458,10 +515,17 @@ function CandidatesAdminInner() {
             return (
               <div key={candidate.id} className="bg-card border border-border hover:border-border/80 transition-all rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5 group">
                 <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
-                  <div className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center flex-shrink-0 font-mono shadow-sm ${isTop ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : isMid ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-zinc-500/10 border-zinc-500/30 text-zinc-400"}`}>
-                    <span className="text-lg font-extrabold leading-none">{score}%</span>
-                    <span className="text-[9px] uppercase font-bold tracking-tighter mt-0.5">Match</span>
-                  </div>
+                  {candidate.evaluation ? (
+                    <div className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center flex-shrink-0 font-mono shadow-sm ${isTop ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : isMid ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-zinc-500/10 border-zinc-500/30 text-zinc-400"}`}>
+                      <span className="text-lg font-extrabold leading-none">{score}%</span>
+                      <span className="text-[9px] uppercase font-bold tracking-tighter mt-0.5">Match</span>
+                    </div>
+                  ) : (
+                    <div className="w-14 h-14 rounded-2xl border border-dashed border-zinc-500/30 flex flex-col items-center justify-center flex-shrink-0 font-mono shadow-sm bg-zinc-500/5 text-zinc-400">
+                      <span className="text-base font-extrabold leading-none">--</span>
+                      <span className="text-[8px] uppercase font-bold tracking-tighter mt-0.5 text-zinc-500">Paused</span>
+                    </div>
+                  )}
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors truncate">{candidate.name}</h3>
@@ -471,6 +535,11 @@ function CandidatesAdminInner() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-mono font-medium text-primary px-2 py-0.5 rounded bg-primary/10 border border-primary/20">{candidate.job?.title || "Role"}</span>
                       <span className="text-xs font-mono text-muted-foreground">Applied {new Date(candidate.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                      {!candidate.evaluation && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-500/10 border border-zinc-500/20 text-zinc-400">
+                          AI Scoring Paused
+                        </span>
+                      )}
                     </div>
                     {candidate.evaluation?.matchedSkills && candidate.evaluation.matchedSkills.length > 0 && (
                       <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -529,9 +598,15 @@ function CandidatesAdminInner() {
                           {cand.name}
                         </Link>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className="text-[10px] font-mono font-bold text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10">
-                            {cand.evaluation?.score ?? 0}%
-                          </span>
+                          {cand.evaluation ? (
+                            <span className="text-[10px] font-mono font-bold text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10">
+                              {cand.evaluation.score}%
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono font-bold text-zinc-400 px-1.5 py-0.5 rounded bg-zinc-500/10">
+                              Paused
+                            </span>
+                          )}
                           <button
                             type="button"
                             onClick={(e) => handleDeleteCandidate(e, cand.id, cand.name)}

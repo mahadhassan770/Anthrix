@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { atsDb } from "@/lib/ats-db";
+import { db } from "@/lib/db";
 import { scoreCandidateResume } from "@/lib/ats-ai-scorer";
 import { atsCloudinary } from "@/lib/ats-cloudinary";
 import zlib from "zlib";
@@ -92,6 +93,18 @@ export async function PATCH(
 
     // If re-evaluating with AI requested
     if (data.action === "rescore") {
+      const atsAiSetting = await db.systemSetting.findUnique({
+        where: { key: "ats_ai_enabled" },
+      });
+      const isAtsAiEnabled = atsAiSetting ? atsAiSetting.value !== "false" : true;
+
+      if (!isAtsAiEnabled) {
+        return NextResponse.json(
+          { error: "AI processing and scoring is currently turned OFF. Enable 'AI Scoring' in the ATS pipeline or settings to evaluate candidates." },
+          { status: 400 }
+        );
+      }
+
       const candidate = await atsDb.candidate.findUnique({
         where: { id },
         include: { job: true },
@@ -103,31 +116,59 @@ export async function PATCH(
 
       let resumeText = candidate.resumeText || "";
 
-      // If text wasn't previously extracted, extract from Cloudinary on demand
+      // If text wasn't previously extracted, extract on demand
       if (!resumeText || resumeText.startsWith("Resume file uploaded:")) {
         try {
           if (candidate.resumePublicId) {
-            const archiveUrl = atsCloudinary.utils.download_archive_url({
-              public_ids: [candidate.resumePublicId],
-              resource_type: "image",
-              target_format: "zip",
-            });
-            const res = await fetch(archiveUrl);
-            if (res.ok) {
-              const zipBuf = Buffer.from(await res.arrayBuffer());
-              const pdfBuf = unzipSinglePdf(zipBuf);
-              // eslint-disable-next-line @typescript-eslint/no-require-imports
-              const { PDFParse } = require("pdf-parse");
-              const parser = new PDFParse({ data: pdfBuf });
-              const parsed = await parser.getText();
-              await parser.destroy().catch(() => {});
-              if (parsed.text && parsed.text.trim()) {
-                resumeText = parsed.text.trim();
-                await atsDb.candidate.update({
-                  where: { id: candidate.id },
-                  data: { resumeText },
-                });
+            const isDocx = candidate.resumePublicId.endsWith(".docx") || candidate.resumeUrl?.includes(".docx");
+            const isDoc = candidate.resumePublicId.endsWith(".doc") || candidate.resumeUrl?.includes(".doc");
+
+            if (isDocx || isDoc) {
+              // Fetch raw document
+              const fetchUrl = candidate.resumeUrl;
+              const res = await fetch(fetchUrl);
+              if (res.ok) {
+                const docBuf = Buffer.from(await res.arrayBuffer());
+                if (isDocx) {
+                  // eslint-disable-next-line @typescript-eslint/no-require-imports
+                  const mammoth = require("mammoth");
+                  const result = await mammoth.extractRawText({ buffer: docBuf });
+                  const text = (result?.value || "").replace(/\0/g, "").trim();
+                  if (text) resumeText = text;
+                } else {
+                  const binStr = docBuf.toString("binary");
+                  const matches = binStr.match(/[\x20-\x7E\t\r\n]{4,}/g);
+                  if (matches && matches.length > 0) {
+                    resumeText = matches.join(" ").replace(/\0/g, "").trim();
+                  }
+                }
               }
+            } else {
+              // PDF Document
+              const archiveUrl = atsCloudinary.utils.download_archive_url({
+                public_ids: [candidate.resumePublicId],
+                resource_type: "image",
+                target_format: "zip",
+              });
+              const res = await fetch(archiveUrl);
+              if (res.ok) {
+                const zipBuf = Buffer.from(await res.arrayBuffer());
+                const pdfBuf = unzipSinglePdf(zipBuf);
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                const { PDFParse } = require("pdf-parse");
+                const parser = new PDFParse({ data: pdfBuf });
+                const parsed = await parser.getText();
+                await parser.destroy().catch(() => {});
+                const text = (parsed?.text || "").replace(/\0/g, "").trim();
+                if (text) resumeText = text;
+              }
+            }
+
+            if (resumeText && !resumeText.startsWith("Resume file uploaded:")) {
+              await atsDb.candidate.update({
+                where: { id: candidate.id },
+                data: { resumeText },
+              });
             }
           }
         } catch (extractErr) {

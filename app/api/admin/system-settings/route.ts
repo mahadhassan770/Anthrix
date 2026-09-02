@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
       atsGroqApiKey: configMap["ats_groq_api_key"] || process.env.ATS_GROQ_API_KEY || "",
       atsGroqModel: configMap["ats_groq_model"] || "llama-3.3-70b-versatile",
       atsSystemPrompt: configMap["ats_system_prompt"] || "",
+      atsAiEnabled: configMap["ats_ai_enabled"] !== "false",
       // SMTP settings
       smtpHost: configMap["smtp_host"] || process.env.SMTP_HOST || "",
       smtpPort: configMap["smtp_port"] || process.env.SMTP_PORT || "465",
@@ -200,6 +201,7 @@ export async function POST(req: NextRequest) {
     if (typeof body.atsGroqApiKey === "string") updates.push({ key: "ats_groq_api_key", value: body.atsGroqApiKey.trim() });
     if (typeof body.atsGroqModel === "string") updates.push({ key: "ats_groq_model", value: body.atsGroqModel.trim() });
     if (typeof body.atsSystemPrompt === "string") updates.push({ key: "ats_system_prompt", value: body.atsSystemPrompt });
+    if (typeof body.atsAiEnabled === "boolean") updates.push({ key: "ats_ai_enabled", value: body.atsAiEnabled ? "true" : "false" });
 
     // SMTP Updates
     if (typeof body.smtpHost === "string") updates.push({ key: "smtp_host", value: body.smtpHost.trim() });

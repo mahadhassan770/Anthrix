@@ -89,6 +89,7 @@ export default function SettingsPage() {
     atsGroqApiKey: "",
     atsGroqModel: "",
     atsSystemPrompt: "",
+    atsAiEnabled: true,
   });
   const [atsShowKey, setAtsShowKey] = useState(false);
   const [atsTesting, setAtsTesting] = useState(false);
@@ -230,6 +231,7 @@ export default function SettingsPage() {
               atsGroqApiKey: data.atsGroqApiKey || "",
               atsGroqModel: savedAtsGroqModel,
               atsSystemPrompt: data.atsSystemPrompt || "",
+              atsAiEnabled: data.atsAiEnabled !== false,
             };
             setAiSettings(loadedAi);
             setAiLoaded(true);
@@ -1433,6 +1435,39 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-border/50">
+                    {/* Master AI Processing & Scoring Toggle */}
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-background border border-border">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">AI Processing & Resume Scoring</p>
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                            aiSettings.atsAiEnabled
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                              : "bg-zinc-500/10 border-zinc-500/30 text-zinc-400"
+                          }`}>
+                            {aiSettings.atsAiEnabled ? "ACTIVE" : "PAUSED"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Automatically parse resumes, calculate 0–100 match scores, and generate talent dossiers upon submission
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAiSettings({ ...aiSettings, atsAiEnabled: !aiSettings.atsAiEnabled })}
+                        className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer shrink-0 ml-4 ${
+                          aiSettings.atsAiEnabled ? "bg-emerald-500" : "bg-border"
+                        }`}
+                        title={aiSettings.atsAiEnabled ? "Click to pause AI scoring" : "Click to activate AI scoring"}
+                      >
+                        <span
+                          className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                            aiSettings.atsAiEnabled ? "left-7" : "left-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
                     {/* ATS API Key */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">

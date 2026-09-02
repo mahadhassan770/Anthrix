@@ -437,17 +437,23 @@ export default function CandidateDetailClient({ id }: { id: string }) {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
               {candidate.name}
             </h1>
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-mono font-bold border ${
-                isTop
-                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                  : isMid
-                  ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                  : "bg-zinc-500/10 border-zinc-500/30 text-zinc-400"
-              }`}
-            >
-              {score}% AI Match
-            </span>
+            {evalData ? (
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-mono font-bold border ${
+                  isTop
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                    : isMid
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                    : "bg-zinc-500/10 border-zinc-500/30 text-zinc-400"
+                }`}
+              >
+                {score}% AI Match
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold border bg-zinc-500/10 border-zinc-500/30 text-zinc-400">
+                AI Scoring Paused
+              </span>
+            )}
           </div>
           <p className="text-xs font-mono text-muted-foreground">
             Applied for <strong className="text-foreground">{candidate.job?.title}</strong> on{" "}
@@ -531,21 +537,27 @@ export default function CandidateDetailClient({ id }: { id: string }) {
                   AI Evaluation Synthesis
                 </h3>
               </div>
-              <span
-                className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
-                  evalData?.recommendation === "STRONG_MATCH"
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                    : evalData?.recommendation === "CONSIDER"
-                    ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                    : "bg-red-500/10 text-red-400 border border-red-500/20"
-                }`}
-              >
-                {evalData?.recommendation?.replace("_", " ") || "NEEDS_REVIEW"}
-              </span>
+              {evalData ? (
+                <span
+                  className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
+                    evalData.recommendation === "STRONG_MATCH"
+                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      : evalData.recommendation === "CONSIDER"
+                      ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                      : "bg-red-500/10 text-red-400 border border-red-500/20"
+                  }`}
+                >
+                  {evalData.recommendation?.replace("_", " ") || "NEEDS_REVIEW"}
+                </span>
+              ) : (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
+                  AI PAUSED
+                </span>
+              )}
             </div>
 
             <p className="text-xs text-foreground/90 leading-relaxed font-sans">
-              {evalData?.summary || "No AI evaluation summary generated yet. Click Re-score AI to run."}
+              {evalData?.summary || "Automatic AI scoring was paused when this candidate applied. You can turn AI Scoring ON to evaluate incoming applications, or click 'Re-score AI' above to score this candidate on demand."}
             </p>
 
             {/* 5-Dimension Evaluation Breakdown */}
