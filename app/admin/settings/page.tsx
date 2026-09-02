@@ -83,11 +83,11 @@ export default function SettingsPage() {
   // ─── AI Copilot State (Super Admin Only) ──────────────────────────────────
   const [aiSettings, setAiSettings] = useState({
     groqApiKey: "",
-    groqModel: "llama-3.3-70b-versatile",
+    groqModel: "",
     copilotEnabled: true,
     systemPrompt: "",
     atsGroqApiKey: "",
-    atsGroqModel: "llama-3.3-70b-versatile",
+    atsGroqModel: "",
     atsSystemPrompt: "",
   });
   const [atsShowKey, setAtsShowKey] = useState(false);
@@ -109,21 +109,26 @@ export default function SettingsPage() {
   const [atsModelMsg, setAtsModelMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [atsTestMsg, setAtsTestMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const fetchLiveModels = async () => {
+  const fetchLiveModels = async (keyOverride?: string, modelOverride?: string) => {
     setModelsLoading(true);
     setMainModelMsg(null);
     try {
+      const apiKey = keyOverride !== undefined ? keyOverride : aiSettings.groqApiKey;
       const res = await fetch("/api/admin/groq-models", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: aiSettings.groqApiKey, type: "main" }),
+        body: JSON.stringify({ apiKey, type: "main" }),
       });
       const data = await res.json();
       if (res.ok && data.models && data.models.length > 0) {
         setLiveModels(data.models);
-        if (!data.models.includes(aiSettings.groqModel)) {
-          setAiSettings((prev) => ({ ...prev, groqModel: data.models[0] }));
-        }
+        setAiSettings((prev) => {
+          const current = modelOverride !== undefined ? modelOverride : prev.groqModel;
+          if (current) {
+            return { ...prev, groqModel: current };
+          }
+          return { ...prev, groqModel: data.models[0] };
+        });
         setMainModelMsg({ type: "success", text: `Successfully loaded ${data.models.length} active models directly from Groq!` });
       } else {
         setMainModelMsg({ type: "error", text: data.error || "Failed to fetch live models. Check API key." });
@@ -135,21 +140,26 @@ export default function SettingsPage() {
     }
   };
 
-  const fetchAtsLiveModels = async () => {
+  const fetchAtsLiveModels = async (keyOverride?: string, modelOverride?: string) => {
     setAtsModelsLoading(true);
     setAtsModelMsg(null);
     try {
+      const apiKey = keyOverride !== undefined ? keyOverride : (aiSettings.atsGroqApiKey || aiSettings.groqApiKey);
       const res = await fetch("/api/admin/groq-models", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: aiSettings.atsGroqApiKey || aiSettings.groqApiKey, type: "ats" }),
+        body: JSON.stringify({ apiKey, type: "ats" }),
       });
       const data = await res.json();
       if (res.ok && data.models && data.models.length > 0) {
         setAtsLiveModels(data.models);
-        if (!data.models.includes(aiSettings.atsGroqModel)) {
-          setAiSettings((prev) => ({ ...prev, atsGroqModel: data.models[0] }));
-        }
+        setAiSettings((prev) => {
+          const current = modelOverride !== undefined ? modelOverride : prev.atsGroqModel;
+          if (current) {
+            return { ...prev, atsGroqModel: current };
+          }
+          return { ...prev, atsGroqModel: data.models[0] };
+        });
         setAtsModelMsg({ type: "success", text: `Successfully loaded ${data.models.length} active ATS models directly from Groq!` });
       } else {
         setAtsModelMsg({ type: "error", text: data.error || "Failed to fetch ATS models. Check API key." });
@@ -210,18 +220,21 @@ export default function SettingsPage() {
           setSmtpLoaded(true);
 
           if (session?.user?.role === "super_admin") {
-            setAiSettings({
+            const savedGroqModel = data.groqModel || "";
+            const savedAtsGroqModel = data.atsGroqModel || "";
+            const loadedAi = {
               groqApiKey: data.groqApiKey || "",
-              groqModel: data.groqModel || "llama-3.3-70b-versatile",
+              groqModel: savedGroqModel,
               copilotEnabled: data.copilotEnabled !== false,
               systemPrompt: data.systemPrompt || "",
               atsGroqApiKey: data.atsGroqApiKey || "",
-              atsGroqModel: data.atsGroqModel || "llama-3.3-70b-versatile",
+              atsGroqModel: savedAtsGroqModel,
               atsSystemPrompt: data.atsSystemPrompt || "",
-            });
+            };
+            setAiSettings(loadedAi);
             setAiLoaded(true);
-            fetchLiveModels();
-            fetchAtsLiveModels();
+            fetchLiveModels(loadedAi.groqApiKey, savedGroqModel);
+            fetchAtsLiveModels(loadedAi.atsGroqApiKey || loadedAi.groqApiKey, savedAtsGroqModel);
           }
         }
       })
@@ -1282,7 +1295,7 @@ export default function SettingsPage() {
                         <label className="text-sm font-semibold text-foreground">Copilot LLM Model</label>
                         <button
                           type="button"
-                          onClick={fetchLiveModels}
+                          onClick={() => fetchLiveModels()}
                           disabled={modelsLoading}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
                           title="Fetch all live active models from Groq API"
@@ -1309,17 +1322,24 @@ export default function SettingsPage() {
                         className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
                         disabled={modelsLoading}
                       >
-                        {liveModels.length === 0 ? (
-                          <option value={aiSettings.groqModel || "llama-3.3-70b-versatile"}>
-                            {aiSettings.groqModel ? `${aiSettings.groqModel} (Click Fetch to refresh list)` : "Click '⚡ Fetch Available Models' above"}
-                          </option>
-                        ) : (
-                          liveModels.map((modelId) => (
+                        {(() => {
+                          const options = [...liveModels];
+                          if (aiSettings.groqModel && !options.includes(aiSettings.groqModel)) {
+                            options.unshift(aiSettings.groqModel);
+                          }
+                          if (options.length === 0) {
+                            return (
+                              <option value={aiSettings.groqModel || ""}>
+                                {aiSettings.groqModel ? `${aiSettings.groqModel} (Saved)` : "Click '⚡ Fetch Available Models' above"}
+                              </option>
+                            );
+                          }
+                          return options.map((modelId) => (
                             <option key={modelId} value={modelId}>
-                              {modelId}{modelId === "llama-3.3-70b-versatile" ? " (Recommended Flagship)" : ""}
+                              {modelId}
                             </option>
-                          ))
-                        )}
+                          ));
+                        })()}
                       </select>
                       <p className="text-xs text-muted-foreground">
                         {liveModels.length > 0
@@ -1443,7 +1463,7 @@ export default function SettingsPage() {
                         <label className="text-sm font-semibold text-foreground">ATS Evaluation Model</label>
                         <button
                           type="button"
-                          onClick={fetchAtsLiveModels}
+                          onClick={() => fetchAtsLiveModels()}
                           disabled={atsModelsLoading}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
                           title="Fetch all live active models for ATS from Groq API"
@@ -1470,17 +1490,24 @@ export default function SettingsPage() {
                         className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
                         disabled={atsModelsLoading}
                       >
-                        {atsLiveModels.length === 0 ? (
-                          <option value={aiSettings.atsGroqModel || "llama-3.3-70b-versatile"}>
-                            {aiSettings.atsGroqModel ? `${aiSettings.atsGroqModel} (Click Fetch to refresh list)` : "Click '⚡ Fetch Available Models' above"}
-                          </option>
-                        ) : (
-                          atsLiveModels.map((modelId) => (
+                        {(() => {
+                          const options = [...atsLiveModels];
+                          if (aiSettings.atsGroqModel && !options.includes(aiSettings.atsGroqModel)) {
+                            options.unshift(aiSettings.atsGroqModel);
+                          }
+                          if (options.length === 0) {
+                            return (
+                              <option value={aiSettings.atsGroqModel || ""}>
+                                {aiSettings.atsGroqModel ? `${aiSettings.atsGroqModel} (Saved)` : "Click '⚡ Fetch Available Models' above"}
+                              </option>
+                            );
+                          }
+                          return options.map((modelId) => (
                             <option key={modelId} value={modelId}>
-                              {modelId}{modelId === "llama-3.3-70b-versatile" ? " (Recommended for ATS)" : ""}
+                              {modelId}
                             </option>
-                          ))
-                        )}
+                          ));
+                        })()}
                       </select>
                       <p className="text-xs text-muted-foreground">
                         Used to parse resumes against requirements, calculate 0–100 match scores, and auto-generate candidate emails.
