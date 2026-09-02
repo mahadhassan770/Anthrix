@@ -116,6 +116,7 @@ export default function CandidateDetailPage() {
   const [adminNotes, setAdminNotes] = useState("");
   const [rating, setRating] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const [failedResumePages, setFailedResumePages] = useState<Set<number>>(new Set());
   const [showInterviewModal, setShowInterviewModal] = useState(false);
 
   // Email Drawer state
@@ -164,6 +165,19 @@ export default function CandidateDetailPage() {
   const handleOpenEmailModal = (templateId = "interview_invite") => {
     applyTemplate(templateId);
     setEmailModalOpen(true);
+  };
+
+  const getResumePageUrl = (resumeUrl: string, pageNum: number) => {
+    if (!resumeUrl) return "";
+    if (resumeUrl.includes("cloudinary.com")) {
+      const parts = resumeUrl.split("/upload/");
+      if (parts.length === 2) {
+        const cleanAfter = parts[1].replace(/^v\d+\//, "").replace(/\.pdf(\?.*)?$/i, ".png");
+        return `${parts[0]}/upload/pg_${pageNum},f_png,q_auto:best/${cleanAfter}`;
+      }
+      return resumeUrl.replace(/\.pdf(\?.*)?$/i, `.png?pg=${pageNum}`);
+    }
+    return resumeUrl;
   };
 
   const doStageUpdate = async (newStage: string) => {
@@ -622,39 +636,35 @@ export default function CandidateDetailPage() {
           </div>
         </div>
 
-        {/* RIGHT PANE: Resume & Document */}
+        {/* RIGHT PANE: Resume & Document Multi-Page Reader */}
         <div className="lg:col-span-6 space-y-6">
           <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
             <div className="flex items-center justify-between border-b border-border/50 pb-4">
               <div className="flex items-center gap-2">
                 <FileText size={16} className="text-primary" />
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
-                  Resume Document
-                </span>
+                <div>
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
+                    Resume Document
+                  </span>
+                  <span className="ml-2 text-[11px] font-mono text-muted-foreground">
+                    (All Pages)
+                  </span>
+                </div>
               </div>
 
               {candidate.resumeUrl && (
                 <div className="flex items-center gap-2">
-                  <a
-                    href={
-                      candidate.resumeUrl.includes("cloudinary.com") && candidate.resumeUrl.toLowerCase().endsWith(".pdf")
-                        ? candidate.resumeUrl.replace(/\.pdf$/i, ".png")
-                        : candidate.resumeUrl
-                    }
+                  <Link
+                    href={`/admin/candidates/${id}/resume`}
                     target="_blank"
-                    rel="noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-primary/90 transition-all"
                   >
                     <ExternalLink size={13} />
                     View Resume
-                  </a>
+                  </Link>
                   <a
-                    href={
-                      candidate.resumeUrl.includes("cloudinary.com") && candidate.resumeUrl.toLowerCase().endsWith(".pdf")
-                        ? candidate.resumeUrl.replace(/\.pdf$/i, ".png")
-                        : candidate.resumeUrl
-                    }
-                    download
+                    href={getResumePageUrl(candidate.resumeUrl, 1)}
+                    download={`${candidate.name.replace(/\s+/g, "_")}_Resume.png`}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all"
@@ -668,39 +678,51 @@ export default function CandidateDetailPage() {
 
             {candidate.resumeUrl ? (
               <div className="space-y-4">
-                {/* Embedded Visual Resume Render */}
+                {/* Embedded Multi-Page Visual Resume Render */}
                 <div className="relative bg-background border border-border rounded-2xl overflow-hidden group shadow-inner">
-                  <div className="max-h-[600px] overflow-y-auto p-2 bg-zinc-950/40">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={
-                        candidate.resumeUrl.includes("cloudinary.com") && candidate.resumeUrl.toLowerCase().endsWith(".pdf")
-                          ? candidate.resumeUrl.replace(/\.pdf$/i, ".png")
-                          : candidate.resumeUrl
-                      }
-                      alt={`${candidate.name}'s Resume Preview`}
-                      className="w-full h-auto object-contain rounded-xl shadow-md mx-auto"
-                      loading="lazy"
-                    />
+                  <div className="max-h-[700px] overflow-y-auto p-4 space-y-4 bg-zinc-950/40">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((pageNum) => {
+                      if (failedResumePages.has(pageNum)) return null;
+                      const pageUrl = getResumePageUrl(candidate.resumeUrl, pageNum);
+
+                      return (
+                        <div key={pageNum} className="space-y-1.5">
+                          <div className="flex items-center justify-between px-1 text-[11px] font-mono text-muted-foreground">
+                            <span>Page {pageNum}</span>
+                          </div>
+                          <div className="w-full bg-white rounded-xl shadow-lg overflow-hidden border border-zinc-700/40">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={pageUrl}
+                              alt={`${candidate.name}'s Resume - Page ${pageNum}`}
+                              onError={() => {
+                                setFailedResumePages((prev) => {
+                                  const next = new Set(prev);
+                                  next.add(pageNum);
+                                  return next;
+                                });
+                              }}
+                              className="w-full h-auto object-contain block mx-auto select-none"
+                              loading="eager"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  {/* Overlay button to open full in new tab */}
-                  <div className="p-3 bg-background/90 border-t border-border flex items-center justify-between">
+                  {/* Overlay footer to open dedicated full reader in new tab */}
+                  <div className="p-3 bg-background/95 border-t border-border flex items-center justify-between">
                     <div className="text-xs font-mono text-muted-foreground truncate">
                       {candidate.resumeUrl.split("/").pop()?.split("?")[0] || "resume.pdf"}
                     </div>
-                    <a
-                      href={
-                        candidate.resumeUrl.includes("cloudinary.com") && candidate.resumeUrl.toLowerCase().endsWith(".pdf")
-                          ? candidate.resumeUrl.replace(/\.pdf$/i, ".png")
-                          : candidate.resumeUrl
-                      }
+                    <Link
+                      href={`/admin/candidates/${id}/resume`}
                       target="_blank"
-                      rel="noreferrer"
                       className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
                     >
-                      Open Full in New Tab <ExternalLink size={12} />
-                    </a>
+                      Open Full Multi-Page Reader <ExternalLink size={12} />
+                    </Link>
                   </div>
                 </div>
 
