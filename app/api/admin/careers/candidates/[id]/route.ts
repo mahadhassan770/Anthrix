@@ -154,13 +154,54 @@ export async function PATCH(
               if (res.ok) {
                 const zipBuf = Buffer.from(await res.arrayBuffer());
                 const pdfBuf = unzipSinglePdf(zipBuf);
-                // eslint-disable-next-line @typescript-eslint/no-require-imports
-                const { PDFParse } = require("pdf-parse");
-                const parser = new PDFParse({ data: pdfBuf });
-                const parsed = await parser.getText();
-                await parser.destroy().catch(() => {});
-                const text = (parsed?.text || "").replace(/\0/g, "").trim();
-                if (text) resumeText = text;
+                try {
+                  // eslint-disable-next-line @typescript-eslint/no-require-imports
+                  const { PDFParse } = require("pdf-parse");
+                  const parser = new PDFParse({ data: pdfBuf });
+                  const parsed = await parser.getText();
+                  await parser.destroy().catch(() => {});
+                  const text = (parsed?.text || "").replace(/\0/g, "").trim();
+                  if (text && text.length > 30) resumeText = text;
+                } catch {
+                  // pdf-parse fallback below
+                }
+
+                if (!resumeText || resumeText.length < 30) {
+                  try {
+                    const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+                    const str = pdfBuf.toString("binary");
+                    let match: RegExpExecArray | null;
+                    let fallbackText = "";
+                    while ((match = streamRegex.exec(str)) !== null) {
+                      const streamData = Buffer.from(match[1], "binary");
+                      let decompressed = "";
+                      try {
+                        decompressed = zlib.inflateSync(streamData).toString("utf-8");
+                      } catch {
+                        try {
+                          decompressed = zlib.inflateRawSync(streamData).toString("utf-8");
+                        } catch {
+                          decompressed = streamData.toString("latin1");
+                        }
+                      }
+                      const tjMatches = decompressed.match(/\(([^)]+)\)\s*Tj/g) || [];
+                      for (const tm of tjMatches) {
+                        const m = tm.match(/\(([^)]+)\)\s*Tj/);
+                        if (m && m[1]) fallbackText += m[1] + " ";
+                      }
+                      const arrMatches = decompressed.match(/\[([^\]]+)\]\s*TJ/g) || [];
+                      for (const tj of arrMatches) {
+                        const parts = tj.match(/\(([^)]+)\)/g) || [];
+                        for (const p of parts) fallbackText += p.slice(1, -1);
+                        fallbackText += " ";
+                      }
+                    }
+                    fallbackText = fallbackText.replace(/\\([()\\])/g, "$1").replace(/\s+/g, " ").replace(/\0/g, "").trim();
+                    if (fallbackText.length > 30) resumeText = fallbackText;
+                  } catch {
+                    // ignore
+                  }
+                }
               }
             }
 

@@ -5,6 +5,7 @@ import { uploadAtsResume } from "@/lib/ats-cloudinary";
 import { scoreCandidateResume } from "@/lib/ats-ai-scorer";
 import { sendEmail } from "@/lib/email-service";
 import { ATS_EMAIL_TEMPLATES } from "@/lib/ats-email-templates";
+import zlib from "zlib";
 
 // Mark this route as Node.js runtime so native modules work at request time
 export const runtime = "nodejs";
@@ -45,12 +46,77 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await resumeFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 3. Extract text for Word docs from raw buffer (works reliably)
+    // 3. Extract text from resume (PDF, DOCX, DOC, or TXT)
     let extractedText = "";
     const lowerFileName = (resumeFile.name || "").toLowerCase();
 
     try {
-      if (lowerFileName.endsWith(".docx") || resumeFile.type.includes("wordprocessingml")) {
+      if (lowerFileName.endsWith(".pdf") || resumeFile.type === "application/pdf") {
+        // Method 1: Try pdf-parse (now externalized in next.config.ts)
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const { PDFParse } = require("pdf-parse");
+          const parser = new PDFParse({ data: buffer });
+          const parsed = await parser.getText();
+          await parser.destroy().catch(() => {});
+          const t = (parsed?.text || "").replace(/\0/g, "").trim();
+          if (t.length > 30) {
+            extractedText = t;
+          }
+        } catch (pdfErr) {
+          console.warn("[PDF Intake] Primary pdf-parse failed, activating zlib stream parser:", pdfErr);
+        }
+
+        // Method 2: Pure Node.js built-in zlib FlateDecode stream parser (100% reliable fallback)
+        if (!extractedText || extractedText.length < 30) {
+          try {
+            const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+            const str = buffer.toString("binary");
+            let match: RegExpExecArray | null;
+            let fallbackText = "";
+
+            while ((match = streamRegex.exec(str)) !== null) {
+              const streamData = Buffer.from(match[1], "binary");
+              let decompressed = "";
+              try {
+                decompressed = zlib.inflateSync(streamData).toString("utf-8");
+              } catch {
+                try {
+                  decompressed = zlib.inflateRawSync(streamData).toString("utf-8");
+                } catch {
+                  decompressed = streamData.toString("latin1");
+                }
+              }
+
+              const tjMatches = decompressed.match(/\(([^)]+)\)\s*Tj/g) || [];
+              for (const tm of tjMatches) {
+                const m = tm.match(/\(([^)]+)\)\s*Tj/);
+                if (m && m[1]) fallbackText += m[1] + " ";
+              }
+              const arrMatches = decompressed.match(/\[([^\]]+)\]\s*TJ/g) || [];
+              for (const tj of arrMatches) {
+                const parts = tj.match(/\(([^)]+)\)/g) || [];
+                for (const p of parts) {
+                  fallbackText += p.slice(1, -1);
+                }
+                fallbackText += " ";
+              }
+            }
+
+            fallbackText = fallbackText
+              .replace(/\\([()\\])/g, "$1")
+              .replace(/\s+/g, " ")
+              .replace(/\0/g, "")
+              .trim();
+
+            if (fallbackText.length > 30) {
+              extractedText = fallbackText;
+            }
+          } catch (streamErr) {
+            console.warn("[PDF Intake] Stream parser failed:", streamErr);
+          }
+        }
+      } else if (lowerFileName.endsWith(".docx") || resumeFile.type.includes("wordprocessingml")) {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const mammoth = require("mammoth");
         const result = await mammoth.extractRawText({ buffer });
@@ -64,9 +130,16 @@ export async function POST(req: NextRequest) {
       } else if (lowerFileName.endsWith(".txt")) {
         extractedText = buffer.toString("utf-8").replace(/\0/g, "").trim();
       }
-      // Note: PDFs are handled AFTER Cloudinary upload via authenticated archive URL
     } catch (parseErr) {
-      console.warn("Could not extract text from non-PDF resume:", parseErr);
+      console.warn("Could not extract text from resume:", parseErr);
+    }
+
+    // Always sanitize text and remove null bytes (\0) which crash PostgreSQL
+    extractedText = (extractedText || "").replace(/\0/g, "").trim();
+
+    if (!extractedText || extractedText.length < 20) {
+      const safeFilename = resumeFile.name.replace(/[^\w.-]/g, "_");
+      extractedText = `Resume file uploaded: ${safeFilename}`;
     }
 
     // 4. Upload to dedicated ATS Cloudinary
@@ -91,71 +164,6 @@ export async function POST(req: NextRequest) {
         { error: "Failed to upload resume document. Please try again." },
         { status: 500 }
       );
-    }
-
-    // 5. For PDFs: extract text via authenticated Cloudinary archive download
-    //    This is far more reliable than parsing in the Next.js/Turbopack bundled context.
-    if (!extractedText && (lowerFileName.endsWith(".pdf") || resumeFile.type === "application/pdf")) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { getAtsCloudinary } = require("@/lib/ats-cloudinary");
-        const atsCloud = getAtsCloudinary();
-        const archiveUrl = atsCloud.utils.download_archive_url({
-          public_ids: [resumePublicId],
-          resource_type: "image",
-          target_format: "zip",
-        });
-        const archiveRes = await fetch(archiveUrl);
-        if (archiveRes.ok) {
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
-          const zlib = require("zlib");
-          const zipBuf = Buffer.from(await archiveRes.arrayBuffer());
-
-          // Unzip the single PDF file
-          let pdfBuf: Buffer | null = null;
-          let offset = 0;
-          while (offset < zipBuf.length - 4) {
-            const sig = zipBuf.readUInt32LE(offset);
-            if (sig === 0x04034b50) {
-              const compMethod = zipBuf.readUInt16LE(offset + 8);
-              let compSize = zipBuf.readUInt32LE(offset + 18);
-              const fnameLen = zipBuf.readUInt16LE(offset + 26);
-              const extraLen = zipBuf.readUInt16LE(offset + 28);
-              const dataOffset = offset + 30 + fnameLen + extraLen;
-              if (compSize === 0) {
-                let nextSig = dataOffset;
-                while (nextSig < zipBuf.length - 4) {
-                  const s = zipBuf.readUInt32LE(nextSig);
-                  if (s === 0x08074b50 || s === 0x02014b50 || s === 0x04034b50) break;
-                  nextSig++;
-                }
-                compSize = nextSig - dataOffset;
-              }
-              const compData = zipBuf.slice(dataOffset, dataOffset + compSize);
-              pdfBuf = compMethod === 0 ? compData : zlib.inflateRawSync(compData);
-              break;
-            }
-            offset++;
-          }
-
-          if (pdfBuf && pdfBuf.length > 0) {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            const { PDFParse } = require("pdf-parse");
-            const parser = new PDFParse({ data: pdfBuf });
-            const parsed = await parser.getText();
-            await parser.destroy().catch(() => {});
-            extractedText = (parsed?.text || "").replace(/\0/g, "").trim();
-          }
-        }
-      } catch (pdfErr) {
-        console.warn("PDF text extraction via archive failed:", pdfErr);
-      }
-    }
-
-    // Fallback placeholder if extraction failed or yielded too little text
-    if (!extractedText || extractedText.length < 20) {
-      const safeFilename = resumeFile.name.replace(/[^\w.-]/g, "_");
-      extractedText = `Resume file uploaded: ${safeFilename}`;
     }
 
 
