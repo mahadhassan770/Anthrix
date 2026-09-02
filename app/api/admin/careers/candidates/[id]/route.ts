@@ -3,8 +3,9 @@ import { auth } from "@/lib/auth";
 import { atsDb } from "@/lib/ats-db";
 import { scoreCandidateResume } from "@/lib/ats-ai-scorer";
 import { atsCloudinary } from "@/lib/ats-cloudinary";
-import { PDFParse } from "pdf-parse";
 import zlib from "zlib";
+
+export const runtime = "nodejs";
 
 function unzipSinglePdf(zipBuffer: Buffer): Buffer {
   let offset = 0;
@@ -115,6 +116,8 @@ export async function PATCH(
             if (res.ok) {
               const zipBuf = Buffer.from(await res.arrayBuffer());
               const pdfBuf = unzipSinglePdf(zipBuf);
+              // eslint-disable-next-line @typescript-eslint/no-require-imports
+              const { PDFParse } = require("pdf-parse");
               const parser = new PDFParse({ data: new Uint8Array(pdfBuf) });
               const parsed = await parser.getText();
               if (parsed.text && parsed.text.trim()) {

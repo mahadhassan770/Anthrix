@@ -133,10 +133,15 @@ export default function CandidateDetailClient({ id }: { id: string }) {
     setFetchError(null);
     try {
       const res = await fetch(`/api/admin/careers/candidates/${id}`);
-      const data = await res.json();
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        // Non-JSON response
+      }
+
       if (!res.ok) {
-        // Show real error — 401 = session expired, 404 = truly deleted, 500 = server error
-        setFetchError(`Error ${res.status}: ${data?.error || "Failed to load candidate"}`);
+        setFetchError(`Error ${res.status}: ${data?.error || res.statusText || "Failed to load candidate"}`);
         setCandidate(null);
         return;
       }
@@ -145,7 +150,7 @@ export default function CandidateDetailClient({ id }: { id: string }) {
       setRating(data.rating || 0);
     } catch (err: any) {
       console.error("fetchCandidate error:", err);
-      setFetchError("Network error — make sure the dev server is running");
+      setFetchError(err?.message || "Network error — failed to load candidate");
       setCandidate(null);
     } finally {
       setLoading(false);
