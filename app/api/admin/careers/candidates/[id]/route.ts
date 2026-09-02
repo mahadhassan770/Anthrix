@@ -118,9 +118,9 @@ export async function PATCH(
               const pdfBuf = unzipSinglePdf(zipBuf);
               // eslint-disable-next-line @typescript-eslint/no-require-imports
               const { PDFParse } = require("pdf-parse");
-              const parser = new PDFParse({ verbosity: -1 });
-              await parser.load(pdfBuf);
+              const parser = new PDFParse({ data: pdfBuf });
               const parsed = await parser.getText();
+              await parser.destroy().catch(() => {});
               if (parsed.text && parsed.text.trim()) {
                 resumeText = parsed.text.trim();
                 await atsDb.candidate.update({

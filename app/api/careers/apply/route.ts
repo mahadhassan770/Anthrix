@@ -50,10 +50,10 @@ export async function POST(req: NextRequest) {
       if (resumeFile.name.endsWith(".pdf") || resumeFile.type === "application/pdf") {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { PDFParse } = require("pdf-parse");
-        const parser = new PDFParse({ verbosity: -1 });
-        await parser.load(buffer);
+        const parser = new PDFParse({ data: buffer });
         const parsed = await parser.getText();
         extractedText = parsed.text || "";
+        await parser.destroy().catch(() => {});
       } else {
         extractedText = buffer.toString("utf-8");
       }
