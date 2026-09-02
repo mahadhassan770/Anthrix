@@ -52,19 +52,51 @@ export async function POST(req: NextRequest) {
 
     try {
       if (lowerFileName.endsWith(".pdf") || resumeFile.type === "application/pdf") {
-        // Method 1: Try pdf-parse (now externalized in next.config.ts)
+        // Engine 1: pdf2json (Vercel Serverless native, handles CID/ToUnicode fonts, zero DOM dependencies)
         try {
           // eslint-disable-next-line @typescript-eslint/no-require-imports
-          const { PDFParse } = require("pdf-parse");
-          const parser = new PDFParse({ data: buffer });
-          const parsed = await parser.getText();
-          await parser.destroy().catch(() => {});
-          const t = (parsed?.text || "").replace(/\0/g, "").trim();
-          if (t.length > 30) {
-            extractedText = t;
+          const PDFParser = require("pdf2json");
+          const text = await new Promise<string>((resolve) => {
+            const pdfParser = new PDFParser(null, 1);
+            const timeout = setTimeout(() => resolve(""), 6000);
+            pdfParser.on("pdfParser_dataError", (err: any) => {
+              clearTimeout(timeout);
+              console.warn("[PDF Intake] pdf2json error:", err?.parserError || err);
+              resolve("");
+            });
+            pdfParser.on("pdfParser_dataReady", () => {
+              clearTimeout(timeout);
+              try {
+                const raw = pdfParser.getRawTextContent() || "";
+                resolve(raw.replace(/\0/g, "").trim());
+              } catch {
+                resolve("");
+              }
+            });
+            pdfParser.parseBuffer(buffer);
+          });
+          if (text && text.length > 30) {
+            extractedText = text;
           }
-        } catch (pdfErr) {
-          console.warn("[PDF Intake] Primary pdf-parse failed, activating zlib stream parser:", pdfErr);
+        } catch (pdf2JsonErr) {
+          console.warn("[PDF Intake] pdf2json failed, trying secondary engines:", pdf2JsonErr);
+        }
+
+        // Engine 2: Try pdf-parse (now externalized in next.config.ts)
+        if (!extractedText || extractedText.length < 30) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const { PDFParse } = require("pdf-parse");
+            const parser = new PDFParse({ data: buffer });
+            const parsed = await parser.getText();
+            await parser.destroy().catch(() => {});
+            const t = (parsed?.text || "").replace(/\0/g, "").trim();
+            if (t.length > 30) {
+              extractedText = t;
+            }
+          } catch (pdfErr) {
+            console.warn("[PDF Intake] pdf-parse failed, activating zlib stream parser:", pdfErr);
+          }
         }
 
         // Method 2: Pure Node.js built-in zlib FlateDecode stream parser (100% reliable fallback)

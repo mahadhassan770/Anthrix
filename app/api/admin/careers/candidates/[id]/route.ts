@@ -154,16 +154,46 @@ export async function PATCH(
               if (res.ok) {
                 const zipBuf = Buffer.from(await res.arrayBuffer());
                 const pdfBuf = unzipSinglePdf(zipBuf);
+                // Engine 1: pdf2json (handles CID/ToUnicode fonts on Vercel)
                 try {
                   // eslint-disable-next-line @typescript-eslint/no-require-imports
-                  const { PDFParse } = require("pdf-parse");
-                  const parser = new PDFParse({ data: pdfBuf });
-                  const parsed = await parser.getText();
-                  await parser.destroy().catch(() => {});
-                  const text = (parsed?.text || "").replace(/\0/g, "").trim();
+                  const PDFParser = require("pdf2json");
+                  const text = await new Promise<string>((resolve) => {
+                    const pdfParser = new PDFParser(null, 1);
+                    const timeout = setTimeout(() => resolve(""), 6000);
+                    pdfParser.on("pdfParser_dataError", (err: any) => {
+                      clearTimeout(timeout);
+                      console.warn("[Candidate Rescore] pdf2json error:", err?.parserError || err);
+                      resolve("");
+                    });
+                    pdfParser.on("pdfParser_dataReady", () => {
+                      clearTimeout(timeout);
+                      try {
+                        const raw = pdfParser.getRawTextContent() || "";
+                        resolve(raw.replace(/\0/g, "").trim());
+                      } catch {
+                        resolve("");
+                      }
+                    });
+                    pdfParser.parseBuffer(pdfBuf);
+                  });
                   if (text && text.length > 30) resumeText = text;
-                } catch {
-                  // pdf-parse fallback below
+                } catch (pdf2JsonErr) {
+                  console.warn("[Candidate Rescore] pdf2json failed, trying pdf-parse:", pdf2JsonErr);
+                }
+
+                if (!resumeText || resumeText.length < 30) {
+                  try {
+                    // eslint-disable-next-line @typescript-eslint/no-require-imports
+                    const { PDFParse } = require("pdf-parse");
+                    const parser = new PDFParse({ data: pdfBuf });
+                    const parsed = await parser.getText();
+                    await parser.destroy().catch(() => {});
+                    const text = (parsed?.text || "").replace(/\0/g, "").trim();
+                    if (text && text.length > 30) resumeText = text;
+                  } catch {
+                    // pdf-parse fallback below
+                  }
                 }
 
                 if (!resumeText || resumeText.length < 30) {
