@@ -39,11 +39,29 @@ async function handleFetchModels(apiKey: string) {
     const data = await res.json();
     const rawList = data.data || [];
 
+    const PRIORITY_MODELS = [
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "qwen/qwen3.8-27b",
+      "qwen/qwen3.6-27b",
+      "groq/compound",
+      "llama-3.3-70b-versatile",
+      "llama-3.1-70b-versatile",
+      "llama-3.1-8b-instant",
+    ];
+
     // Filter out inactive/decommissioned and non-chat models
     const models: string[] = rawList
       .filter((m: any) => m.active !== false && isChatModel(m.id))
       .map((m: any) => m.id as string)
-      .sort();
+      .sort((a: string, b: string) => {
+        const aIdx = PRIORITY_MODELS.indexOf(a);
+        const bIdx = PRIORITY_MODELS.indexOf(b);
+        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+        if (aIdx !== -1) return -1;
+        if (bIdx !== -1) return 1;
+        return a.localeCompare(b);
+      });
 
     return { models, success: true };
   } catch (err: any) {

@@ -222,14 +222,9 @@ function computeHeuristicScore(
   if (pros.length === 0) pros.push("Application received and stored for recruiter review");
 
   const cons: string[] = [];
-  if (topMissing.length > 0) cons.push(`Resume does not explicitly reference: ${topMissing.slice(0, 3).join(", ")}`);
-  if (yearsExp < 2) cons.push("Limited demonstrable work experience; consider if this is a junior opening");
-  if (impactScore === 0) cons.push("No quantifiable achievements found; results-oriented evidence preferred");
-  if (cons.length === 0) cons.push("Recommend a screening call to verify key competencies");
-
   const summaryExp = yearsExp > 0 ? `${yearsExp}+ years of experience` : "background";
   const summaryMatch = topMatched.length > 0 ? `Keywords matched: ${topMatched.slice(0, 2).join(", ")}.` : "";
-  const summary = `Candidate evaluated via semantic intake parser (heuristic mode). Candidate shows ${summaryMatch} ${summaryExp} detected. Score: ${score}/100. Use the 'Re-score AI' button for full LLM deep evaluation when quota resets.`;
+  const summary = `Candidate evaluated via semantic intake parser (heuristic mode). Candidate shows ${summaryMatch} ${summaryExp} detected. Score: ${score}/100.`;
 
   return {
     score,
@@ -252,8 +247,6 @@ function computeHeuristicScore(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TIER-1: LLM DEEP EVALUATION ENGINE
-// Production-grade prompt with 5-dimension weighted rubric, calibration
-// anchors, and anti-score-inflation instructions.
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildLLMPrompts(
@@ -264,89 +257,91 @@ function buildLLMPrompts(
   jobRequirements?: string[],
   customAtsPrompt?: string
 ): { systemPrompt: string; userPrompt: string } {
-  const systemPrompt = `You are a senior ATS Talent Intelligence engine conducting a rigorous, calibrated candidate evaluation for Anthrix — a technology solutions company that hires across ALL professional domains: Software Engineering, AI/ML, UI/UX Design, Marketing, Business Development/Sales, Operations, Video/Media Production, Content Writing, HR, Finance, and Management.
+  const systemPrompt = `You are an elite, highly calibrated ATS Talent Intelligence engine for Anthrix.
+You evaluate candidates with extreme objectivity, technical precision, and zero score inflation.
 
-## YOUR EVALUATION FRAMEWORK
+## 5-DIMENSION EVALUATION RUBRIC (TOTAL 100 PTS)
 
-You evaluate each candidate across 5 weighted dimensions and produce a composite score:
+1. Skills & Technical Alignment (0–30 pts):
+   - Direct evidence of the specific technologies, tools, and methodologies required for this role.
+   - If candidate lists 0 matching skills for the role: MUST score 0-5 pts.
+   - If candidate matches some skills but lacks key requirements: score 10-20 pts.
+   - If candidate matches all core & advanced required skills with demonstrated mastery: score 25-30 pts.
 
-| Dimension | Weight | What to Assess |
-|---|---|---|
-| Skills & Technical Alignment | 30% | Direct match between candidate's demonstrated skills/tools/domain knowledge and what the job requires |
-| Experience Depth & Relevance | 25% | Years of experience in this specific domain, quality of past employers/projects, recency of relevant work |
-| Career Trajectory & Growth | 20% | Evidence of increasing responsibility, promotions, seniority levels, leadership |
-| Accomplishments & Measurable Impact | 15% | Quantified results: revenue generated, % growth, team size, users/clients served, deals closed |
-| Role Fit & Soft Alignment | 10% | Communication quality in resume, cultural indicators, role-specific soft skills (leadership, BD outreach, creative direction etc.) |
+2. Experience Depth & Seniority (0–25 pts):
+   - Years of relevant hands-on industry experience vs what the role requires.
+   - Student / entry-level (< 2 years): score 8–15 pts.
+   - Mid-level (2–5 years): score 15–20 pts.
+   - Senior / Lead (5+ years of verified production leadership): score 21–25 pts.
 
-## SCORING CALIBRATION
+3. Career Trajectory & Growth (0–20 pts):
+   - Promotions, progressive ownership, challenging projects, speed of skill acquisition.
+   - Typical range: 10–17 pts.
 
-Use the FULL 0–100 range. DO NOT cluster scores around 65-75. Be honest.
+4. Accomplishments & Measurable Impact (0–15 pts):
+   - Quantified achievements: revenue, latency reduction, user scale, deals closed, apps deployed.
+   - Typical range: 7–13 pts.
 
-Calibration anchors:
-- **90–100**: Exceptional candidate. Direct experience in exact role, proven track record with quantified results, senior-level depth. Rare — should represent top ~5% of applicants.
-- **75–89**: Strong candidate. Solid domain experience, most requirements met, clear growth trajectory. Good shortlist material.
-- **55–74**: Consideration zone. Some relevant experience but notable gaps in key areas or missing seniority/results. Needs interview to verify.
-- **35–54**: Weak match. Significant gaps in domain expertise, missing critical qualifications, or very limited experience.
-- **0–34**: Poor fit. Career background does not align with this role's domain, requirements, or experience level.
+5. Role Fit & Domain Alignment (0–10 pts):
+   - Relevance of their past projects to Anthrix's core business and role expectations.
+   - Typical range: 5–9 pts.
 
-## ANTI-INFLATION RULES
-- A first-time applicant with no domain experience MUST score below 40.
-- A candidate who has clearly used generic skills (e.g. "Microsoft Office" for an engineering role) MUST NOT receive a skills alignment bonus.
-- Do NOT give benefit of the doubt for vague statements like "worked on projects". Only score what is explicitly evidenced.
-- Score what is ON the resume, not what you imagine the candidate might know.
+## SCORING CALIBRATION BENCHMARKS
+- 88–100%: Rare, top 5% candidate. Direct senior experience, all required skills, quantified production impact.
+- 70–87%: Strong candidate. Good domain experience, most requirements met, viable for immediate interview.
+- 50–69%: Consideration zone. Promising junior or partial match with notable gaps in seniority or core tech stack.
+- 30–49%: Weak match. Significant missing qualifications or unrelated background.
+- 0–29%: Incompatible profile or unreadable resume text.
 
-${customAtsPrompt ? `## CUSTOM ATS EVALUATION DIRECTIVES (COMPANY POLICY)
-${customAtsPrompt.trim()}
-
-` : ""}## OUTPUT FORMAT
-You MUST return ONLY a single valid JSON object. No markdown, no explanation, no prose outside the JSON.
-
+${customAtsPrompt ? `## CUSTOM ATS DIRECTIVES (COMPANY POLICY)\n${customAtsPrompt.trim()}\n\n` : ""}## JSON OUTPUT REQUIREMENTS
+Return ONLY a single valid JSON object. No prose outside the JSON:
 {
   "dimensionScores": {
-    "skillsAlignment": <0-30>,
-    "experienceDepth": <0-25>,
-    "careerTrajectory": <0-20>,
-    "accomplishmentImpact": <0-15>,
-    "roleFit": <0-10>
+    "skillsAlignment": <number 0-30>,
+    "experienceDepth": <number 0-25>,
+    "careerTrajectory": <number 0-20>,
+    "accomplishmentImpact": <number 0-15>,
+    "roleFit": <number 0-10>
   },
-  "score": <sum of dimensionScores, integer 0-100>,
+  "score": <integer 0-100, exact sum of dimensionScores>,
   "recommendation": "<STRONG_MATCH|CONSIDER|POOR_MATCH>",
-  "summary": "<3 sentences: (1) What this candidate has done. (2) How well they fit this specific role. (3) One key risk or consideration for the hiring manager.>",
-  "matchedSkills": ["<skill explicitly found in resume that is relevant to this role>", ...],
-  "missingSkills": ["<key requirement for the role that the resume does not demonstrate>", ...],
+  "summary": "<3 concise sentences: (1) Background summary. (2) Alignment with this role. (3) Key strength and main risk/gap.>",
+  "matchedSkills": ["<skill1>", "<skill2>", ...],
+  "missingSkills": ["<skill1>", "<skill2>", ...],
   "pros": ["<specific strength 1>", "<specific strength 2>", "<specific strength 3>"],
   "cons": ["<specific concern 1>", "<specific concern 2>"]
 }`;
 
   const reqSection = jobRequirements && jobRequirements.length > 0
-    ? `\n## KEY REQUIREMENTS\n${jobRequirements.map((r) => `- ${r}`).join("\n")}`
+    ? `\n## KEY JOB REQUIREMENTS\n${jobRequirements.map((r) => `- ${r}`).join("\n")}`
     : "";
 
-  const userPrompt = `## ROLE TO EVALUATE FOR
+  const userPrompt = `## TARGET ROLE
 **Title:** ${jobTitle}
 
-**Job Overview & Responsibilities:**
+**Job Description & Responsibilities:**
 ${jobDescription}
 ${reqSection}
 
 ---
 
-## CANDIDATE RESUME
+## CANDIDATE APPLICATION
 **Name:** ${candidateName}
 
+**Extracted Resume Document:**
 \`\`\`
 ${cleanedResume}
 \`\`\`
 
 ---
 
-Evaluate this candidate using all 5 dimensions of the rubric. Be calibrated and specific. Return ONLY the JSON object.`;
+Evaluate this candidate objectively against the 5 dimensions. Do NOT inflate scores. Return ONLY the JSON object.`;
 
   return { systemPrompt, userPrompt };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MASTER SCORER — Orchestrates Tier-1 (LLM) → Retry → Tier-2 (Heuristic)
+// MASTER SCORER — Orchestrates LLM with multi-model fallback & heuristic guard
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function scoreCandidateResume({
@@ -366,7 +361,28 @@ export async function scoreCandidateResume({
 }): Promise<AiScoringResult> {
   const cleanedResume = cleanResumeText(resumeText);
 
-  // Fetch API keys, model & custom ATS prompt from DB (ATS key only — strict isolation)
+  // If resume is empty, unreadable, or placeholder
+  if (!cleanedResume || cleanedResume.length < 80 || cleanedResume.startsWith("Resume file uploaded:")) {
+    return {
+      score: 0,
+      recommendation: "POOR_MATCH",
+      summary: `The resume document for ${candidateName} contains insufficient readable text for AI analysis. Manual review or re-upload is recommended.`,
+      matchedSkills: [],
+      missingSkills: jobRequirements.slice(0, 5),
+      pros: [],
+      cons: ["No readable text extracted from uploaded resume document"],
+      evaluationType: "HEURISTIC_BACKUP",
+      dimensionScores: {
+        skillsAlignment: 0,
+        experienceDepth: 0,
+        careerTrajectory: 0,
+        accomplishmentImpact: 0,
+        roleFit: 0,
+      },
+    };
+  }
+
+  // Fetch API keys, model & custom ATS prompt from DB
   const [atsKeyRecord, atsModelRecord, atsPromptRecord, mainKeyRecord, mainModelRecord] = await Promise.all([
     db.systemSetting.findUnique({ where: { key: "ats_groq_api_key" } }),
     db.systemSetting.findUnique({ where: { key: "ats_groq_model" } }),
@@ -380,12 +396,16 @@ export async function scoreCandidateResume({
     mainKeyRecord?.value || process.env.GROQ_API_KEY || ""
   ).trim();
 
-  const model = (
+  let configuredModel = (
     atsModelRecord?.value || process.env.ATS_GROQ_MODEL ||
-    mainModelRecord?.value || "llama-3.3-70b-versatile"
+    mainModelRecord?.value || process.env.GROQ_MODEL || "openai/gpt-oss-120b"
   ).trim();
 
-  // No API key → run Tier-2 immediately
+  if (!configuredModel) {
+    configuredModel = "openai/gpt-oss-120b";
+  }
+
+  // No API key → run Tier-2 heuristic evaluator
   if (!apiKey) {
     return computeHeuristicScore(candidateName, cleanedResume, jobTitle, jobDescription, jobRequirements);
   }
@@ -394,9 +414,15 @@ export async function scoreCandidateResume({
     candidateName, cleanedResume, jobTitle, jobDescription, jobRequirements, atsPromptRecord?.value
   );
 
-  // Exponential Backoff Retry Loop — up to 3 attempts
-  const maxAttempts = 3;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  // Model fallback chain: primary model -> fast model -> robust open model
+  const candidateModels = [
+    configuredModel,
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b",
+  ].filter((m, idx, arr) => arr.indexOf(m) === idx);
+
+  for (const model of candidateModels) {
     try {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -411,48 +437,47 @@ export async function scoreCandidateResume({
             { role: "user", content: userPrompt },
           ],
           response_format: { type: "json_object" },
-          temperature: 0.1, // Low temperature = consistent, calibrated scoring
+          temperature: 0.1,
           max_tokens: 1200,
         }),
       });
 
-      // Rate limit / server busy → exponential backoff + jitter
-      if (res.status === 429 || res.status === 503 || res.status === 502) {
-        const retryAfterHeader = res.headers.get("retry-after");
-        const delayMs = retryAfterHeader
-          ? parseInt(retryAfterHeader, 10) * 1000
-          : Math.pow(2, attempt) * 1000 + Math.floor(Math.random() * 800);
-        console.warn(`[ATS Scorer] Status ${res.status} — backing off ${delayMs}ms (attempt ${attempt}/${maxAttempts})`);
-        await sleep(delayMs);
-        continue;
-      }
-
       if (!res.ok) {
-        throw new Error(`Groq API ${res.status}: ${await res.text().catch(() => "")}`);
+        console.warn(`[ATS Scorer] Model ${model} returned ${res.status}`);
+        continue;
       }
 
       const data = await res.json();
       const raw = data.choices?.[0]?.message?.content;
-      if (!raw) throw new Error("Empty LLM response");
+      if (!raw) continue;
 
       let parsed: any;
       try {
         parsed = JSON.parse(raw);
       } catch {
-        throw new Error("LLM returned invalid JSON");
+        continue;
       }
 
-      // Validate and normalise dimension scores
+      const matchedSkills: string[] = Array.isArray(parsed.matchedSkills) ? parsed.matchedSkills.slice(0, 10) : [];
+      const missingSkills: string[] = Array.isArray(parsed.missingSkills) ? parsed.missingSkills.slice(0, 8) : [];
+      const pros: string[] = Array.isArray(parsed.pros) ? parsed.pros.slice(0, 5) : [];
+      const cons: string[] = Array.isArray(parsed.cons) ? parsed.cons.slice(0, 5) : [];
+
+      // Validate dimension scores
       const dims = parsed.dimensionScores || {};
-      const skillsAlignment = Math.min(30, Math.max(0, Number(dims.skillsAlignment) || 0));
+      let skillsAlignment = Math.min(30, Math.max(0, Number(dims.skillsAlignment) || 0));
       const experienceDepth = Math.min(25, Math.max(0, Number(dims.experienceDepth) || 0));
       const careerTrajectory = Math.min(20, Math.max(0, Number(dims.careerTrajectory) || 0));
       const accomplishmentImpact = Math.min(15, Math.max(0, Number(dims.accomplishmentImpact) || 0));
       const roleFit = Math.min(10, Math.max(0, Number(dims.roleFit) || 0));
 
-      // Always recompute composite score from dimensions — prevents LLM from self-inflating
+      // Anti-inflation guard: if 0 skills matched, skillsAlignment cannot exceed 5
+      if (matchedSkills.length === 0 && skillsAlignment > 5) {
+        skillsAlignment = 3;
+      }
+
       const compositeScore = skillsAlignment + experienceDepth + careerTrajectory + accomplishmentImpact + roleFit;
-      const finalScore = Math.min(100, Math.max(0, compositeScore));
+      const finalScore = Math.min(100, Math.max(0, Math.round(compositeScore)));
 
       const recommendation: "STRONG_MATCH" | "CONSIDER" | "POOR_MATCH" =
         finalScore >= 75 ? "STRONG_MATCH" : finalScore >= 50 ? "CONSIDER" : "POOR_MATCH";
@@ -461,22 +486,20 @@ export async function scoreCandidateResume({
         score: finalScore,
         recommendation,
         summary: typeof parsed.summary === "string" ? parsed.summary : "Evaluation completed.",
-        matchedSkills: Array.isArray(parsed.matchedSkills) ? parsed.matchedSkills.slice(0, 8) : [],
-        missingSkills: Array.isArray(parsed.missingSkills) ? parsed.missingSkills.slice(0, 5) : [],
-        pros: Array.isArray(parsed.pros) ? parsed.pros.slice(0, 4) : [],
-        cons: Array.isArray(parsed.cons) ? parsed.cons.slice(0, 3) : [],
+        matchedSkills,
+        missingSkills,
+        pros,
+        cons,
         evaluationType: "LLM_EVALUATED",
         dimensionScores: { skillsAlignment, experienceDepth, careerTrajectory, accomplishmentImpact, roleFit },
       };
     } catch (err: any) {
-      console.warn(`[ATS Scorer] Attempt ${attempt} failed: ${err.message}`);
-      if (attempt < maxAttempts) {
-        await sleep(1000 * attempt + Math.floor(Math.random() * 400));
-      }
+      console.warn(`[ATS Scorer] Model ${model} failed: ${err.message}`);
     }
   }
 
-  // All retries exhausted → Tier-2 Heuristic
-  console.warn(`[ATS Scorer] LLM retries exhausted — activating Tier-2 heuristic for ${candidateName}`);
+  // All LLM attempts failed → Tier-2 Heuristic
+  console.warn(`[ATS Scorer] Activating Tier-2 heuristic for ${candidateName}`);
   return computeHeuristicScore(candidateName, cleanedResume, jobTitle, jobDescription, jobRequirements);
 }
+

@@ -48,4 +48,15 @@ export async function uploadAtsResume(
   });
 }
 
-export const atsCloudinary = cloudinary;
+export const getAtsCloudinary = () => {
+  cloudinary.config(getAtsCloudinaryConfig());
+  return cloudinary;
+};
+
+export const atsCloudinary = new Proxy(cloudinary, {
+  get(target, prop) {
+    cloudinary.config(getAtsCloudinaryConfig());
+    return (target as any)[prop];
+  },
+});
+

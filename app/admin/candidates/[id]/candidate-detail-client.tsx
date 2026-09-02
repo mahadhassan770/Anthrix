@@ -548,6 +548,48 @@ export default function CandidateDetailClient({ id }: { id: string }) {
               {evalData?.summary || "No AI evaluation summary generated yet. Click Re-score AI to run."}
             </p>
 
+            {/* 5-Dimension Evaluation Breakdown */}
+            {(() => {
+              const dims = evalData?.rawEvaluation?.dimensionScores || evalData?.dimensionScores;
+              if (!dims) return null;
+              const dimensionList = [
+                { label: "Skills Alignment", val: dims.skillsAlignment ?? 0, max: 30, color: "bg-emerald-500" },
+                { label: "Experience Depth", val: dims.experienceDepth ?? 0, max: 25, color: "bg-blue-500" },
+                { label: "Career Trajectory", val: dims.careerTrajectory ?? 0, max: 20, color: "bg-purple-500" },
+                { label: "Accomplishment Impact", val: dims.accomplishmentImpact ?? 0, max: 15, color: "bg-amber-500" },
+                { label: "Role Fit", val: dims.roleFit ?? 0, max: 10, color: "bg-rose-500" },
+              ];
+
+              return (
+                <div className="space-y-2.5 pt-3 border-t border-border/50">
+                  <p className="text-[11px] font-mono uppercase font-bold text-muted-foreground tracking-wider">
+                    5-Dimension Rubric Scorecard
+                  </p>
+                  <div className="space-y-2">
+                    {dimensionList.map((d) => {
+                      const pct = Math.min(100, Math.round((d.val / d.max) * 100));
+                      return (
+                        <div key={d.label} className="space-y-1">
+                          <div className="flex items-center justify-between text-[11px] font-mono">
+                            <span className="text-foreground/90">{d.label}</span>
+                            <span className="text-muted-foreground font-bold">
+                              {d.val} / {d.max} pts ({pct}%)
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-background rounded-full overflow-hidden border border-border/40">
+                            <div
+                              className={`h-full rounded-full ${d.color} transition-all duration-500`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Pros & Cons Pills */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-border/50">
               <div className="space-y-2">
@@ -701,6 +743,45 @@ export default function CandidateDetailClient({ id }: { id: string }) {
             >
               {savingNotes ? "Saving..." : "Save Notes & Rating"}
             </button>
+          </div>
+
+          {/* Communications & Email Logs */}
+          <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                <Mail size={15} className="text-primary" /> Communications History
+              </h3>
+              <button
+                type="button"
+                onClick={() => handleOpenEmailModal("general_followup")}
+                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+              >
+                + Send Email
+              </button>
+            </div>
+
+            {(candidate.emails || []).length === 0 ? (
+              <p className="text-xs text-muted-foreground font-mono">No logged email communications for this candidate yet.</p>
+            ) : (
+              <div className="space-y-2.5">
+                {candidate.emails.map((em: any) => (
+                  <div key={em.id} className="p-3.5 rounded-xl bg-background border border-border space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-foreground truncate">{em.subject}</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary uppercase font-bold flex-shrink-0">
+                        {em.type || "EMAIL"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground font-mono">
+                      Sent on {new Date(em.sentAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                    <p className="text-xs text-foreground/80 whitespace-pre-wrap font-sans bg-card p-2.5 rounded-lg border border-border/40 mt-1">
+                      {em.body}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

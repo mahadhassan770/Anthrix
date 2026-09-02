@@ -199,6 +199,7 @@ export async function POST(req: NextRequest) {
     if (typeof body.systemPrompt === "string") updates.push({ key: "copilot_system_prompt", value: body.systemPrompt });
     if (typeof body.atsGroqApiKey === "string") updates.push({ key: "ats_groq_api_key", value: body.atsGroqApiKey.trim() });
     if (typeof body.atsGroqModel === "string") updates.push({ key: "ats_groq_model", value: body.atsGroqModel.trim() });
+    if (typeof body.atsSystemPrompt === "string") updates.push({ key: "ats_system_prompt", value: body.atsSystemPrompt });
 
     // SMTP Updates
     if (typeof body.smtpHost === "string") updates.push({ key: "smtp_host", value: body.smtpHost.trim() });
