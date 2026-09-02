@@ -7,7 +7,8 @@ const globalForAtsPrisma = globalThis as unknown as {
 export const atsDb =
   globalForAtsPrisma.atsPrisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    log: [],
   });
 
 if (process.env.NODE_ENV !== "production") globalForAtsPrisma.atsPrisma = atsDb;
+

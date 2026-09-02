@@ -1,124 +1,196 @@
 export const services = [
   {
-    id: "build",
-    pillar: "Build",
-    tagline: "Web & Software Development",
+    id: "saas",
+    pillar: "SaaS Platform Engineering",
+    tagline: "Multi-Tenant Systems & Cloud Infrastructure",
     description:
-      "We engineer high-performance digital products from the ground up — websites that convert, SaaS platforms that scale, and applications with AI baked into the architecture from day one.",
-    icon: "Code2",
+      "We design and engineer secure, high-concurrency SaaS platforms from the ground up — from database schemas, tenant isolation, and custom auth to automated billing, webhooks, and analytics dashboards.",
+    icon: "Cloud",
     offerings: [
       {
-        id: "websites",
-        name: "Websites & Web Applications",
-        icon: "Globe",
+        id: "multi-tenant-infra",
+        name: "Multi-Tenant Cloud Infrastructure",
+        icon: "Server",
         description:
-          "Performance-first websites and web apps built on Next.js. Fast by default, structured for SEO, and architected to grow without needing a full rebuild as your business does.",
+          "Enterprise multi-tenancy with strict tenant data isolation, role-based access control (RBAC), and database partitioning engineered to scale.",
         problem:
-          "Most agency-built websites are slow, hard to update, and impossible to iterate on. We build them as engineering products, not design deliverables.",
+          "Early-stage SaaS teams waste months battling infrastructure bottlenecks and security loopholes. We engineer rock-solid multi-tenancy from day one.",
         useCases: [
-          "Marketing site for a B2B SaaS company needing strong Core Web Vitals",
-          "Client portal web app with authentication, dashboards, and API integrations",
+          "B2B SaaS with team workspaces, member invitations, and granular role permissions",
+          "High-throughput multi-tenant databases with automated migrations and backups",
         ],
       },
       {
-        id: "saas",
-        name: "SaaS Platforms",
+        id: "subscription-billing",
+        name: "Subscription & Billing Engines",
         icon: "Layers",
         description:
-          "End-to-end SaaS product engineering — from database schema and auth to billing, multi-tenancy, and admin tooling. We build the plumbing so you can focus on the product.",
+          "Seamless payment infrastructure with Stripe & LemonSqueezy — subscription tiers, usage metering, proration, and automated self-serve customer portals.",
         problem:
-          "Early-stage SaaS founders lose months to infrastructure decisions. We make those decisions well the first time.",
+          "Complex billing logic and failed payment retries cause churn. We implement bulletproof subscription pipelines with webhook verification.",
         useCases: [
-          "Multi-tenant B2B platform with role-based access, Stripe billing, and team management",
-          "Internal tooling SaaS for operations teams with custom reporting dashboards",
+          "SaaS tiered billing with free trials, coupons, and automated invoice generation",
+          "Usage-based API metering with monthly overage billing and credit systems",
         ],
       },
       {
-        id: "ai-apps",
-        name: "AI-Powered Applications",
-        icon: "Cpu",
+        id: "scalable-apis",
+        name: "High-Throughput APIs & Microservices",
+        icon: "Code2",
         description:
-          "Custom software applications that have intelligence built in — not bolted on. LLM-powered features, automated decision layers, and AI-native UX designed for real users.",
+          "Low-latency REST & GraphQL APIs with rate limiting, background job queues, and automated third-party webhook dispatchers.",
         problem:
-          "Most 'AI features' are just a GPT API call wrapped in a text box. We design AI capabilities that fit naturally into how users actually work.",
+          "Unoptimized endpoints crash during traffic spikes. We build resilient asynchronous architectures that handle peak loads gracefully.",
         useCases: [
-          "Internal knowledge assistant for a professional services firm",
-          "AI-augmented CRM that surfaces next-best-action recommendations automatically",
+          "Developer-facing public REST APIs with API key authentication and usage caps",
+          "Event-driven background queues for heavy data processing and reporting",
         ],
       },
     ],
   },
   {
-    id: "automate",
-    pillar: "Automate",
-    tagline: "AI & Automation Systems",
+    id: "web-app",
+    pillar: "Web & App Development",
+    tagline: "High-Performance Web & Mobile Products",
     description:
-      "We deploy intelligent systems that eliminate repetitive work, accelerate your team, and capture revenue that currently falls through the cracks — from AI agents to full workflow pipelines.",
-    icon: "Workflow",
+      "We build modern web applications and mobile experiences with Next.js, TypeScript, and Tailwind CSS — fast by default, SEO-optimized, and engineered to convert.",
+    icon: "AppWindow",
     offerings: [
       {
-        id: "ai-agents",
-        name: "AI Agents",
-        icon: "Bot",
+        id: "nextjs-apps",
+        name: "Next.js & React Web Applications",
+        icon: "Globe",
         description:
-          "Autonomous agents built on LLMs that complete multi-step tasks without human hand-holding — research, analysis, drafting, routing, and decision-making at scale.",
+          "Performance-first web applications with server-side rendering, sub-second page transitions, and structured architecture built to scale.",
         problem:
-          "There's no shortage of things your team does on repeat that require reasoning but not creativity. Agents take those off the plate entirely.",
+          "Most agency-built sites are slow, bloated with plugins, and hard to update. We build software-grade products that deliver top Core Web Vitals.",
         useCases: [
-          "Sales research agent that builds a full prospect brief before every discovery call",
-          "Operations agent that monitors dashboards, detects anomalies, and drafts incident reports",
+          "Fast B2B marketing sites and web apps needing 95+ Google PageSpeed scores",
+          "Interactive client portals with live data streams and authentication",
         ],
       },
       {
-        id: "rag",
-        name: "RAG Systems & Knowledge Bases",
-        icon: "Database",
+        id: "portals-dashboards",
+        name: "Interactive Client Portals & Dashboards",
+        icon: "Layout",
         description:
-          "Retrieval-Augmented Generation systems that let your team query your own documents, data, and institutional knowledge using plain language. The AI answers from your context, not from the internet.",
+          "Custom operational dashboards and client portals with real-time charts, advanced filtering, role management, and exportable reports.",
         problem:
-          "Information is buried in Notion, PDFs, Slack, and email. RAG makes it instantly queryable without any manual search.",
+          "Teams outgrow generic SaaS spreadsheets. We build bespoke internal portals tailored exactly to your company workflows.",
         useCases: [
-          "Legal document retrieval assistant for an enterprise legal team",
-          "Internal policy Q&A bot for HR and onboarding, trained on company documents",
+          "Executive analytics dashboards consolidating metrics from disparate platforms",
+          "Client onboarding portals with document uploads and progress tracking",
         ],
       },
       {
-        id: "workflow",
-        name: "Workflow Automation",
+        id: "mobile-pwa",
+        name: "Mobile & Progressive Web Apps",
+        icon: "Sparkles",
+        description:
+          "Cross-platform responsive web apps designed with mobile-first ergonomics, offline caching, and native-like performance.",
+        problem:
+          "Building separate iOS and Android native apps is expensive. PWAs offer native speed and feel from a single maintainable codebase.",
+        useCases: [
+          "Field operations web apps used on mobile devices in low-connectivity areas",
+          "Customer engagement portals with instant mobile home-screen install",
+        ],
+      },
+    ],
+  },
+  {
+    id: "automation",
+    pillar: "Automation & Integrations",
+    tagline: "Enterprise Workflows & API Pipelines",
+    description:
+      "We deploy intelligent automation pipelines using n8n, Zapier, and custom API connectors to eliminate manual tasks, unify data stacks, and boost operational velocity.",
+    icon: "Zap",
+    offerings: [
+      {
+        id: "n8n-pipelines",
+        name: "n8n & Custom API Pipelines",
+        icon: "Workflow",
+        description:
+          "Self-hosted, cost-effective n8n workflows that orchestrate complex multi-step data transformations and trigger automated actions across your tech stack.",
+        problem:
+          "SaaS subscription fees for automation tools skyrocket with volume. We build self-hosted n8n pipelines with unlimited execution capacity.",
+        useCases: [
+          "Lead capture → enrichment → CRM routing → instant Slack alert in under 15 seconds",
+          "Automated financial reconciliation across payment gateways and accounting tools",
+        ],
+      },
+      {
+        id: "crm-sync",
+        name: "Cross-Platform Data Synchronization",
         icon: "GitBranch",
         description:
-          "Custom automation pipelines using n8n, Zapier, and direct API integrations that connect your tools, eliminate copy-paste work, and keep data synchronized across your stack.",
+          "Bi-directional data sync engines connecting HubSpot, Salesforce, Stripe, PostgreSQL, and internal databases with real-time conflict resolution.",
         problem:
-          "Every team has a list of manual steps that 'only take five minutes' but add up to hours. We systematically eliminate them.",
+          "Siloed business tools cause data discrepancies and human copy-paste errors. We build automated connective tissue across your entire software ecosystem.",
         useCases: [
-          "Lead enrichment pipeline: form submission → CRM entry → Slack alert → enriched profile in 30 seconds",
-          "E-commerce ops: order placed → inventory updated → shipping label created → customer notified, zero touches",
+          "Real-time CRM account updates whenever a customer upgrades or cancels in Stripe",
+          "Centralized data lakes feeding executive dashboards across sales and product",
         ],
       },
       {
-        id: "whatsapp",
-        name: "WhatsApp Automation",
-        icon: "MessageSquare",
-        description:
-          "AI-powered WhatsApp bots that qualify inbound leads, answer FAQs, book calls, and follow up — operating 24/7 on the channel your customers already use.",
-        problem:
-          "Sales teams lose leads because response time is too slow. A WhatsApp bot responds in seconds, qualifies the lead, and hands off a warm contact.",
-        useCases: [
-          "Real estate agency lead qualification bot that books viewings automatically",
-          "E-commerce support bot handling order status, returns, and product questions",
-        ],
-      },
-      {
-        id: "data",
-        name: "Data Services & Pipelines",
+        id: "ecommerce-ops",
+        name: "E-Commerce & Operations Automation",
         icon: "BarChart3",
         description:
-          "Structured data pipelines that extract, transform, and load information from disparate sources into clean, queryable formats your team can actually use for decisions.",
+          "Zero-touch automation connecting Shopify, WooCommerce, external 3PL warehouses, ERP systems, and customer notifications.",
         problem:
-          "Business data lives in ten tools, none of which talk to each other. We build the connective tissue.",
+          "Manual order fulfillment and stock updating causes shipping delays and stockouts. We automate the full order lifecycle.",
         useCases: [
-          "Unified revenue dashboard pulling from Stripe, HubSpot, and Google Analytics",
-          "Automated competitor pricing scraper feeding into a live spreadsheet dashboard",
+          "Order placed → inventory reserved → 3PL shipping label generated → customer tracking SMS sent",
+          "Automated low-stock alerts and supplier purchase order drafting",
+        ],
+      },
+    ],
+  },
+  {
+    id: "ai-solutions",
+    pillar: "AI Agents & Solutions",
+    tagline: "Autonomous Agents & Knowledge Systems",
+    description:
+      "We engineer custom LLM agents, enterprise RAG search engines, and intelligent decision systems that adapt, reason, and scale with your business operations.",
+    icon: "Cpu",
+    offerings: [
+      {
+        id: "autonomous-agents",
+        name: "Autonomous Multi-Step AI Agents",
+        icon: "Bot",
+        description:
+          "Intelligent AI agents built on modern LLMs that complete multi-step reasoning tasks without human hand-holding — research, document drafting, and decision routing.",
+        problem:
+          "Teams spend countless hours on repetitive reasoning tasks. AI agents execute these workflows 24/7 with zero fatigue.",
+        useCases: [
+          "Automated sales research agent generating complete prospect briefs before sales calls",
+          "Support triage agent diagnosing customer issues and resolving common tier-1 requests",
+        ],
+      },
+      {
+        id: "rag-knowledge",
+        name: "Enterprise RAG & Knowledge Bases",
+        icon: "Database",
+        description:
+          "Retrieval-Augmented Generation systems that query your proprietary documents, PDFs, Notion pages, and databases with verified citations and zero hallucination.",
+        problem:
+          "Internal knowledge is scattered across Slack, Google Drive, and PDFs. RAG makes all institutional knowledge instantly queryable.",
+        useCases: [
+          "Internal policy and technical documentation assistant for engineering and HR",
+          "Legal contract review assistant extracting compliance risks and key dates",
+        ],
+      },
+      {
+        id: "whatsapp-ai-bots",
+        name: "24/7 AI WhatsApp Sales & Support",
+        icon: "MessageSquare",
+        description:
+          "Conversational AI assistants operating directly on WhatsApp to qualify inbound leads, answer product questions, book calendar calls, and follow up.",
+        problem:
+          "Slow lead response times kill conversion rates. WhatsApp AI bots respond in seconds and qualify prospects around the clock.",
+        useCases: [
+          "Real estate & service agency bot qualifying budget, location, and booking consultations",
+          "Customer support bot resolving order tracking and FAQs 24/7",
         ],
       },
     ],
@@ -127,3 +199,4 @@ export const services = [
 
 export type Service = (typeof services)[number];
 export type Offering = Service["offerings"][number];
+

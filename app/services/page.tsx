@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowUpRight, Terminal, Cpu, ArrowRight, Layers, Workflow } from "lucide-react";
 import { Pillar } from "@/components/services/pillar";
-import { Reveal } from "@/components/motion/reveal";
 import { CTA } from "@/components/sections/cta";
 import { db } from "@/lib/db";
 import { ServicesHero } from "@/components/services/services-hero";
+import { services as staticServices } from "@/lib/content/services";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +15,7 @@ export const metadata: Metadata = {
 
 export default async function ServicesPage() {
   let services: any[] = [];
+
   try {
     services = await db.service.findMany({
       where: { published: true },
@@ -27,8 +26,33 @@ export default async function ServicesPage() {
         },
       },
     });
-  } catch (err) {
-    console.error("Failed to fetch services:", err);
+  } catch {
+    // Database connection latency or serverless wake-up — seamlessly fallback to defaults
+  }
+
+  // Graceful fallback to static services if DB is temporarily unreachable or empty
+  if (!services || services.length === 0) {
+    services = staticServices.map((s, sIdx) => ({
+      id: s.id,
+      slug: s.id,
+      title: s.pillar,
+      tagline: s.tagline,
+      description: s.description,
+      icon: s.icon,
+      order: sIdx + 1,
+      published: true,
+      offerings: s.offerings.map((off, oIdx) => ({
+        id: off.id,
+        slug: off.id,
+        name: off.name,
+        description: off.description,
+        problem: off.problem,
+        icon: off.icon,
+        useCases: off.useCases,
+        order: oIdx + 1,
+        serviceId: s.id,
+      })),
+    }));
   }
 
   return (
@@ -49,4 +73,5 @@ export default async function ServicesPage() {
     </div>
   );
 }
+
 

@@ -13,7 +13,7 @@ const DEFAULT_SERVICES = [
     description:
       "Secure, multi-tenant SaaS platforms built for performance, scalability, and growth.",
     icon: "Cloud",
-    href: "/services#saas",
+    href: "/services/saas",
   },
   {
     id: "web-app",
@@ -21,7 +21,7 @@ const DEFAULT_SERVICES = [
     description:
       "Modern web and mobile experiences that are fast, intuitive, and built to convert.",
     icon: "AppWindow",
-    href: "/services#websites",
+    href: "/services/web-app",
   },
   {
     id: "automation",
@@ -29,7 +29,7 @@ const DEFAULT_SERVICES = [
     description:
       "Streamline operations with powerful automation and seamless third-party integrations.",
     icon: "Zap",
-    href: "/services#workflow",
+    href: "/services/automation",
   },
   {
     id: "ai-solutions",
@@ -37,7 +37,7 @@ const DEFAULT_SERVICES = [
     description:
       "Build intelligent AI agents and custom solutions that learn, adapt, and scale with your business.",
     icon: "Cpu",
-    href: "/services#ai-agents",
+    href: "/services/ai-solutions",
   },
 ];
 
@@ -50,7 +50,7 @@ export function ServicesOverview({ capabilities }: { capabilities?: Capability[]
           title: cap.title,
           description: cap.description,
           icon: cap.icon || DEFAULT_SERVICES[idx % DEFAULT_SERVICES.length].icon,
-          href: "/services",
+          href: `/services/${(cap as any).slug || cap.id || DEFAULT_SERVICES[idx % DEFAULT_SERVICES.length].id}`,
         }))
       : DEFAULT_SERVICES;
 

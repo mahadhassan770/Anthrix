@@ -85,8 +85,11 @@ export function Team() {
                 <div className="relative z-10 flex flex-col flex-1">
                   {/* Avatar & Role Header */}
                   <div className="flex items-center justify-between mb-6">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#121520] border border-[#F55036] flex items-center justify-center text-white font-display font-black text-xl tracking-tight shadow-[0_0_20px_rgba(245,80,54,0.15)] group-hover:scale-105 group-hover:shadow-[0_0_25px_rgba(245,80,54,0.25)] transition-all duration-300">
-                      {member.initials || member.name.slice(0, 2).toUpperCase()}
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#121520] border border-[#F55036] flex items-center justify-center shadow-[0_0_20px_rgba(245,80,54,0.15)] group-hover:scale-105 group-hover:shadow-[0_0_25px_rgba(245,80,54,0.25)] transition-all duration-300">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F55036" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                      </svg>
                     </div>
 
                     <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest px-3.5 py-1 rounded-full bg-[#F55036]/10 border border-[#F55036]/30 text-[#F55036] font-bold">

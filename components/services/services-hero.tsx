@@ -60,22 +60,22 @@ export function ServicesHero({ services }: { services: ServiceBasic[] }) {
                 Engineering &{" "}
                 <span className="text-[#F55036]">AI Services</span>
               </h1>
-              <p className="text-lg md:text-xl text-white/60 leading-relaxed font-sans mb-10">
-                Two focused practice areas. One unified studio. Whether you need a production-grade web platform,
-                an autonomous AI agent system, or both wired together — this is where that work lives.
+              <p className="text-base sm:text-lg md:text-xl text-zinc-400 leading-relaxed font-sans mb-8">
+                Four core engineering practices. One unified studio. We architect high-concurrency SaaS platforms,
+                high-performance web apps, intelligent automation pipelines, and autonomous AI agent systems.
               </p>
 
               {/* Quick-jump anchor pills */}
-              <div className="flex flex-wrap gap-3 pt-8 border-t border-white/5">
+              <div className="flex flex-wrap gap-2.5 pt-6 border-t border-white/5">
                 {services.map((s) => (
                   <a
                     key={s.id}
                     href={`#${s.slug}`}
-                    className="group flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/10 bg-white/[0.03] text-xs font-mono tracking-wider text-white/70 hover:text-white hover:border-[#F55036]/50 hover:bg-[#F55036]/10 transition-all duration-300"
+                    className="group flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/[0.03] text-xs font-mono tracking-wider text-zinc-300 hover:text-white hover:border-[#F55036]/50 hover:bg-[#F55036]/10 transition-all duration-300"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-[#F55036]" />
-                    <span className="uppercase font-semibold">{s.title} Practice</span>
-                    <ArrowRight size={12} className="text-[#F55036] transition-transform group-hover:translate-x-0.5" />
+                    <span className="uppercase font-semibold text-[11px]">{s.title}</span>
+                    <ArrowRight size={11} className="text-[#F55036] transition-transform group-hover:translate-x-0.5" />
                   </a>
                 ))}
               </div>

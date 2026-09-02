@@ -19,6 +19,7 @@ export function CTA() {
             alt="Background Pattern" 
             width={400} 
             height={400} 
+            style={{ width: "auto", height: "auto" }}
             className="object-contain select-none"
             priority
           />

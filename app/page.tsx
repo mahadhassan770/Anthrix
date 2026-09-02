@@ -19,8 +19,8 @@ export default async function Home() {
     capabilities = await db.capability.findMany({
       orderBy: { order: "asc" },
     });
-  } catch (err) {
-    console.warn("[Home Page] Could not load dynamic capabilities from DB, using defaults:", err);
+  } catch {
+    // Graceful fallback to default capabilities
   }
 
   try {
@@ -44,8 +44,8 @@ export default async function Home() {
         isDbProject: true,
       }));
     }
-  } catch (err) {
-    console.warn("[Home Page] Could not load dynamic projects from DB, using static work items:", err);
+  } catch {
+    // Graceful fallback to static work items
   }
 
   // Fallback to static work if DB is temporarily unreachable or empty

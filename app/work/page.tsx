@@ -14,14 +14,14 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function WorkPage() {
-  // Fetch only published projects from DB
-  let dbProjects: PortfolioProject[] = [];
+  // Fetch only published projects from DB — no hardcoded fallback
+  let projects: PortfolioProject[] = [];
   try {
-    const projects = await db.project.findMany({
+    const rows = await db.project.findMany({
       where: { published: true },
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     });
-    dbProjects = projects.map((p) => ({
+    projects = rows.map((p) => ({
       id: p.id,
       slug: p.slug,
       title: p.title,
@@ -33,9 +33,9 @@ export default async function WorkPage() {
       githubUrl: p.githubUrl,
       isDbProject: true,
     }));
-  } catch {
-    // If DB is unavailable, fall back to static content only
-    dbProjects = [];
+  } catch (err) {
+    console.error("[Work Page] Could not fetch projects:", err);
+    projects = [];
   }
 
   return (
@@ -129,91 +129,91 @@ export default async function WorkPage() {
         style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
       >
         <div className="container mx-auto px-6 pt-12">
-          <WorkGrid dbProjects={dbProjects} />
+          <WorkGrid dbProjects={projects} />
         </div>
       </section>
 
       {/* ══════════════════════════════════════════
           BOTTOM CTA
       ══════════════════════════════════════════ */}
-      <section
-        className="relative overflow-hidden"
-        style={{
-          background: "#080B12",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-center min-h-[360px]">
+      <section className="relative overflow-hidden bg-[#080B12] border-t border-white/[0.06] min-h-[420px]">
 
-            {/* Left: Text */}
-            <div className="py-16 md:py-20 relative z-10">
-              <h2
-                className="font-bold leading-tight mb-4"
-                style={{
-                  fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)",
-                  color: "#EDEDED",
-                  letterSpacing: "-0.02em",
-                }}
+        {/* ── Image: absolutely fills the right half, bleeds to edges ── */}
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[62%] hidden lg:block pointer-events-none select-none">
+          <Image
+            src="/work-cta.jpg"
+            alt=""
+            fill
+            sizes="62vw"
+            className="object-cover object-center opacity-35"
+          />
+          {/* Heavy left fade — kills the hard edge completely */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(to right, #080B12 0%, #080B12 10%, rgba(8,11,18,0.95) 30%, rgba(8,11,18,0.7) 50%, rgba(8,11,18,0.2) 75%, transparent 100%)",
+            }}
+          />
+          {/* Top & bottom fade */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(to bottom, #080B12 0%, transparent 30%, transparent 70%, #080B12 100%)",
+            }}
+          />
+          {/* Radial vignette — darkens all four edges */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse at 75% 50%, transparent 30%, rgba(8,11,18,0.6) 65%, rgba(8,11,18,0.92) 100%)",
+            }}
+          />
+          {/* Overall dark overlay to push image further back */}
+          <div className="absolute inset-0 bg-[#080B12]/40" />
+        </div>
+
+        {/* Background ambient glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute left-1/4 top-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-[#F55036]/[0.07] blur-[120px] rounded-full" />
+        </div>
+
+        {/* Content */}
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-xl py-20 md:py-24">
+            <p className="text-xs font-mono uppercase tracking-widest text-[#F55036] mb-5">
+              / Start a Project
+            </p>
+            <h2 className="font-display font-bold text-3xl md:text-[2.6rem] leading-tight tracking-tight text-white mb-5">
+              Have a project
+              <br />
+              <span className="text-[#F55036]">in mind?</span>
+            </h2>
+            <p className="text-white/50 text-[15px] leading-relaxed max-w-sm mb-10">
+              Let&apos;s build something extraordinary together. We&apos;re ready when you are.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/contact"
+                className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-[#F55036] hover:bg-[#D93520] text-white font-semibold text-sm transition-all duration-300 shadow-[0_0_20px_rgba(245,80,54,0.3)] hover:shadow-[0_0_32px_rgba(245,80,54,0.45)] hover:scale-[1.02] active:scale-[0.98]"
               >
-                Have a project
-                <br />
-                in mind?
-              </h2>
-              <p
-                className="mb-8 max-w-xs leading-relaxed"
-                style={{ color: "#6B7280", fontSize: "0.9rem", lineHeight: "1.75" }}
+                Book a Call
+                <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white/70 hover:text-white font-semibold text-sm transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
               >
-                Let&apos;s build something extraordinary together. We&apos;re ready when
-                you are.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                  style={{
-                    background: "linear-gradient(135deg, #F55036 0%, #D93520 100%)",
-                    boxShadow: "0 4px 24px rgba(245,80,54,0.35)",
-                  }}
-                >
-                  Book a Call
-                  <ArrowUpRight size={15} />
-                </Link>
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white/70 hover:text-white font-medium text-sm transition-all duration-200"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  <Mail size={14} />
-                  Send Email
-                </Link>
-              </div>
+                <Mail size={15} />
+                Send a Message
+              </Link>
             </div>
-
-            {/* Right: Growth Chart graphic */}
-            <div className="relative hidden lg:flex items-center justify-end h-full overflow-hidden">
-              <div
-                className="absolute inset-0 pointer-events-none z-10"
-                style={{
-                  background:
-                    "linear-gradient(to right, #080B12 0%, rgba(8,11,18,0.4) 30%, transparent 60%)",
-                }}
-              />
-              <Image
-                src="/work-cta.jpg"
-                alt="Anthrix Scaling Architecture"
-                width={560}
-                height={380}
-                className="w-full max-w-[560px] h-auto object-contain select-none opacity-95 relative z-0 drop-shadow-[0_0_40px_rgba(245,80,54,0.25)]"
-              />
-            </div>
-
           </div>
         </div>
       </section>
     </div>
   );
 }
+

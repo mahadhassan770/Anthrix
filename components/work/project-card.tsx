@@ -24,12 +24,13 @@ export interface PortfolioProject {
   isDbProject?: boolean;
 }
 
-// Derive unique filter tags from both static + DB projects
-function buildTags(projects: PortfolioProject[]): string[] {
-  const tagSet = new Set<string>(["All Projects"]);
-  projects.forEach((p) => p.tags.forEach((t) => tagSet.add(t)));
-  return Array.from(tagSet);
-}
+// Fixed general category filters — not tech stacks
+const FILTERS = [
+  "All Projects",
+  "SaaS Platforms",
+  "AI & Automation",
+  "Web & Mobile Apps",
+];
 
 // Resolve the display image for a project
 function resolveImage(p: PortfolioProject): string {
@@ -41,7 +42,6 @@ function resolveImage(p: PortfolioProject): string {
 }
 
 export function WorkGrid({ dbProjects = [] }: { dbProjects?: PortfolioProject[] }) {
-  const allTags = buildTags(dbProjects);
   const [activeTag, setActiveTag] = useState("All Projects");
 
   const filtered =
@@ -56,7 +56,7 @@ export function WorkGrid({ dbProjects = [] }: { dbProjects?: PortfolioProject[] 
     <div>
       {/* ── Filter Pills ── */}
       <div className="flex flex-wrap gap-2 mb-10">
-        {allTags.map((tag) => (
+        {FILTERS.map((tag) => (
           <button
             key={tag}
             onClick={() => setActiveTag(tag)}
@@ -109,19 +109,6 @@ export function WorkGrid({ dbProjects = [] }: { dbProjects?: PortfolioProject[] 
           )}
         </motion.div>
       </AnimatePresence>
-
-      {/* ── View All CTA ── */}
-      {filtered.length > 0 && (
-        <div className="flex justify-center mt-10">
-          <Link
-            href="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 hover:bg-white/10 text-sm font-medium transition-all duration-200"
-          >
-            View All Projects
-            <ArrowUpRight size={15} />
-          </Link>
-        </div>
-      )}
     </div>
   );
 }
