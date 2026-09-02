@@ -109,6 +109,7 @@ export default function CandidateDetailClient({ id }: { id: string }) {
 
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [rescoring, setRescoring] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
@@ -129,19 +130,22 @@ export default function CandidateDetailClient({ id }: { id: string }) {
   const fetchCandidate = async () => {
     if (!id) return;
     setLoading(true);
+    setFetchError(null);
     try {
       const res = await fetch(`/api/admin/careers/candidates/${id}`);
+      const data = await res.json();
       if (!res.ok) {
-        console.error(`Candidate fetch failed: ${res.status}`);
+        // Show real error — 401 = session expired, 404 = truly deleted, 500 = server error
+        setFetchError(`Error ${res.status}: ${data?.error || "Failed to load candidate"}`);
         setCandidate(null);
         return;
       }
-      const data = await res.json();
       setCandidate(data);
       setAdminNotes(data.adminNotes || "");
       setRating(data.rating || 0);
-    } catch (err) {
+    } catch (err: any) {
       console.error("fetchCandidate error:", err);
+      setFetchError("Network error — make sure the dev server is running");
       setCandidate(null);
     } finally {
       setLoading(false);
@@ -369,13 +373,22 @@ export default function CandidateDetailClient({ id }: { id: string }) {
           </div>
           <div className="space-y-2">
             <h2 className="text-xl font-extrabold text-foreground tracking-tight">
-              Candidate Not Found
+              {fetchError?.startsWith("Error 404") ? "Candidate Not Found" : "Failed to Load Candidate"}
             </h2>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              This candidate application does not exist or may have been permanently deleted from the ATS pipeline.
+              {fetchError || "This candidate application does not exist or may have been permanently deleted."}
             </p>
+            {fetchError?.startsWith("Error 401") && (
+              <p className="text-xs text-amber-400 font-semibold mt-1">Your session may have expired. Try refreshing the page or signing in again.</p>
+            )}
           </div>
-          <div className="pt-2">
+          <div className="flex flex-col gap-2 pt-2">
+            <button
+              onClick={fetchCandidate}
+              className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-6 rounded-2xl border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+            >
+              <RefreshCw size={13} /> Retry
+            </button>
             <Link
               href="/admin/candidates"
               className="inline-flex items-center justify-center gap-2 w-full py-3 px-6 rounded-2xl bg-primary text-white text-xs font-bold shadow-[0_0_20px_rgba(245,80,54,0.35)] hover:bg-primary/90 transition-all cursor-pointer"
@@ -388,6 +401,7 @@ export default function CandidateDetailClient({ id }: { id: string }) {
       </div>
     );
   }
+
 
   const evalData = candidate.evaluation;
   const score = evalData?.score ?? 0;

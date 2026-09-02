@@ -49,8 +49,14 @@ export async function GET(
 
   try {
     const { id } = await params;
+    const cleanId = id?.trim();
+
+    if (!cleanId) {
+      return NextResponse.json({ error: "Missing candidate ID" }, { status: 400 });
+    }
+
     const candidate = await atsDb.candidate.findUnique({
-      where: { id },
+      where: { id: cleanId },
       include: {
         job: true,
         evaluation: true,
@@ -64,7 +70,8 @@ export async function GET(
 
     return NextResponse.json(candidate);
   } catch (error: any) {
-    return NextResponse.json({ error: "Failed to fetch candidate" }, { status: 500 });
+    console.error("Failed to fetch candidate:", error);
+    return NextResponse.json({ error: error?.message || "Failed to fetch candidate" }, { status: 500 });
   }
 }
 
@@ -193,9 +200,24 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    await atsDb.candidate.delete({ where: { id } });
+    const cleanId = id?.trim();
+
+    if (!cleanId) {
+      return NextResponse.json({ error: "Missing candidate ID" }, { status: 400 });
+    }
+
+    // Explicitly delete child records first to avoid FK constraint issues
+    await atsDb.candidateEmail.deleteMany({ where: { candidateId: cleanId } });
+    await atsDb.aiEvaluation.deleteMany({ where: { candidateId: cleanId } });
+    await atsDb.candidate.delete({ where: { id: cleanId } });
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: "Failed to delete candidate" }, { status: 500 });
+    console.error("DELETE candidate error:", error.message, error.code);
+    return NextResponse.json(
+      { error: `Failed to delete candidate: ${error.message}` },
+      { status: 500 }
+    );
   }
 }
+

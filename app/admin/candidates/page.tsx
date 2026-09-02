@@ -517,20 +517,38 @@ function CandidatesAdminInner() {
                 </div>
                 <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                   {colCandidates.map((cand) => (
-                    <Link key={cand.id} href={`/admin/candidates/${cand.id}`} className="block p-3 rounded-xl bg-background border border-border hover:border-primary/50 transition-all space-y-2 group">
+                    <div
+                      key={cand.id}
+                      className="p-3 rounded-xl bg-background border border-border hover:border-primary/50 transition-all space-y-2 group"
+                    >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">{cand.name}</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-mono font-bold text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10">{cand.evaluation?.score ?? 0}%</span>
-                          <button onClick={(e) => handleDeleteCandidate(e, cand.id, cand.name)}
+                        <Link
+                          href={`/admin/candidates/${cand.id}`}
+                          className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate hover:underline"
+                        >
+                          {cand.name}
+                        </Link>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <span className="text-[10px] font-mono font-bold text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10">
+                            {cand.evaluation?.score ?? 0}%
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteCandidate(e, cand.id, cand.name)}
                             className="text-muted-foreground/50 hover:text-red-400 p-0.5 rounded hover:bg-red-500/10 transition-colors cursor-pointer"
-                            title={`Delete application for ${cand.name}`}>
+                            title={`Delete application for ${cand.name}`}
+                          >
                             <Trash2 size={12} />
                           </button>
                         </div>
                       </div>
-                      <p className="text-[11px] text-muted-foreground truncate">{cand.job?.title}</p>
-                    </Link>
+                      <Link
+                        href={`/admin/candidates/${cand.id}`}
+                        className="block text-[11px] text-muted-foreground truncate hover:text-foreground transition-colors"
+                      >
+                        {cand.job?.title}
+                      </Link>
+                    </div>
                   ))}
                 </div>
               </div>
