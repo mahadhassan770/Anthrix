@@ -625,43 +625,81 @@ export default function CandidateDetailPage() {
         {/* RIGHT PANE: Resume & Document */}
         <div className="lg:col-span-6 space-y-6">
           <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
-            <div className="flex items-center gap-2 border-b border-border/50 pb-4">
-              <FileText size={16} className="text-primary" />
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
-                Resume Document
-              </span>
+            <div className="flex items-center justify-between border-b border-border/50 pb-4">
+              <div className="flex items-center gap-2">
+                <FileText size={16} className="text-primary" />
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
+                  Resume Document
+                </span>
+              </div>
+
+              {candidate.resumeUrl && (
+                <div className="flex items-center gap-2">
+                  <a
+                    href={
+                      candidate.resumeUrl.includes("cloudinary.com") && candidate.resumeUrl.toLowerCase().endsWith(".pdf")
+                        ? candidate.resumeUrl.replace(/\.pdf$/i, ".png")
+                        : candidate.resumeUrl
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-primary/90 transition-all"
+                  >
+                    <ExternalLink size={13} />
+                    View Resume
+                  </a>
+                  <a
+                    href={
+                      candidate.resumeUrl.includes("cloudinary.com") && candidate.resumeUrl.toLowerCase().endsWith(".pdf")
+                        ? candidate.resumeUrl.replace(/\.pdf$/i, ".png")
+                        : candidate.resumeUrl
+                    }
+                    download
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all"
+                  >
+                    <Download size={13} />
+                    Download
+                  </a>
+                </div>
+              )}
             </div>
 
             {candidate.resumeUrl ? (
               <div className="space-y-4">
-                {/* Visual resume card */}
-                <div className="flex flex-col items-center justify-center gap-5 py-12 bg-background border border-border rounded-2xl">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                    <FileText size={28} className="text-primary" />
+                {/* Embedded Visual Resume Render */}
+                <div className="relative bg-background border border-border rounded-2xl overflow-hidden group shadow-inner">
+                  <div className="max-h-[600px] overflow-y-auto p-2 bg-zinc-950/40">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={
+                        candidate.resumeUrl.includes("cloudinary.com") && candidate.resumeUrl.toLowerCase().endsWith(".pdf")
+                          ? candidate.resumeUrl.replace(/\.pdf$/i, ".png")
+                          : candidate.resumeUrl
+                      }
+                      alt={`${candidate.name}'s Resume Preview`}
+                      className="w-full h-auto object-contain rounded-xl shadow-md mx-auto"
+                      loading="lazy"
+                    />
                   </div>
-                  <div className="text-center space-y-1">
-                    <p className="text-sm font-bold text-foreground">{candidate.name}&apos;s Resume</p>
-                    <p className="text-xs text-muted-foreground font-mono">
+
+                  {/* Overlay button to open full in new tab */}
+                  <div className="p-3 bg-background/90 border-t border-border flex items-center justify-between">
+                    <div className="text-xs font-mono text-muted-foreground truncate">
                       {candidate.resumeUrl.split("/").pop()?.split("?")[0] || "resume.pdf"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
+                    </div>
                     <a
-                      href={candidate.resumeUrl}
+                      href={
+                        candidate.resumeUrl.includes("cloudinary.com") && candidate.resumeUrl.toLowerCase().endsWith(".pdf")
+                          ? candidate.resumeUrl.replace(/\.pdf$/i, ".png")
+                          : candidate.resumeUrl
+                      }
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-primary/90 transition-all"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
                     >
-                      <ExternalLink size={15} />
-                      View Resume
-                    </a>
-                    <a
-                      href={candidate.resumeUrl}
-                      download
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all"
-                    >
-                      <Download size={15} />
-                      Download
+                      Open Full in New Tab <ExternalLink size={12} />
                     </a>
                   </div>
                 </div>
@@ -672,7 +710,7 @@ export default function CandidateDetailPage() {
                     <p className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
                       Extracted Resume Text
                     </p>
-                    <div className="max-h-64 overflow-y-auto font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                    <div className="max-h-48 overflow-y-auto font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
                       {candidate.resumeText}
                     </div>
                   </div>
