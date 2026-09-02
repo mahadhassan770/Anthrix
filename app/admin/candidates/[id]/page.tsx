@@ -107,7 +107,7 @@ function InterviewModal({ candidate, onClose, onConfirm }: { candidate: any; onC
 export default function CandidateDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params?.id as string;
+  const id = Array.isArray(params?.id) ? params.id[0] : (params?.id as string);
 
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -349,11 +349,29 @@ export default function CandidateDetailPage() {
 
   if (!candidate) {
     return (
-      <div className="p-12 text-center text-muted-foreground">
-        <p>Candidate not found.</p>
-        <Link href="/admin/candidates" className="text-primary hover:underline text-xs mt-2 block">
-          Back to Candidates
-        </Link>
+      <div className="min-h-[500px] flex items-center justify-center p-6">
+        <div className="bg-card border border-border rounded-3xl p-8 sm:p-12 max-w-md w-full text-center space-y-5 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto">
+            <AlertCircle size={30} />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-extrabold text-foreground tracking-tight">
+              Candidate Not Found
+            </h2>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              This candidate application does not exist or may have been permanently deleted from the ATS pipeline.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/admin/candidates"
+              className="inline-flex items-center justify-center gap-2 w-full py-3 px-6 rounded-2xl bg-primary text-white text-xs font-bold shadow-[0_0_20px_rgba(245,80,54,0.35)] hover:bg-primary/90 transition-all cursor-pointer"
+            >
+              <ArrowLeft size={15} />
+              Back to Candidates Pipeline
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
