@@ -29,7 +29,11 @@ import {
   MapPin,
   Link2,
 } from "lucide-react";
-import { ATS_EMAIL_TEMPLATES, EmailTemplate } from "@/lib/ats-email-templates";
+import {
+  DEFAULT_STORED_TEMPLATES,
+  StoredEmailTemplate,
+  renderTemplateText,
+} from "@/lib/ats-email-templates";
 
 interface InterviewDetails {
   dateTime: string;
@@ -161,9 +165,23 @@ export default function CandidateDetailClient({ id }: { id: string }) {
     if (id) fetchCandidate();
   }, [id]);
 
-  const applyTemplate = (templateId: string, candData = candidate) => {
+  const [emailTemplates, setEmailTemplates] = useState<StoredEmailTemplate[]>(DEFAULT_STORED_TEMPLATES);
+
+  useEffect(() => {
+    fetch("/api/admin/email-templates")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.templates && Array.isArray(d.templates) && d.templates.length > 0) {
+          setEmailTemplates(d.templates);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const applyTemplate = (templateId: string, candData = candidate, list = emailTemplates) => {
     if (!candData) return;
-    const template = ATS_EMAIL_TEMPLATES.find((t) => t.id === templateId) || ATS_EMAIL_TEMPLATES[0];
+    const template = list.find((t) => t.id === templateId) || list[0];
+    if (!template) return;
     setSelectedTemplateId(template.id);
     const vars = {
       name: candData.name,
@@ -171,8 +189,8 @@ export default function CandidateDetailClient({ id }: { id: string }) {
       department: candData.job?.department,
       matchedSkills: candData.evaluation?.matchedSkills || [],
     };
-    setEmailSubject(template.subject(vars));
-    setEmailBody(template.body(vars));
+    setEmailSubject(renderTemplateText(template.subject, vars));
+    setEmailBody(renderTemplateText(template.body, vars));
     setEmailSuccess(null);
   };
 
@@ -945,7 +963,7 @@ export default function CandidateDetailClient({ id }: { id: string }) {
               <div className="space-y-1.5">
                 <label className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Email Template</label>
                 <select value={selectedTemplateId} onChange={(e) => applyTemplate(e.target.value)} className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-primary outline-none font-semibold cursor-pointer">
-                  {ATS_EMAIL_TEMPLATES.map((tmpl) => (<option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>))}
+                  {emailTemplates.map((tmpl) => (<option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>))}
                 </select>
               </div>
 

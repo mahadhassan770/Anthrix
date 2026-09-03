@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { uploadAtsResume } from "@/lib/ats-cloudinary";
 import { scoreCandidateResume } from "@/lib/ats-ai-scorer";
 import { sendEmail } from "@/lib/email-service";
-import { ATS_EMAIL_TEMPLATES } from "@/lib/ats-email-templates";
+import { getActiveEmailTemplates, renderTemplateText } from "@/lib/ats-email-templates";
 import zlib from "zlib";
 
 // Mark this route as Node.js runtime so native modules work at request time
@@ -256,10 +256,11 @@ export async function POST(req: NextRequest) {
 
     // 7. Auto-send "Application Received" confirmation email to candidate
     try {
-      const template = ATS_EMAIL_TEMPLATES.find((t) => t.id === "application_received");
+      const activeTemplates = await getActiveEmailTemplates();
+      const template = activeTemplates.find((t) => t.id === "application_received");
       if (template) {
-        const subject = template.subject({ name: candidate.name, jobTitle: job.title });
-        const body = template.body({ name: candidate.name, jobTitle: job.title });
+        const subject = renderTemplateText(template.subject, { name: candidate.name, jobTitle: job.title });
+        const body = renderTemplateText(template.body, { name: candidate.name, jobTitle: job.title });
 
         await sendEmail({
           to: candidate.email,

@@ -6,12 +6,9 @@ import { useSession } from "@/lib/auth-client";
 import { authClient } from "@/lib/auth-client";
 import {
   Loader2, User, Lock, Palette, Camera, ShieldAlert, Monitor, Sun, Moon, Laptop, CheckCircle, Eye, EyeOff,
-  Bot, Zap, Shield, RefreshCw, FlaskConical, Save, PhoneCall, Phone, MapPin, Mail, Clock,
+  Bot, Zap, Shield, RefreshCw, FlaskConical, Save, PhoneCall, Phone, MapPin, Mail, Clock, MailCheck,
 } from "lucide-react";
-
-
-
-
+import { EmailTemplatesTab } from "./email-templates-tab";
 
 const DEFAULT_COPILOT_PROMPT = `You are the Anthrix AI Solutions Architect & Client Advisor.
 - Represent Anthrix Technologies: an elite engineering agency specializing in Autonomous AI Agents, RAG Pipelines, Multi-Tenant SaaS, and Full-Stack Web Architecture.
@@ -29,7 +26,7 @@ export default function SettingsPage() {
   const { data: session, isPending, refetch } = useSession();
   const { theme, setTheme } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<"profile" | "contact" | "smtp" | "security" | "appearance" | "ai">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "contact" | "smtp" | "security" | "appearance" | "ai" | "templates">("profile");
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -532,7 +529,12 @@ export default function SettingsPage() {
     { id: "smtp", label: "Email & SMTP", icon: Mail, desc: "Gmail / SMTP email dispatch" },
     { id: "security", label: "Security", icon: Lock, desc: "Passwords and authentication" },
     { id: "appearance", label: "Appearance", icon: Palette, desc: "Theme and interface" },
-    ...(isSuperAdmin ? [{ id: "ai", label: "AI Copilot", icon: Bot, desc: "LLM engine & configuration" }] : []),
+    ...(isSuperAdmin
+      ? [
+          { id: "templates", label: "Email Templates", icon: MailCheck, desc: "Recruitment email templates" },
+          { id: "ai", label: "AI Copilot", icon: Bot, desc: "LLM engine & configuration" },
+        ]
+      : []),
   ];
 
   if (isPending) {
@@ -1626,6 +1628,11 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
+          )}
+
+          {/* ─── EMAIL TEMPLATES TAB (SUPER ADMIN ONLY) ────────────────────── */}
+          {activeTab === "templates" && isSuperAdmin && (
+            <EmailTemplatesTab isSuperAdmin={isSuperAdmin} />
           )}
 
         </main>
