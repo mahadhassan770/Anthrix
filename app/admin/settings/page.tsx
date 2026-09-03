@@ -5,10 +5,41 @@ import { useTheme } from "next-themes";
 import { useSession } from "@/lib/auth-client";
 import { authClient } from "@/lib/auth-client";
 import {
-  Loader2, User, Lock, Palette, Camera, ShieldAlert, Monitor, Sun, Moon, Laptop, CheckCircle, Eye, EyeOff,
-  Bot, Zap, Shield, RefreshCw, FlaskConical, Save, PhoneCall, Phone, MapPin, Mail, Clock, MailCheck,
+  Loader2,
+  User,
+  Lock,
+  Palette,
+  Camera,
+  ShieldAlert,
+  Monitor,
+  Sun,
+  Moon,
+  Laptop,
+  CheckCircle,
+  Eye,
+  EyeOff,
+  Bot,
+  Zap,
+  Shield,
+  RefreshCw,
+  Save,
+  PhoneCall,
+  Phone,
+  MapPin,
+  Mail,
+  MailCheck,
+  Building,
+  KeyRound,
+  Sliders,
+  Check,
+  Sparkles,
+  ChevronRight,
+  Clock,
+  Info,
 } from "lucide-react";
 import { EmailTemplatesTab } from "./email-templates-tab";
+
+// ─── Default AI System Prompts ────────────────────────────────────────────────
 
 const DEFAULT_COPILOT_PROMPT = `You are the Anthrix AI Solutions Architect & Client Advisor.
 - Represent Anthrix Technologies: an elite engineering agency specializing in Autonomous AI Agents, RAG Pipelines, Multi-Tenant SaaS, and Full-Stack Web Architecture.
@@ -22,11 +53,17 @@ const DEFAULT_ATS_PROMPT = `You are the Principal Talent Intelligence & Evaluati
 - Evidence-Based: Reward explicit metrics ($ revenue, % growth, scale, leadership), verify continuous tenure, and penalize keyword stuffing or generic claims.
 - Output: Deliver sharp, unbiased summaries, highlighting verified strengths, specific gaps, and clear hiring recommendations.`;
 
+// ─── Settings Page Component ──────────────────────────────────────────────────
+
 export default function SettingsPage() {
   const { data: session, isPending, refetch } = useSession();
   const { theme, setTheme } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<"profile" | "contact" | "smtp" | "security" | "appearance" | "ai" | "templates">("profile");
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "contact" | "smtp" | "security" | "appearance" | "templates" | "ai"
+  >("profile");
+
+  // Profile & Password State
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -39,7 +76,7 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
-  // ─── SMTP Email State (Admin & Super Admin) ──────────────────────────────
+  // ─── SMTP Email State ───────────────────────────────────────────────────────
   const [smtpSettings, setSmtpSettings] = useState({
     smtpHost: "smtp.gmail.com",
     smtpPort: "465",
@@ -60,11 +97,13 @@ export default function SettingsPage() {
       smtpHost: "smtp.gmail.com",
       smtpPort: "465",
       smtpSecure: true,
-      smtpFrom: prev.smtpUser ? `Anthrix Technologies <${prev.smtpUser}>` : prev.smtpFrom || "Anthrix Technologies <yourgmail@gmail.com>",
+      smtpFrom: prev.smtpUser
+        ? `Anthrix Technologies <${prev.smtpUser}>`
+        : prev.smtpFrom || "Anthrix Technologies <yourgmail@gmail.com>",
     }));
   };
 
-  // ─── Contact Details State (Admin & Super Admin) ──────────────────────────
+  // ─── Contact Details State ──────────────────────────────────────────────────
   const [contactForm, setContactForm] = useState({
     email: "",
     phone: "",
@@ -77,7 +116,7 @@ export default function SettingsPage() {
   const [contactMsg, setContactMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [contactLoaded, setContactLoaded] = useState(false);
 
-  // ─── AI Copilot State (Super Admin Only) ──────────────────────────────────
+  // ─── AI Copilot State (Super Admin Only) ────────────────────────────────────
   const [aiSettings, setAiSettings] = useState({
     groqApiKey: "",
     groqModel: "",
@@ -96,7 +135,6 @@ export default function SettingsPage() {
   const [aiMsg, setAiMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [aiLoaded, setAiLoaded] = useState(false);
 
-  // Live models fetched dynamically from Groq API
   const [liveModels, setLiveModels] = useState<string[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [mainModelMsg, setMainModelMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -122,12 +160,10 @@ export default function SettingsPage() {
         setLiveModels(data.models);
         setAiSettings((prev) => {
           const current = modelOverride !== undefined ? modelOverride : prev.groqModel;
-          if (current) {
-            return { ...prev, groqModel: current };
-          }
+          if (current) return { ...prev, groqModel: current };
           return { ...prev, groqModel: data.models[0] };
         });
-        setMainModelMsg({ type: "success", text: `Successfully loaded ${data.models.length} active models directly from Groq!` });
+        setMainModelMsg({ type: "success", text: `Loaded ${data.models.length} active models from Groq!` });
       } else {
         setMainModelMsg({ type: "error", text: data.error || "Failed to fetch live models. Check API key." });
       }
@@ -142,7 +178,7 @@ export default function SettingsPage() {
     setAtsModelsLoading(true);
     setAtsModelMsg(null);
     try {
-      const apiKey = keyOverride !== undefined ? keyOverride : (aiSettings.atsGroqApiKey || aiSettings.groqApiKey);
+      const apiKey = keyOverride !== undefined ? keyOverride : aiSettings.atsGroqApiKey || aiSettings.groqApiKey;
       const res = await fetch("/api/admin/groq-models", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -153,12 +189,10 @@ export default function SettingsPage() {
         setAtsLiveModels(data.models);
         setAiSettings((prev) => {
           const current = modelOverride !== undefined ? modelOverride : prev.atsGroqModel;
-          if (current) {
-            return { ...prev, atsGroqModel: current };
-          }
+          if (current) return { ...prev, atsGroqModel: current };
           return { ...prev, atsGroqModel: data.models[0] };
         });
-        setAtsModelMsg({ type: "success", text: `Successfully loaded ${data.models.length} active ATS models directly from Groq!` });
+        setAtsModelMsg({ type: "success", text: `Loaded ${data.models.length} active ATS models from Groq!` });
       } else {
         setAtsModelMsg({ type: "error", text: data.error || "Failed to fetch ATS models. Check API key." });
       }
@@ -169,7 +203,7 @@ export default function SettingsPage() {
     }
   };
 
-  // Sync form with session once loaded
+  // Sync profile form with session
   useEffect(() => {
     if (session?.user) {
       setProfileForm({
@@ -179,7 +213,7 @@ export default function SettingsPage() {
     }
   }, [session]);
 
-  // ─── Load Contact Details (Admin & Super Admin) ───────────────────────────
+  // Load Contact details
   useEffect(() => {
     if (contactLoaded) return;
     fetch("/api/admin/contact-settings")
@@ -200,7 +234,7 @@ export default function SettingsPage() {
       .catch(() => {});
   }, [contactLoaded]);
 
-  // ─── Load System & SMTP Settings ──────────────────────────────────────────
+  // Load System & SMTP Settings
   useEffect(() => {
     if (smtpLoaded) return;
     fetch("/api/admin/system-settings")
@@ -239,6 +273,97 @@ export default function SettingsPage() {
       })
       .catch(() => {});
   }, [session, smtpLoaded]);
+
+  // Handlers
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileLoading(true);
+    setProfileMsg(null);
+    try {
+      await authClient.updateUser({ name: profileForm.name });
+      setProfileMsg({ type: "success", text: "Profile updated successfully!" });
+      refetch?.();
+    } catch {
+      setProfileMsg({ type: "error", text: "Failed to update profile." });
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordMsg(null);
+    if (passwordForm.new !== passwordForm.confirm) {
+      setPasswordMsg({ type: "error", text: "New passwords do not match." });
+      return;
+    }
+    if (passwordForm.new.length < 8) {
+      setPasswordMsg({ type: "error", text: "Password must be at least 8 characters long." });
+      return;
+    }
+    setPasswordLoading(true);
+    try {
+      const { error } = await authClient.changePassword({
+        currentPassword: passwordForm.current,
+        newPassword: passwordForm.new,
+        revokeOtherSessions: true,
+      });
+      if (error) {
+        setPasswordMsg({ type: "error", text: error.message || "Failed to update password." });
+      } else {
+        setPasswordMsg({ type: "success", text: "Password changed successfully! Other sessions logged out." });
+        setPasswordForm({ current: "", new: "", confirm: "" });
+      }
+    } catch {
+      setPasswordMsg({ type: "error", text: "An error occurred while changing password." });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    setProfileMsg(null);
+    try {
+      const payload = new FormData();
+      payload.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: payload });
+      const data = await res.json();
+      if (!res.ok || !data.secure_url) throw new Error(data.error || "Upload failed");
+      await authClient.updateUser({ image: data.secure_url });
+      setProfileMsg({ type: "success", text: "Profile avatar updated successfully!" });
+      refetch?.();
+    } catch (err: any) {
+      setProfileMsg({ type: "error", text: err.message || "Failed to upload avatar" });
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setContactSaving(true);
+    setContactMsg(null);
+    try {
+      const res = await fetch("/api/admin/contact-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contactForm),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setContactMsg({ type: "success", text: data.message || "Contact details updated successfully!" });
+      } else {
+        setContactMsg({ type: "error", text: data.error || "Failed to save contact details." });
+      }
+    } catch {
+      setContactMsg({ type: "error", text: "Network error saving contact details." });
+    } finally {
+      setContactSaving(false);
+    }
+  };
 
   const handleSmtpSave = async () => {
     setSmtpLoading(true);
@@ -319,9 +444,7 @@ export default function SettingsPage() {
         type: data.success ? "success" : "error",
         text: data.message || (data.success ? "Copilot LLM connection successful!" : "Connection failed."),
       });
-      if (data.success) {
-        fetchLiveModels();
-      }
+      if (data.success) fetchLiveModels();
     } catch {
       setMainTestMsg({ type: "error", text: "Network error during connection test." });
     } finally {
@@ -343,9 +466,7 @@ export default function SettingsPage() {
         type: data.success ? "success" : "error",
         text: data.message || (data.success ? "ATS LLM connection successful!" : "ATS Connection failed."),
       });
-      if (data.success) {
-        fetchAtsLiveModels();
-      }
+      if (data.success) fetchAtsLiveModels();
     } catch {
       setAtsTestMsg({ type: "error", text: "Network error during ATS connection test." });
     } finally {
@@ -353,1290 +474,967 @@ export default function SettingsPage() {
     }
   };
 
-  // ─── Contact Details Update (Admin & Super Admin) ─────────────────────────
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setContactSaving(true);
-    setContactMsg(null);
-    try {
-      const res = await fetch("/api/admin/contact-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contactForm),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setContactMsg({ type: "success", text: data.message || "Contact details updated successfully!" });
-        if (data.settings) {
-          setContactForm(data.settings);
-        }
-      } else {
-        setContactMsg({ type: "error", text: data.error || "Failed to save contact details." });
-      }
-    } catch {
-      setContactMsg({ type: "error", text: "Network error. Please try again." });
-    } finally {
-      setContactSaving(false);
-    }
-  };
-
-  // ─── Profile Update ───────────────────────────────────────────────────────
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setProfileLoading(true);
-    setProfileMsg(null);
-
-    const { error } = await authClient.updateUser({ name: profileForm.name });
-
-    if (error) {
-      setProfileMsg({ type: "error", text: error.message || "Failed to update profile." });
-    } else {
-      setProfileMsg({ type: "success", text: "Profile updated successfully!" });
-      refetch?.();
-    }
-    setProfileLoading(false);
-  };
-
-  // ─── Avatar Upload ────────────────────────────────────────────────────────
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setAvatarUploading(true);
-    setProfileMsg(null);
-
-    try {
-      const payload = new FormData();
-      payload.append("file", file);
-      payload.append("folder", "agency_portfolio");
-
-      const res = await fetch("/api/upload", { method: "POST", body: payload });
-      if (!res.ok) throw new Error("Upload failed");
-
-      const { url } = await res.json();
-      const { error } = await authClient.updateUser({ image: url });
-
-      if (error) throw new Error(error.message);
-      setProfileMsg({ type: "success", text: "Avatar updated successfully!" });
-      refetch?.();
-    } catch (err: any) {
-      setProfileMsg({ type: "error", text: err.message || "Failed to upload avatar." });
-    } finally {
-      setAvatarUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  // ─── Password Change ──────────────────────────────────────────────────────
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordMsg(null);
-
-    if (passwordForm.new !== passwordForm.confirm) {
-      setPasswordMsg({ type: "error", text: "New passwords do not match." });
-      return;
-    }
-
-    if (passwordForm.new.length < 8) {
-      setPasswordMsg({ type: "error", text: "New password must be at least 8 characters." });
-      return;
-    }
-
-    setPasswordLoading(true);
-
-    const { error } = await authClient.changePassword({
-      currentPassword: passwordForm.current,
-      newPassword: passwordForm.new,
-      revokeOtherSessions: true,
-    });
-
-    if (error) {
-      setPasswordMsg({ type: "error", text: error.message || "Failed to change password. Check your current password." });
-    } else {
-      setPasswordMsg({ type: "success", text: "Password changed successfully! Other sessions have been signed out." });
-      setPasswordForm({ current: "", new: "", confirm: "" });
-    }
-    setPasswordLoading(false);
-  };
-
-  // ─── Theme Options ────────────────────────────────────────────────────────
-  const themeOptions = [
-    {
-      id: "light",
-      label: "Light",
-      desc: "Clean and bright interface",
-      icon: Sun,
-      preview: (
-        <div className="w-full h-20 rounded-xl overflow-hidden border border-gray-200 bg-white flex">
-          <div className="w-12 h-full bg-gray-100 border-r border-gray-200 flex flex-col gap-1.5 p-2">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-1.5 rounded-full bg-gray-300 w-full" />)}
-          </div>
-          <div className="flex-1 p-3 flex flex-col gap-2">
-            <div className="h-2 rounded-full bg-gray-200 w-3/4" />
-            <div className="flex-1 rounded-lg bg-gray-50 border border-gray-200" />
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "dark",
-      label: "Dark",
-      desc: "Industrial Carbon — easy on eyes",
-      icon: Moon,
-      preview: (
-        <div className="w-full h-20 rounded-xl overflow-hidden border border-[#2D323B] bg-[#0F1115] flex">
-          <div className="w-12 h-full bg-[#1C1F26] border-r border-[#2D323B] flex flex-col gap-1.5 p-2">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-1.5 rounded-full bg-[#2D323B] w-full" />)}
-          </div>
-          <div className="flex-1 p-3 flex flex-col gap-2">
-            <div className="h-2 rounded-full bg-[#2D323B] w-3/4" />
-            <div className="flex-1 rounded-lg bg-[#1C1F26] border border-[#2D323B]" />
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "system",
-      label: "System",
-      desc: "Follows your OS preference",
-      icon: Laptop,
-      preview: (
-        <div className="w-full h-20 rounded-xl overflow-hidden border border-gray-200 flex">
-          <div className="w-1/2 h-full bg-white flex flex-col">
-            <div className="h-5 bg-gray-100 border-b border-gray-200" />
-            <div className="flex-1 p-1.5 flex flex-col gap-1">
-              <div className="h-1.5 rounded-full bg-gray-200 w-3/4" />
-              <div className="flex-1 rounded bg-gray-50" />
-            </div>
-          </div>
-          <div className="w-1/2 h-full bg-[#0F1115] flex flex-col">
-            <div className="h-5 bg-[#1C1F26] border-b border-[#2D323B]" />
-            <div className="flex-1 p-1.5 flex flex-col gap-1">
-              <div className="h-1.5 rounded-full bg-[#2D323B] w-3/4" />
-              <div className="flex-1 rounded bg-[#1C1F26]" />
-            </div>
-          </div>
-        </div>
-      ),
-    },
-  ];
-
-  const isSuperAdmin = session?.user?.role === "super_admin";
-
-  const tabs = [
-    { id: "profile", label: "General", icon: User, desc: "Personal info and avatar" },
-    { id: "contact", label: "Contact Info", icon: PhoneCall, desc: "Phones, email & location" },
-    { id: "smtp", label: "Email & SMTP", icon: Mail, desc: "Gmail / SMTP email dispatch" },
-    { id: "security", label: "Security", icon: Lock, desc: "Passwords and authentication" },
-    { id: "appearance", label: "Appearance", icon: Palette, desc: "Theme and interface" },
-    ...(isSuperAdmin
-      ? [
-          { id: "templates", label: "Email Templates", icon: MailCheck, desc: "Recruitment email templates" },
-          { id: "ai", label: "AI Copilot", icon: Bot, desc: "LLM engine & configuration" },
-        ]
-      : []),
-  ];
-
   if (isPending) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-muted-foreground">
-        <Loader2 size={32} className="animate-spin mb-4 text-primary" />
-        <p>Loading preferences...</p>
+        <Loader2 size={32} className="animate-spin mb-4 text-[#F55036]" />
+        <p className="text-sm font-medium">Loading preferences &amp; configurations...</p>
       </div>
     );
   }
 
+  const isSuperAdmin = session?.user?.role === "super_admin";
   const avatar = (session?.user as any)?.image;
   const initials = profileForm.name?.charAt(0).toUpperCase() || "A";
 
-  return (
-    <div className="w-full space-y-8 pb-16">
+  const tabs = [
+    { id: "profile", label: "Profile", icon: User },
+    { id: "contact", label: "Company Info", icon: Building },
+    { id: "smtp", label: "Email & SMTP", icon: Mail },
+    { id: "security", label: "Security", icon: Lock },
+    { id: "appearance", label: "Appearance", icon: Palette },
+    ...(isSuperAdmin
+      ? [
+          { id: "templates", label: "Email Templates", icon: MailCheck },
+          { id: "ai", label: "AI Engines", icon: Bot },
+        ]
+      : []),
+  ];
 
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-card to-background border border-border p-8 lg:p-10">
-        <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="relative z-10 flex items-center gap-6">
-          <div
-            className="w-20 h-20 rounded-2xl bg-background border border-border flex items-center justify-center shadow-2xl flex-shrink-0 overflow-hidden cursor-pointer group relative"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {avatar ? (
-              <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-3xl font-bold text-foreground font-display">{initials}</span>
-            )}
-            <div className="absolute inset-0 bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              {avatarUploading ? <Loader2 size={20} className="text-white animate-spin" /> : <Camera size={20} className="text-white" />}
+  return (
+    <div className="w-full space-y-6">
+      {/* ─── Compact User Identity Card ────────────────────────────────────────── */}
+      <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-[#F55036]/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+          <div className="flex items-center gap-4">
+            {/* Avatar with Camera Overlay */}
+            <div
+              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0C1019] to-card border border-border flex items-center justify-center shadow-inner overflow-hidden cursor-pointer group relative flex-shrink-0"
+              onClick={() => fileInputRef.current?.click()}
+              title="Click to change avatar"
+            >
+              {avatar ? (
+                <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xl font-bold text-foreground font-mono">{initials}</span>
+              )}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {avatarUploading ? <Loader2 size={16} className="text-white animate-spin" /> : <Camera size={16} className="text-white" />}
+              </div>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
+                  {profileForm.name || "Administrator"}
+                </h1>
+                <span
+                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border uppercase ${
+                    isSuperAdmin
+                      ? "bg-[#F55036]/10 border-[#F55036]/25 text-[#F55036]"
+                      : "bg-purple-500/10 border-purple-500/25 text-purple-400"
+                  }`}
+                >
+                  {isSuperAdmin ? "Super Admin" : "Admin"}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground font-mono">{profileForm.email}</p>
             </div>
           </div>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-          <div>
-            <h1 className="text-3xl font-bold text-foreground font-display tracking-tight mb-1">
-              {profileForm.name || "Admin"}
-            </h1>
-            <p className="text-muted-foreground">{profileForm.email}</p>
-          </div>
+
+          <button
+            type="button"
+            onClick={() => refetch?.()}
+            className="self-start sm:self-center flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-background hover:bg-muted/40 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all"
+          >
+            <RefreshCw size={12} />
+            <span>Sync</span>
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      {/* ─── Material Segmented Pill Navigation ──────────────────────────────── */}
+      <div className="bg-card border border-border rounded-2xl p-1.5 flex items-center gap-1 overflow-x-auto shadow-sm">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                setActiveTab(tab.id as any);
+                setProfileMsg(null);
+                setPasswordMsg(null);
+                setSmtpMsg(null);
+                setContactMsg(null);
+                setAiMsg(null);
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex-1 justify-center ${
+                isActive
+                  ? "bg-[#F55036] text-white shadow-[0_0_15px_rgba(245,80,54,0.3)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+              }`}
+            >
+              <Icon size={14} />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
 
-        {/* Sidebar Nav */}
-        <aside className="w-full md:w-64 flex-shrink-0">
-          <nav className="flex flex-col space-y-2 sticky top-6">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => { setActiveTab(tab.id as any); setProfileMsg(null); setPasswordMsg(null); }}
-                  className={`flex flex-col items-start px-5 py-4 rounded-xl text-left transition-all duration-200 ${
-                    isActive ? "bg-card border border-border shadow-lg" : "bg-transparent border border-transparent hover:bg-card/50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-1">
-                    <Icon size={16} className={isActive ? "text-primary" : "text-muted-foreground"} />
-                    <span className={`font-semibold ${isActive ? "text-foreground" : "text-muted-foreground"}`}>{tab.label}</span>
-                  </div>
-                  <span className={`text-xs pl-7 ${isActive ? "text-muted-foreground" : "text-muted-foreground/60"}`}>{tab.desc}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </aside>
-
-        {/* Content */}
-        <main className="flex-1 min-w-0">
-
-          {/* ─── PROFILE TAB ─────────────────────────────────────────────────── */}
-          {activeTab === "profile" && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-
-              {profileMsg && (
-                <div className={`p-4 rounded-xl text-sm font-medium border flex items-center gap-3 ${
+      {/* ─── TAB CONTENTS ────────────────────────────────────────────────────── */}
+      <div className="min-w-0">
+        {/* ── TAB 1: PROFILE ── */}
+        {activeTab === "profile" && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            {profileMsg && (
+              <div
+                className={`p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5 ${
                   profileMsg.type === "error"
-                    ? "bg-destructive/10 border-destructive/20 text-destructive"
-                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                }`}>
-                  {profileMsg.type === "error" ? <ShieldAlert size={18} /> : <CheckCircle size={18} />}
-                  {profileMsg.text}
-                </div>
-              )}
-
-              {/* Avatar Card */}
-              <div className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="p-6 sm:p-8 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-foreground mb-1">Profile Photo</h2>
-                    <p className="text-sm text-muted-foreground">Click the photo in the header to upload a new avatar.</p>
-                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG or GIF. Max 2MB.</p>
-                  </div>
-                  <div
-                    className="w-16 h-16 rounded-full bg-background border border-border flex items-center justify-center overflow-hidden cursor-pointer group relative"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    {avatar ? (
-                      <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-xl font-bold text-foreground">{initials}</span>
-                    )}
-                    <div className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      {avatarUploading ? <Loader2 size={14} className="text-white animate-spin" /> : <Camera size={14} className="text-white" />}
-                    </div>
-                  </div>
-                </div>
+                    ? "bg-rose-500/10 border-rose-500/25 text-rose-400"
+                    : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+                }`}
+              >
+                {profileMsg.type === "error" ? <ShieldAlert size={15} /> : <CheckCircle size={15} />}
+                <span>{profileMsg.text}</span>
               </div>
-
-              {/* Name & Email Form */}
-              <form onSubmit={handleProfileSubmit} className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="p-6 sm:p-8 space-y-6">
-                  <div>
-                    <h2 className="text-lg font-bold text-foreground mb-1">Personal Info</h2>
-                    <p className="text-sm text-muted-foreground">Update your display name shown across the admin panel.</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border/50">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">Display Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={profileForm.name}
-                        onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all"
-                        placeholder="Your name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">Email Address</label>
-                      <input
-                        type="email"
-                        disabled
-                        value={profileForm.email}
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-muted-foreground opacity-70 cursor-not-allowed outline-none"
-                      />
-                      <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-background/50 p-4 sm:px-8 border-t border-border flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">Max 32 characters.</p>
-                  <button
-                    type="submit"
-                    disabled={profileLoading}
-                    className="px-5 py-2.5 bg-foreground hover:opacity-90 text-background text-sm font-bold rounded-lg transition-all disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {profileLoading && <Loader2 size={16} className="animate-spin" />}
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* ─── CONTACT DETAILS TAB (ADMIN & SUPER ADMIN) ─────────────────── */}
-          {activeTab === "contact" && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-
-              {/* Status Banner */}
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-card to-background border border-border p-6 sm:p-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                    <PhoneCall size={22} className="text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-foreground mb-1 font-display">Business & Contact Information</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Manage phone numbers, emails, and location displayed across the Contact page, Footer, and Invoices.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {contactMsg && (
-                <div className={`p-4 rounded-xl text-sm font-medium border flex items-center gap-3 ${
-                  contactMsg.type === "error"
-                    ? "bg-destructive/10 border-destructive/20 text-destructive"
-                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                }`}>
-                  {contactMsg.type === "error" ? <ShieldAlert size={18} /> : <CheckCircle size={18} />}
-                  {contactMsg.text}
-                </div>
-              )}
-
-              <form onSubmit={handleContactSubmit} className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="p-6 sm:p-8 space-y-6">
-
-                  {/* Section 1: Phone Numbers */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Phone size={16} className="text-primary" />
-                      <h3 className="text-base font-bold text-foreground">Phone Numbers</h3>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-4">Direct calling lines for sales, clients, and technical support.</p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Primary Phone Number *</label>
-                        <input
-                          type="text"
-                          required
-                          value={contactForm.phone}
-                          onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
-                          placeholder="+1 (415) 123-4567 or +92 300 1234567"
-                        />
-                        <p className="text-[11px] text-muted-foreground">Displayed as main contact line in the header & footer.</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Secondary Phone Number (Optional)</label>
-                        <input
-                          type="text"
-                          value={contactForm.secondaryPhone}
-                          onChange={(e) => setContactForm({ ...contactForm, secondaryPhone: e.target.value })}
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
-                          placeholder="+92 321 7654321 (WhatsApp / Backup Line)"
-                        />
-                        <p className="text-[11px] text-muted-foreground">Alternative or WhatsApp direct support number.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 2: Email Addresses */}
-                  <div className="pt-6 border-t border-border/50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Mail size={16} className="text-primary" />
-                      <h3 className="text-base font-bold text-foreground">Email Addresses</h3>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-4">Inboxes where project inquiries, RFPs, and billing queries are routed.</p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Primary Contact Email *</label>
-                        <input
-                          type="email"
-                          required
-                          value={contactForm.email}
-                          onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
-                          placeholder="hello@anthrix.dev"
-                        />
-                        <p className="text-[11px] text-muted-foreground">Main inquiry email shown on the Contact page & Footer.</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Support & Billing Email</label>
-                        <input
-                          type="email"
-                          value={contactForm.supportEmail}
-                          onChange={(e) => setContactForm({ ...contactForm, supportEmail: e.target.value })}
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
-                          placeholder="contact@anthrix.com"
-                        />
-                        <p className="text-[11px] text-muted-foreground">Used on invoices and client portal receipts.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 3: Location & Hours */}
-                  <div className="pt-6 border-t border-border/50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MapPin size={16} className="text-primary" />
-                      <h3 className="text-base font-bold text-foreground">Studio Location & Working Hours</h3>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-4">Location information and operational availability hours.</p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Operating Location *</label>
-                        <input
-                          type="text"
-                          required
-                          value={contactForm.location}
-                          onChange={(e) => setContactForm({ ...contactForm, location: e.target.value })}
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
-                          placeholder="San Francisco, CA or Lahore, Pakistan"
-                        />
-                        <p className="text-[11px] text-muted-foreground">City and region displayed on the Contact page and Footer.</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Working / Support Hours</label>
-                        <input
-                          type="text"
-                          value={contactForm.workingHours}
-                          onChange={(e) => setContactForm({ ...contactForm, workingHours: e.target.value })}
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
-                          placeholder="Mon - Fri: 9:00 AM - 6:00 PM"
-                        />
-                        <p className="text-[11px] text-muted-foreground">Operating schedule shown to prospective clients.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Live Preview of Chips */}
-                  <div className="pt-6 border-t border-border/50">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Live Preview (How it appears to visitors)</p>
-                    <div className="flex flex-wrap gap-3 p-4 rounded-xl bg-background/50 border border-border">
-                      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-xs">
-                        <Mail size={13} className="text-primary" />
-                        <span className="text-muted-foreground">Email:</span>
-                        <span className="font-semibold text-foreground">{contactForm.email || "hello@anthrix.dev"}</span>
-                      </div>
-                      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-xs">
-                        <Phone size={13} className="text-primary" />
-                        <span className="text-muted-foreground">Phone:</span>
-                        <span className="font-semibold text-foreground">{contactForm.phone || "+1 (415) 123-4567"}</span>
-                      </div>
-                      {contactForm.secondaryPhone && (
-                        <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-xs">
-                          <PhoneCall size={13} className="text-emerald-500" />
-                          <span className="text-muted-foreground">Secondary:</span>
-                          <span className="font-semibold text-foreground">{contactForm.secondaryPhone}</span>
-                        </div>
-                      )}
-                      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-xs">
-                        <MapPin size={13} className="text-primary" />
-                        <span className="text-muted-foreground">Location:</span>
-                        <span className="font-semibold text-foreground">{contactForm.location || "San Francisco, CA"}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Footer Save Button */}
-                <div className="bg-background/50 p-4 sm:px-8 border-t border-border flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <CheckCircle size={14} className="text-emerald-500" />
-                    <span>Available to both Admins and Super Admins</span>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={contactSaving}
-                    className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold rounded-lg transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-primary/20"
-                  >
-                    {contactSaving && <Loader2 size={16} className="animate-spin" />}
-                    Save Contact Details
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* ─── EMAIL & SMTP TAB ─────────────────────────────────────────── */}
-          {activeTab === "smtp" && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-
-              {/* Status Banner */}
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-card to-background border border-border p-6 sm:p-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 text-primary">
-                      <Mail size={22} />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-foreground mb-1 font-display">Email & SMTP Delivery Engine</h2>
-                      <p className="text-sm text-muted-foreground">
-                        Configure Gmail or custom SMTP to send automated candidate confirmations, interview invites, and offers.
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={fillGmailPresets}
-                    className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/30 text-primary text-xs font-bold hover:bg-primary/20 transition-all active:scale-95"
-                  >
-                    <Zap size={14} /> Fill with Gmail Presets
-                  </button>
-                </div>
-              </div>
-
-              {/* Feedback Message */}
-              {smtpMsg && (
-                <div className={`p-4 rounded-xl text-sm font-medium border flex items-center gap-3 ${
-                  smtpMsg.type === "error"
-                    ? "bg-destructive/10 border-destructive/20 text-destructive"
-                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                }`}>
-                  {smtpMsg.type === "error" ? <ShieldAlert size={18} /> : <CheckCircle size={18} />}
-                  {smtpMsg.text}
-                </div>
-              )}
-
-              {/* Gmail App Password Setup Instructions Alert */}
-              <div className="p-5 rounded-2xl bg-primary/[0.03] border border-primary/20 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-primary">
-                  <Shield size={15} /> How to connect your Gmail (Free & Takes 1 Minute)
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-muted-foreground leading-relaxed">
-                  <div className="p-3 rounded-xl bg-background border border-border">
-                    <strong className="text-foreground block mb-1">1. Enable 2-Step Verification</strong>
-                    Turn on 2-Step Verification in your Google Account security settings.
-                  </div>
-                  <div className="p-3 rounded-xl bg-background border border-border">
-                    <strong className="text-foreground block mb-1">2. Generate App Password</strong>
-                    Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="text-primary underline">Google App Passwords</a>, name it <code className="text-primary font-mono font-bold">Anthrix ATS</code>, and generate a 16-character key.
-                  </div>
-                  <div className="p-3 rounded-xl bg-background border border-border">
-                    <strong className="text-foreground block mb-1">3. Paste Below & Test</strong>
-                    Enter your Gmail address, paste the 16-character key below, and click <strong className="text-foreground">Test Connection</strong>!
-                  </div>
-                </div>
-              </div>
-
-              {/* SMTP Form */}
-              <div className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="p-6 sm:p-8 space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {/* SMTP Host */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-foreground">SMTP Host Server *</label>
-                      <input
-                        type="text"
-                        required
-                        value={smtpSettings.smtpHost}
-                        onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpHost: e.target.value })}
-                        placeholder="smtp.gmail.com or smtp.hostinger.com"
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
-                      />
-                      <p className="text-[11px] text-muted-foreground">For Gmail, use <code className="font-mono text-foreground">smtp.gmail.com</code>.</p>
-                    </div>
-
-                    {/* SMTP Port & Security */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">SMTP Port *</label>
-                        <input
-                          type="text"
-                          required
-                          value={smtpSettings.smtpPort}
-                          onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpPort: e.target.value })}
-                          placeholder="465"
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
-                        />
-                        <p className="text-[11px] text-muted-foreground">465 (SSL) or 587 (TLS).</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-foreground">SSL / TLS</label>
-                        <select
-                          value={smtpSettings.smtpSecure ? "true" : "false"}
-                          onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpSecure: e.target.value === "true" })}
-                          className="w-full bg-background border border-border rounded-xl px-3 py-3 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
-                        >
-                          <option value="true">SSL (Port 465)</option>
-                          <option value="false">TLS / STARTTLS (Port 587)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* SMTP Username / Email */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-foreground">SMTP Username / Gmail Address *</label>
-                      <input
-                        type="email"
-                        required
-                        value={smtpSettings.smtpUser}
-                        onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpUser: e.target.value })}
-                        placeholder="yourname@gmail.com"
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
-                      />
-                      <p className="text-[11px] text-muted-foreground">Your full email address used for login.</p>
-                    </div>
-
-                    {/* SMTP Password / Google App Password */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Password / Google App Password *</label>
-                      <div className="relative">
-                        <input
-                          type={smtpShowPass ? "text" : "password"}
-                          required
-                          value={smtpSettings.smtpPass}
-                          onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpPass: e.target.value })}
-                          placeholder="16-character Google App Password"
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-12 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setSmtpShowPass(!smtpShowPass)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {smtpShowPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">For Gmail, paste your 16-character App Password.</p>
-                    </div>
-
-                    {/* Sender 'From' Header */}
-                    <div className="space-y-2 sm:col-span-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Sender "From" Header</label>
-                      <input
-                        type="text"
-                        value={smtpSettings.smtpFrom}
-                        onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpFrom: e.target.value })}
-                        placeholder='Anthrix Technologies <yourname@gmail.com>'
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm"
-                      />
-                      <p className="text-[11px] text-muted-foreground">The display name and sender address candidates see in their inbox.</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions Footer */}
-                <div className="bg-background/50 p-4 sm:px-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={handleSmtpTest}
-                    disabled={smtpTesting || !smtpSettings.smtpHost || !smtpSettings.smtpUser || !smtpSettings.smtpPass}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-400 text-xs font-semibold transition-all disabled:opacity-50"
-                  >
-                    {smtpTesting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                    {smtpTesting ? "Testing SMTP Authentication..." : "Test SMTP Connection"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleSmtpSave}
-                    disabled={smtpLoading}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
-                  >
-                    {smtpLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                    Save SMTP Settings
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ─── SECURITY TAB ─────────────────────────────────────────────────── */}
-          {activeTab === "security" && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-
-              {passwordMsg && (
-                <div className={`p-4 rounded-xl text-sm font-medium border flex items-center gap-3 ${
-                  passwordMsg.type === "error"
-                    ? "bg-destructive/10 border-destructive/20 text-destructive"
-                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                }`}>
-                  {passwordMsg.type === "error" ? <ShieldAlert size={18} /> : <CheckCircle size={18} />}
-                  {passwordMsg.text}
-                </div>
-              )}
-
-              <form onSubmit={handlePasswordSubmit} className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="p-6 sm:p-8 space-y-6">
-                  <div>
-                    <h2 className="text-lg font-bold text-foreground mb-1">Change Password</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Ensure your account uses a strong, unique password. Changing it will sign out all other active sessions.
-                    </p>
-                  </div>
-
-                  <div className="space-y-5 pt-4 border-t border-border/50 max-w-md">
-                    {[
-                      { label: "Current Password", key: "current" as const },
-                      { label: "New Password", key: "new" as const },
-                      { label: "Confirm New Password", key: "confirm" as const },
-                    ].map((field) => (
-                      <div key={field.key} className="space-y-2">
-                        <label className="text-sm font-semibold text-foreground">{field.label}</label>
-                        <div className="relative">
-                          <input
-                            type={showPasswords[field.key] ? "text" : "password"}
-                            required
-                            value={passwordForm[field.key]}
-                            onChange={(e) => setPasswordForm({ ...passwordForm, [field.key]: e.target.value })}
-                            className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-12 text-foreground focus:border-primary outline-none transition-all font-mono"
-                            placeholder="••••••••"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPasswords(p => ({ ...p, [field.key]: !p[field.key] }))}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {showPasswords[field.key] ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
-                        </div>
-                        {field.key === "new" && (
-                          <p className="text-xs text-muted-foreground">Must be at least 8 characters.</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="bg-background/50 p-4 sm:px-8 border-t border-border flex items-center justify-end">
-                  <button
-                    type="submit"
-                    disabled={passwordLoading}
-                    className="px-5 py-2.5 bg-destructive hover:bg-red-600 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {passwordLoading && <Loader2 size={16} className="animate-spin" />}
-                    Update Password
-                  </button>
-                </div>
-              </form>
-
-              {/* Active Sessions */}
-              <div className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="p-6 sm:p-8">
-                  <h2 className="text-lg font-bold text-foreground mb-1">Active Sessions</h2>
-                  <p className="text-sm text-muted-foreground mb-4">Devices currently logged into your account.</p>
-                  <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-background">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                      <Monitor size={18} className="text-emerald-500" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-foreground">Current Device</p>
-                      <p className="text-xs text-muted-foreground">Active now</p>
-                    </div>
-                    <span className="text-xs bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-1 rounded-full font-medium">
-                      Active
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ─── APPEARANCE TAB ───────────────────────────────────────────────── */}
-          {activeTab === "appearance" && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="p-6 sm:p-8">
-                  <h2 className="text-lg font-bold text-foreground mb-1">Interface Theme</h2>
-                  <p className="text-sm text-muted-foreground mb-8">
-                    Choose how the admin panel looks. Your preference is applied instantly and saved automatically.
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {themeOptions.map((opt) => {
-                      const isSelected = theme === opt.id;
-                      return (
-                        <button
-                          key={opt.id}
-                          onClick={() => setTheme(opt.id)}
-                          className={`relative group flex flex-col gap-4 p-4 rounded-2xl border-2 transition-all duration-200 text-left ${
-                            isSelected ? "border-primary bg-primary/5" : "border-border bg-background hover:border-primary/30"
-                          }`}
-                        >
-                          {opt.preview}
-
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className={`font-semibold text-sm ${isSelected ? "text-primary" : "text-foreground"}`}>{opt.label}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
-                            </div>
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                              isSelected ? "border-primary bg-primary" : "border-border"
-                            }`}>
-                              {isSelected && (
-                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                  <path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              )}
-                            </div>
-                          </div>
-
-                          {isSelected && (
-                            <div className="absolute top-3 right-3 flex items-center gap-1 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
-                              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                              Active
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="bg-background/50 p-4 sm:px-8 border-t border-border flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <p className="text-xs text-muted-foreground">Theme is applied instantly and saved to your browser's local storage.</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ─── AI COPILOT TAB (SUPER ADMIN ONLY) ─────────────────────────── */}
-          {activeTab === "ai" && isSuperAdmin && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-
-              {/* Status Banner */}
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#080B12] to-[#0D1117] border border-[#F55036]/20 p-6">
-                <div className="absolute inset-0 bg-[#F55036]/5" />
-                <div className="absolute top-0 right-0 w-48 h-48 bg-[#F55036]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-                <div className="relative flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#F55036]/10 border border-[#F55036]/30 flex items-center justify-center flex-shrink-0">
-                    <Bot size={22} className="text-[#F55036]" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h2 className="text-lg font-bold text-white">Anthrix A-OS Copilot Engine</h2>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F55036]/10 border border-[#F55036]/30 text-[#F55036] tracking-wider uppercase">Super Admin</span>
-                    </div>
-                    <p className="text-sm text-white/50">Powered by High-Speed LLM Inference Engine · Ultra-Low Latency</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${aiSettings.copilotEnabled ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-white/5 border-white/10 text-white/30"}`}>
-                      {aiSettings.copilotEnabled ? "● Active" : "○ Disabled"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Feedback Message */}
-              {aiMsg && (
-                <div className={`p-4 rounded-xl text-sm font-medium border flex items-center gap-3 ${
-                  aiMsg.type === "error"
-                    ? "bg-red-500/10 border-red-500/20 text-red-400"
-                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                }`}>
-                  {aiMsg.type === "error" ? <ShieldAlert size={18} /> : <CheckCircle size={18} />}
-                  {aiMsg.text}
-                </div>
-              )}
-
-              {/* LLM API Key */}
-              <div className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="p-6 sm:p-8 space-y-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                      <Zap size={15} className="text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-foreground">LLM API Configuration</h3>
-                      <p className="text-xs text-muted-foreground">Connect your AI inference provider API key</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 pt-4 border-t border-border/50">
-                    {/* API Key Field */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground">LLM API Key</label>
-                      <div className="relative">
-                        <input
-                          type={aiShowKey ? "text" : "password"}
-                          value={aiSettings.groqApiKey}
-                          onChange={(e) => setAiSettings({ ...aiSettings, groqApiKey: e.target.value })}
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-12 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
-                          placeholder="Enter your LLM API Key (e.g. gsk_...)"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setAiShowKey(!aiShowKey)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {aiShowKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Model Selection with Dedicated Fetch Button */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-foreground">Copilot LLM Model</label>
-                        <button
-                          type="button"
-                          onClick={() => fetchLiveModels()}
-                          disabled={modelsLoading}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
-                          title="Fetch all live active models from Groq API"
-                        >
-                          {modelsLoading ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
-                          {modelsLoading ? "Fetching Models..." : "⚡ Fetch Available Models"}
-                        </button>
-                      </div>
-
-                      {mainModelMsg && (
-                        <div className={`p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2 ${
-                          mainModelMsg.type === "success"
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                            : "bg-red-500/10 border-red-500/30 text-red-400"
-                        }`}>
-                          {mainModelMsg.type === "success" ? <CheckCircle size={14} /> : <ShieldAlert size={14} />}
-                          <span>{mainModelMsg.text}</span>
-                        </div>
-                      )}
-
-                      <select
-                        value={aiSettings.groqModel}
-                        onChange={(e) => setAiSettings({ ...aiSettings, groqModel: e.target.value })}
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
-                        disabled={modelsLoading}
-                      >
-                        {(() => {
-                          const options = [...liveModels];
-                          if (aiSettings.groqModel && !options.includes(aiSettings.groqModel)) {
-                            options.unshift(aiSettings.groqModel);
-                          }
-                          if (options.length === 0) {
-                            return (
-                              <option value={aiSettings.groqModel || ""}>
-                                {aiSettings.groqModel ? `${aiSettings.groqModel} (Saved)` : "Click '⚡ Fetch Available Models' above"}
-                              </option>
-                            );
-                          }
-                          return options.map((modelId) => (
-                            <option key={modelId} value={modelId}>
-                              {modelId}
-                            </option>
-                          ));
-                        })()}
-                      </select>
-                      <p className="text-xs text-muted-foreground">
-                        {liveModels.length > 0
-                          ? `Showing ${liveModels.length} active models. Click "⚡ Fetch Available Models" to refresh live from Groq.`
-                          : "Click the Fetch button above to load all live models from your Groq account."}
-                      </p>
-                    </div>
-
-                    {/* Enable/Disable Toggle */}
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-background border border-border">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">Copilot Enabled</p>
-                        <p className="text-xs text-muted-foreground">Show the Anthrix AI Copilot HUD on the public website</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setAiSettings({ ...aiSettings, copilotEnabled: !aiSettings.copilotEnabled })}
-                        className={`relative w-12 h-6 rounded-full transition-colors ${aiSettings.copilotEnabled ? "bg-primary" : "bg-border"}`}
-                      >
-                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${aiSettings.copilotEnabled ? "translate-x-6" : "translate-x-0"}`} />
-                      </button>
-                    </div>
-
-                    {/* Copilot Custom System Prompt */}
-                    <div className="space-y-2 pt-2 border-t border-border/50">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-foreground">Custom Copilot System Prompt</label>
-                        <button
-                          type="button"
-                          onClick={() => setAiSettings((prev) => ({ ...prev, systemPrompt: DEFAULT_COPILOT_PROMPT }))}
-                          className="text-xs text-primary hover:underline font-medium cursor-pointer"
-                        >
-                          Use Recommended Prompt
-                        </button>
-                      </div>
-                      <textarea
-                        value={aiSettings.systemPrompt}
-                        onChange={(e) => setAiSettings({ ...aiSettings, systemPrompt: e.target.value })}
-                        rows={4}
-                        placeholder={DEFAULT_COPILOT_PROMPT}
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-xs font-mono resize-none leading-relaxed"
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        Custom instructions appended to the website sales advisor copilot.
-                      </p>
-                    </div>
-
-                    {/* Test Copilot LLM Connection Button */}
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={handleAiTest}
-                        disabled={aiTesting}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-400 text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
-                      >
-                        {aiTesting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                        {aiTesting ? "Testing Copilot Connection..." : "Test LLM Connection"}
-                      </button>
-                    </div>
-
-                    {mainTestMsg && (
-                      <div className={`p-3 rounded-xl text-xs font-medium border flex items-center gap-2 ${
-                        mainTestMsg.type === "success"
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                          : "bg-red-500/10 border-red-500/30 text-red-400"
-                      }`}>
-                        {mainTestMsg.type === "success" ? <CheckCircle size={15} /> : <ShieldAlert size={15} />}
-                        <span>{mainTestMsg.text}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Dedicated ATS & Talent Intake AI Engine Card */}
-              <div className="bg-card rounded-2xl border border-border overflow-hidden">
-                <div className="p-6 sm:p-8 space-y-5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                        <Bot size={16} />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold text-foreground">ATS & Talent Intake AI Engine</h3>
-                        <p className="text-xs text-muted-foreground">Dedicated LLM API key and model for resume scoring and candidate pipelines</p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                      Isolated ATS Model
-                    </span>
-                  </div>
-
-                  <div className="space-y-4 pt-4 border-t border-border/50">
-                    {/* Master AI Processing & Scoring Toggle */}
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-background border border-border">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold text-foreground">AI Processing & Resume Scoring</p>
-                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-                            aiSettings.atsAiEnabled
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                              : "bg-zinc-500/10 border-zinc-500/30 text-zinc-400"
-                          }`}>
-                            {aiSettings.atsAiEnabled ? "ACTIVE" : "PAUSED"}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Automatically parse resumes, calculate 0–100 match scores, and generate talent dossiers upon submission
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setAiSettings({ ...aiSettings, atsAiEnabled: !aiSettings.atsAiEnabled })}
-                        className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer shrink-0 ml-4 ${
-                          aiSettings.atsAiEnabled ? "bg-emerald-500" : "bg-border"
-                        }`}
-                        title={aiSettings.atsAiEnabled ? "Click to pause AI scoring" : "Click to activate AI scoring"}
-                      >
-                        <span
-                          className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                            aiSettings.atsAiEnabled ? "left-7" : "left-1"
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* ATS API Key */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-foreground">ATS Groq API Key</label>
-                        <span className="text-[11px] text-muted-foreground">Optional · Falls back to Copilot key if empty</span>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type={atsShowKey ? "text" : "password"}
-                          value={aiSettings.atsGroqApiKey}
-                          onChange={(e) => setAiSettings({ ...aiSettings, atsGroqApiKey: e.target.value })}
-                          className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-12 text-foreground focus:border-primary outline-none transition-all font-mono text-sm"
-                          placeholder="Separate Groq API Key for ATS (e.g. gsk_...)"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setAtsShowKey(!atsShowKey)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {atsShowKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* ATS Model Selection with Dedicated Fetch Button */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-foreground">ATS Evaluation Model</label>
-                        <button
-                          type="button"
-                          onClick={() => fetchAtsLiveModels()}
-                          disabled={atsModelsLoading}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
-                          title="Fetch all live active models for ATS from Groq API"
-                        >
-                          {atsModelsLoading ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
-                          {atsModelsLoading ? "Fetching Models..." : "⚡ Fetch Available Models"}
-                        </button>
-                      </div>
-
-                      {atsModelMsg && (
-                        <div className={`p-2.5 rounded-xl text-xs font-medium border flex items-center gap-2 ${
-                          atsModelMsg.type === "success"
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                            : "bg-red-500/10 border-red-500/30 text-red-400"
-                        }`}>
-                          {atsModelMsg.type === "success" ? <CheckCircle size={14} /> : <ShieldAlert size={14} />}
-                          <span>{atsModelMsg.text}</span>
-                        </div>
-                      )}
-
-                      <select
-                        value={aiSettings.atsGroqModel}
-                        onChange={(e) => setAiSettings({ ...aiSettings, atsGroqModel: e.target.value })}
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-sm font-mono"
-                        disabled={atsModelsLoading}
-                      >
-                        {(() => {
-                          const options = [...atsLiveModels];
-                          if (aiSettings.atsGroqModel && !options.includes(aiSettings.atsGroqModel)) {
-                            options.unshift(aiSettings.atsGroqModel);
-                          }
-                          if (options.length === 0) {
-                            return (
-                              <option value={aiSettings.atsGroqModel || ""}>
-                                {aiSettings.atsGroqModel ? `${aiSettings.atsGroqModel} (Saved)` : "Click '⚡ Fetch Available Models' above"}
-                              </option>
-                            );
-                          }
-                          return options.map((modelId) => (
-                            <option key={modelId} value={modelId}>
-                              {modelId}
-                            </option>
-                          ));
-                        })()}
-                      </select>
-                      <p className="text-xs text-muted-foreground">
-                        Used to parse resumes against requirements, calculate 0–100 match scores, and auto-generate candidate emails.
-                      </p>
-                    </div>
-
-                    {/* ATS Custom Evaluation Directives */}
-                    <div className="space-y-2 pt-2 border-t border-border/50">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-foreground">Custom ATS Evaluation Directives</label>
-                        <button
-                          type="button"
-                          onClick={() => setAiSettings((prev) => ({ ...prev, atsSystemPrompt: DEFAULT_ATS_PROMPT }))}
-                          className="text-xs text-emerald-400 hover:underline font-medium cursor-pointer"
-                        >
-                          Use Recommended Directives
-                        </button>
-                      </div>
-                      <textarea
-                        value={aiSettings.atsSystemPrompt}
-                        onChange={(e) => setAiSettings({ ...aiSettings, atsSystemPrompt: e.target.value })}
-                        rows={4}
-                        placeholder={DEFAULT_ATS_PROMPT}
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground focus:border-primary outline-none transition-all text-xs font-mono resize-none leading-relaxed"
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        Custom hiring standards & evaluation directives injected into the ATS resume scoring engine.
-                      </p>
-                    </div>
-
-                    {/* Test ATS Button */}
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={handleAtsTest}
-                        disabled={atsTesting}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
-                      >
-                        {atsTesting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                        {atsTesting ? "Testing ATS Connection..." : "Test ATS LLM Connection"}
-                      </button>
-                    </div>
-
-                    {atsTestMsg && (
-                      <div className={`p-3 rounded-xl text-xs font-medium border flex items-center gap-2 ${
-                        atsTestMsg.type === "success"
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                          : "bg-red-500/10 border-red-500/30 text-red-400"
-                      }`}>
-                        {atsTestMsg.type === "success" ? <CheckCircle size={15} /> : <ShieldAlert size={15} />}
-                        <span>{atsTestMsg.text}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-2xl bg-card border border-border">
-                <div>
-                  <h4 className="text-sm font-bold text-foreground">Save Configuration</h4>
-                  <p className="text-xs text-muted-foreground">Persist API keys, selected models, and system prompts to your database.</p>
-                </div>
-                <button
-                  onClick={handleAiSave}
-                  disabled={aiLoading}
-                  className="flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-[#F55036] hover:bg-[#E04025] text-white text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(245,80,54,0.3)] cursor-pointer"
-                >
-                  {aiLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  {aiLoading ? "Saving Settings..." : "Save AI Settings"}
-                </button>
-              </div>
-
-              {/* Info Banner */}
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-[#F55036]/5 border border-[#F55036]/15">
-                <Shield size={16} className="text-[#F55036] mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-white/40 leading-relaxed">
-                  The LLM API key is stored securely in your database and is only accessible to super administrators. It is never exposed to the public or regular admins.
+            )}
+
+            <form onSubmit={handleProfileSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-sm">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">General Profile Information</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Update your display name and photo representation across the admin dashboard.
                 </p>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Display Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground font-semibold focus:border-[#F55036] outline-none transition-colors"
+                    placeholder="Your Name"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Email Address (Fixed)
+                  </label>
+                  <input
+                    type="email"
+                    disabled
+                    value={profileForm.email}
+                    className="w-full bg-background/50 border border-border rounded-xl px-3.5 py-2.5 text-xs text-muted-foreground opacity-60 cursor-not-allowed outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end pt-3 border-t border-border">
+                <button
+                  type="submit"
+                  disabled={profileLoading}
+                  className="px-5 py-2.5 rounded-xl bg-[#F55036] text-white text-xs font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-[#F55036]/90 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {profileLoading ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                  {profileLoading ? "Updating..." : "Save Profile"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* ── TAB 2: COMPANY INFO (CONTACT) ── */}
+        {activeTab === "contact" && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            {contactMsg && (
+              <div
+                className={`p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5 ${
+                  contactMsg.type === "error"
+                    ? "bg-rose-500/10 border-rose-500/25 text-rose-400"
+                    : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+                }`}
+              >
+                {contactMsg.type === "error" ? <ShieldAlert size={15} /> : <CheckCircle size={15} />}
+                <span>{contactMsg.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleContactSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-6 shadow-sm">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Agency Business &amp; Contact Details</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Public telephone numbers, inboxes, and studio location shown on the Contact page, Footer, and Invoices.
+                </p>
+              </div>
+
+              {/* Phones */}
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Phone size={13} className="text-[#F55036]" /> Phone Numbers
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Primary Contact Number *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={contactForm.phone}
+                      onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                      placeholder="+1 (415) 123-4567 or +92 300 1234567"
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground font-mono focus:border-[#F55036] outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Secondary / WhatsApp Line
+                    </label>
+                    <input
+                      type="text"
+                      value={contactForm.secondaryPhone}
+                      onChange={(e) => setContactForm({ ...contactForm, secondaryPhone: e.target.value })}
+                      placeholder="+92 321 7654321"
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground font-mono focus:border-[#F55036] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Emails */}
+              <div className="space-y-3 pt-3 border-t border-border/60">
+                <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Mail size={13} className="text-[#F55036]" /> Inboxes &amp; Routing
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Primary Inquiries Email *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                      placeholder="hello@anthrix.dev"
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Support &amp; Billing Email
+                    </label>
+                    <input
+                      type="email"
+                      value={contactForm.supportEmail}
+                      onChange={(e) => setContactForm({ ...contactForm, supportEmail: e.target.value })}
+                      placeholder="billing@anthrix.com"
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Location & Hours */}
+              <div className="space-y-3 pt-3 border-t border-border/60">
+                <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <MapPin size={13} className="text-[#F55036]" /> Location &amp; Operating Hours
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Operating Location *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={contactForm.location}
+                      onChange={(e) => setContactForm({ ...contactForm, location: e.target.value })}
+                      placeholder="San Francisco, CA or Lahore, Pakistan"
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Working Hours
+                    </label>
+                    <input
+                      type="text"
+                      value={contactForm.workingHours}
+                      onChange={(e) => setContactForm({ ...contactForm, workingHours: e.target.value })}
+                      placeholder="Mon - Fri: 9:00 AM - 6:00 PM"
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Visitor Chips Preview */}
+              <div className="p-3.5 rounded-xl bg-background/60 border border-border space-y-2">
+                <p className="text-[10px] font-mono uppercase font-bold text-muted-foreground tracking-wider">
+                  Live Footer &amp; Contact Preview
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-card border border-border font-medium">
+                    <Mail size={12} className="text-[#F55036]" /> {contactForm.email || "hello@anthrix.dev"}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-card border border-border font-medium">
+                    <Phone size={12} className="text-[#F55036]" /> {contactForm.phone || "+1 (415) 123-4567"}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-card border border-border font-medium">
+                    <MapPin size={12} className="text-[#F55036]" /> {contactForm.location || "San Francisco, CA"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end pt-3 border-t border-border">
+                <button
+                  type="submit"
+                  disabled={contactSaving}
+                  className="px-5 py-2.5 rounded-xl bg-[#F55036] text-white text-xs font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-[#F55036]/90 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {contactSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                  {contactSaving ? "Saving..." : "Save Company Details"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* ── TAB 3: EMAIL & SMTP ── */}
+        {activeTab === "smtp" && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            {smtpMsg && (
+              <div
+                className={`p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5 ${
+                  smtpMsg.type === "error"
+                    ? "bg-rose-500/10 border-rose-500/25 text-rose-400"
+                    : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+                }`}
+              >
+                {smtpMsg.type === "error" ? <ShieldAlert size={15} /> : <CheckCircle size={15} />}
+                <span>{smtpMsg.text}</span>
+              </div>
+            )}
+
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">SMTP Email Server &amp; Dispatcher</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Configure your delivery credentials for candidate confirmations, interview invitations, and status notices.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={fillGmailPresets}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F55036]/10 border border-[#F55036]/25 text-[#F55036] hover:bg-[#F55036]/20 text-xs font-bold transition-all self-start sm:self-auto cursor-pointer"
+                >
+                  <Zap size={12} />
+                  <span>Fill Gmail Presets</span>
+                </button>
+              </div>
+
+              {/* Quick Setup Callout */}
+              <div className="p-4 rounded-xl bg-background/60 border border-border space-y-2 text-xs text-muted-foreground leading-relaxed">
+                <p className="font-bold text-foreground flex items-center gap-1.5">
+                  <Shield size={13} className="text-[#F55036]" /> Quick Gmail Instructions:
+                </p>
+                <ol className="list-decimal pl-5 space-y-1">
+                  <li>Ensure 2-Step Verification is active on your Google Account.</li>
+                  <li>
+                    Generate an App Password at{" "}
+                    <a
+                      href="https://myaccount.google.com/apppasswords"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#F55036] underline"
+                    >
+                      myaccount.google.com/apppasswords
+                    </a>{" "}
+                    (Name it "Anthrix ATS").
+                  </li>
+                  <li>Enter your full Gmail address and paste the 16-character generated password below.</li>
+                </ol>
+              </div>
+
+              {/* Form Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    SMTP Host Server *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={smtpSettings.smtpHost}
+                    onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpHost: e.target.value })}
+                    placeholder="smtp.gmail.com"
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground font-mono focus:border-[#F55036] outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Port *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={smtpSettings.smtpPort}
+                      onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpPort: e.target.value })}
+                      placeholder="465"
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground font-mono focus:border-[#F55036] outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Protocol
+                    </label>
+                    <select
+                      value={smtpSettings.smtpSecure ? "true" : "false"}
+                      onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpSecure: e.target.value === "true" })}
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none cursor-pointer"
+                    >
+                      <option value="true">SSL (465)</option>
+                      <option value="false">TLS (587)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    SMTP Username / Gmail Address *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={smtpSettings.smtpUser}
+                    onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpUser: e.target.value })}
+                    placeholder="hiring@anthrix.com"
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    SMTP App Password *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={smtpShowPass ? "text" : "password"}
+                      required
+                      value={smtpSettings.smtpPass}
+                      onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpPass: e.target.value })}
+                      placeholder="••••••••••••••••"
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 pr-10 text-xs text-foreground focus:border-[#F55036] outline-none font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSmtpShowPass(!smtpShowPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {smtpShowPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Sender Identity (From Header) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={smtpSettings.smtpFrom}
+                    onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpFrom: e.target.value })}
+                    placeholder="Anthrix Technologies <hiring@anthrix.com>"
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Action Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-border">
+                <button
+                  type="button"
+                  onClick={handleSmtpTest}
+                  disabled={smtpTesting || !smtpSettings.smtpUser || !smtpSettings.smtpPass}
+                  className="px-4 py-2 rounded-xl border border-border bg-background hover:bg-muted/40 text-xs font-semibold text-foreground transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                >
+                  {smtpTesting ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                  {smtpTesting ? "Testing Connection..." : "Test Connection"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSmtpSave}
+                  disabled={smtpLoading}
+                  className="px-5 py-2.5 rounded-xl bg-[#F55036] text-white text-xs font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-[#F55036]/90 transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                >
+                  {smtpLoading ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                  {smtpLoading ? "Saving..." : "Save SMTP Settings"}
+                </button>
+              </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* ─── EMAIL TEMPLATES TAB (SUPER ADMIN ONLY) ────────────────────── */}
-          {activeTab === "templates" && isSuperAdmin && (
+        {/* ── TAB 4: SECURITY & PASSWORD ── */}
+        {activeTab === "security" && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            {passwordMsg && (
+              <div
+                className={`p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5 ${
+                  passwordMsg.type === "error"
+                    ? "bg-rose-500/10 border-rose-500/25 text-rose-400"
+                    : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+                }`}
+              >
+                {passwordMsg.type === "error" ? <ShieldAlert size={15} /> : <CheckCircle size={15} />}
+                <span>{passwordMsg.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-sm">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Update Password &amp; Session Tokens</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Change your administrator password. Other active sessions will be automatically revoked.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                {[
+                  { label: "Current Password", key: "current" as const },
+                  { label: "New Password", key: "new" as const },
+                  { label: "Confirm New Password", key: "confirm" as const },
+                ].map((field) => (
+                  <div key={field.key} className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      {field.label} *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords[field.key] ? "text" : "password"}
+                        required
+                        value={passwordForm[field.key]}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, [field.key]: e.target.value })}
+                        placeholder="••••••••••••"
+                        className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 pr-10 text-xs text-foreground font-mono focus:border-[#F55036] outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords((p) => ({ ...p, [field.key]: !p[field.key] }))}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPasswords[field.key] ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-end pt-3 border-t border-border">
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="px-5 py-2.5 rounded-xl bg-[#F55036] text-white text-xs font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-[#F55036]/90 transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                >
+                  {passwordLoading ? <Loader2 size={13} className="animate-spin" /> : <Lock size={13} />}
+                  {passwordLoading ? "Updating..." : "Update Password"}
+                </button>
+              </div>
+            </form>
+
+            {/* Active Session Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <Monitor size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground">Current Active Session</p>
+                  <p className="text-[11px] text-muted-foreground">Connected via browser session token</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400">
+                ACTIVE
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 5: APPEARANCE ── */}
+        {activeTab === "appearance" && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-sm">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Interface Theme &amp; Presentation</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Choose your dashboard appearance. Themes are applied instantly.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                {[
+                  { id: "dark", label: "Dark Theme", desc: "Anthrix obsidian aesthetic", icon: Moon },
+                  { id: "light", label: "Light Theme", desc: "High contrast clean surface", icon: Sun },
+                  { id: "system", label: "System Default", desc: "Syncs with OS preferences", icon: Laptop },
+                ].map((opt) => {
+                  const isSelected = theme === opt.id;
+                  const Icon = opt.icon;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setTheme(opt.id)}
+                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-4 ${
+                        isSelected
+                          ? "bg-[#F55036]/8 border-[#F55036] shadow-sm"
+                          : "bg-background border-border hover:border-[#F55036]/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                            isSelected
+                              ? "bg-[#F55036] text-white"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          <Icon size={16} />
+                        </div>
+                        {isSelected && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F55036] text-white">
+                            Active
+                          </span>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold text-foreground">{opt.label}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{opt.desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 6: EMAIL TEMPLATES (SUPER ADMIN) ── */}
+        {activeTab === "templates" && isSuperAdmin && (
+          <div className="animate-in fade-in duration-200">
             <EmailTemplatesTab isSuperAdmin={isSuperAdmin} />
-          )}
+          </div>
+        )}
 
-        </main>
+        {/* ── TAB 7: AI INTELLIGENCE ENGINES (SUPER ADMIN) ── */}
+        {activeTab === "ai" && isSuperAdmin && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {aiMsg && (
+              <div
+                className={`p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2.5 ${
+                  aiMsg.type === "error"
+                    ? "bg-rose-500/10 border-rose-500/25 text-rose-400"
+                    : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+                }`}
+              >
+                {aiMsg.type === "error" ? <ShieldAlert size={15} /> : <CheckCircle size={15} />}
+                <span>{aiMsg.text}</span>
+              </div>
+            )}
 
+            {/* 1. Website Client Copilot */}
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#F55036]/10 border border-[#F55036]/25 flex items-center justify-center text-[#F55036]">
+                    <Bot size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Website Solutions Copilot</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Client-facing AI advisor that answers questions and guides prospects.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAiSettings((p) => ({ ...p, copilotEnabled: !p.copilotEnabled }))}
+                    className={`text-xs font-bold px-3 py-1 rounded-full border transition-all cursor-pointer ${
+                      aiSettings.copilotEnabled
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                        : "bg-zinc-500/10 border-zinc-500/30 text-zinc-500"
+                    }`}
+                  >
+                    {aiSettings.copilotEnabled ? "● Copilot Active" : "○ Copilot Disabled"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Groq API Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={aiShowKey ? "text" : "password"}
+                      value={aiSettings.groqApiKey}
+                      onChange={(e) => setAiSettings({ ...aiSettings, groqApiKey: e.target.value })}
+                      placeholder="gsk_..."
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 pr-10 text-xs text-foreground font-mono focus:border-[#F55036] outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setAiShowKey(!aiShowKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {aiShowKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Model
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => fetchLiveModels()}
+                      disabled={modelsLoading}
+                      className="text-[11px] font-bold text-[#F55036] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      {modelsLoading ? <Loader2 size={11} className="animate-spin" /> : <Zap size={11} />}
+                      <span>Fetch Models</span>
+                    </button>
+                  </div>
+
+                  <select
+                    value={aiSettings.groqModel}
+                    onChange={(e) => setAiSettings({ ...aiSettings, groqModel: e.target.value })}
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground font-mono focus:border-[#F55036] outline-none cursor-pointer"
+                  >
+                    {liveModels.length > 0 ? (
+                      liveModels.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))
+                    ) : (
+                      <option value={aiSettings.groqModel || ""}>
+                        {aiSettings.groqModel || "Click 'Fetch Models'"}
+                      </option>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {mainTestMsg && (
+                <p className={`text-xs font-semibold ${mainTestMsg.type === "success" ? "text-emerald-400" : "text-rose-400"}`}>
+                  {mainTestMsg.text}
+                </p>
+              )}
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Copilot System Persona Prompt
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setAiSettings((p) => ({ ...p, systemPrompt: DEFAULT_COPILOT_PROMPT }))}
+                    className="text-[11px] text-muted-foreground hover:text-foreground font-mono"
+                  >
+                    Reset to Default
+                  </button>
+                </div>
+                <textarea
+                  rows={4}
+                  value={aiSettings.systemPrompt}
+                  onChange={(e) => setAiSettings({ ...aiSettings, systemPrompt: e.target.value })}
+                  placeholder={DEFAULT_COPILOT_PROMPT}
+                  className="w-full bg-background border border-border rounded-xl p-3.5 text-xs text-foreground font-mono focus:border-[#F55036] outline-none leading-relaxed"
+                />
+              </div>
+
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={handleAiTest}
+                  disabled={aiTesting}
+                  className="px-3.5 py-2 rounded-xl border border-border bg-background hover:bg-muted/40 text-xs font-semibold text-foreground transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  {aiTesting ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                  <span>Test Copilot Connection</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 2. ATS Resume Evaluation Intelligence */}
+            <div className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-400">
+                    <Sparkles size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">ATS Resume Scoring Engine</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Automated 5-dimension candidate evaluation and match scoring engine.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAiSettings((p) => ({ ...p, atsAiEnabled: !p.atsAiEnabled }))}
+                    className={`text-xs font-bold px-3 py-1 rounded-full border transition-all cursor-pointer ${
+                      aiSettings.atsAiEnabled
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                        : "bg-zinc-500/10 border-zinc-500/30 text-zinc-500"
+                    }`}
+                  >
+                    {aiSettings.atsAiEnabled ? "● ATS Active" : "○ ATS Paused"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    ATS Dedicated API Key (Optional)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={atsShowKey ? "text" : "password"}
+                      value={aiSettings.atsGroqApiKey}
+                      onChange={(e) => setAiSettings({ ...aiSettings, atsGroqApiKey: e.target.value })}
+                      placeholder="Leave blank to reuse main Groq key"
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 pr-10 text-xs text-foreground font-mono focus:border-[#F55036] outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setAtsShowKey(!atsShowKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {atsShowKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      ATS Scoring Model
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => fetchAtsLiveModels()}
+                      disabled={atsModelsLoading}
+                      className="text-[11px] font-bold text-[#F55036] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      {atsModelsLoading ? <Loader2 size={11} className="animate-spin" /> : <Zap size={11} />}
+                      <span>Fetch Models</span>
+                    </button>
+                  </div>
+
+                  <select
+                    value={aiSettings.atsGroqModel}
+                    onChange={(e) => setAiSettings({ ...aiSettings, atsGroqModel: e.target.value })}
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground font-mono focus:border-[#F55036] outline-none cursor-pointer"
+                  >
+                    {atsLiveModels.length > 0 ? (
+                      atsLiveModels.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))
+                    ) : (
+                      <option value={aiSettings.atsGroqModel || ""}>
+                        {aiSettings.atsGroqModel || "Click 'Fetch Models'"}
+                      </option>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {atsTestMsg && (
+                <p className={`text-xs font-semibold ${atsTestMsg.type === "success" ? "text-emerald-400" : "text-rose-400"}`}>
+                  {atsTestMsg.text}
+                </p>
+              )}
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    ATS Evaluation Rubric Prompt
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setAiSettings((p) => ({ ...p, atsSystemPrompt: DEFAULT_ATS_PROMPT }))}
+                    className="text-[11px] text-muted-foreground hover:text-foreground font-mono"
+                  >
+                    Reset to Default
+                  </button>
+                </div>
+                <textarea
+                  rows={4}
+                  value={aiSettings.atsSystemPrompt}
+                  onChange={(e) => setAiSettings({ ...aiSettings, atsSystemPrompt: e.target.value })}
+                  placeholder={DEFAULT_ATS_PROMPT}
+                  className="w-full bg-background border border-border rounded-xl p-3.5 text-xs text-foreground font-mono focus:border-[#F55036] outline-none leading-relaxed"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={handleAtsTest}
+                  disabled={atsTesting}
+                  className="px-3.5 py-2 rounded-xl border border-border bg-background hover:bg-muted/40 text-xs font-semibold text-foreground transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  {atsTesting ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                  <span>Test ATS Connection</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleAiSave}
+                  disabled={aiLoading}
+                  className="px-6 py-2.5 rounded-xl bg-[#F55036] text-white text-xs font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-[#F55036]/90 transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                >
+                  {aiLoading ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                  {aiLoading ? "Saving..." : "Save AI Configurations"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

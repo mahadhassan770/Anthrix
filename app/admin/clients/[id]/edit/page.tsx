@@ -1,25 +1,10 @@
-import { db } from "@/lib/db";
-import { notFound } from "next/navigation";
-import ClientForm from "@/components/admin/ClientForm";
+import { redirect } from "next/navigation";
 
-export default async function EditClientPage({
+export default async function EditClientRedirect({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  
-  const client = await db.client.findUnique({
-    where: { id },
-  });
-
-  if (!client) {
-    notFound();
-  }
-
-  return (
-    <div className="w-full">
-      <ClientForm client={client} />
-    </div>
-  );
+  redirect(`/admin/clients/${id}`);
 }

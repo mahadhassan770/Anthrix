@@ -2,7 +2,6 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
-  Pencil,
   ArrowLeft,
   Mail,
   Phone,
@@ -15,8 +14,11 @@ import {
   CheckCircle2,
   Clock,
   Eye,
+  Calendar,
+  CreditCard,
 } from "lucide-react";
 import ClientRevenueTable from "@/components/admin/ClientRevenueTable";
+import ClientProfileActions from "@/components/admin/ClientProfileActions";
 
 export default async function ClientProfilePage({
   params,
@@ -47,111 +49,122 @@ export default async function ClientProfilePage({
     .filter((inv) => inv.status === "paid")
     .reduce((acc, inv) => acc + (inv.currency === "USD" ? inv.total : inv.total / rate), 0);
 
-  // Lifetime revenue combines both
-  const totalRevenue = Math.max(directTxRevenueUSD, invoicePaidUSD) || (directTxRevenueUSD + invoicePaidUSD);
+  // Combined lifetime revenue
+  const totalRevenue =
+    Math.max(directTxRevenueUSD, invoicePaidUSD) || directTxRevenueUSD + invoicePaidUSD;
+
+  const status = client.status?.toLowerCase() || "active";
 
   return (
-    <div className="w-full space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="w-full space-y-6">
+      {/* ── Breadcrumb & Back Link ── */}
+      <div>
+        <Link
+          href="/admin/clients"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft size={14} />
+          <span>Back to Clients Directory</span>
+        </Link>
+      </div>
+
+      {/* ── Identity & Actions Header ── */}
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link
-            href="/admin/clients"
-            className="p-2 text-muted-foreground hover:text-foreground hover:bg-border rounded-lg transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </Link>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-background border border-border flex items-center justify-center overflow-hidden flex-shrink-0 text-sm font-bold text-muted-foreground">
-              {client.logo ? (
-                <img src={client.logo} alt={client.name} className="w-full h-full object-cover" />
-              ) : (
-                client.name.charAt(0).toUpperCase()
-              )}
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground font-display tracking-tight leading-none">
+          <div className="w-14 h-14 rounded-2xl bg-background border border-border flex items-center justify-center overflow-hidden flex-shrink-0 text-sm font-bold text-foreground font-mono shadow-sm">
+            {client.logo ? (
+              <img src={client.logo} alt={client.name} className="w-full h-full object-cover" />
+            ) : (
+              client.name.charAt(0).toUpperCase()
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
                 {client.name}
               </h1>
-              {client.company && <p className="text-sm text-muted-foreground mt-1">{client.company}</p>}
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border capitalize ${
+                  status === "active"
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                    : status === "lead"
+                    ? "bg-sky-500/10 text-sky-400 border-sky-500/25"
+                    : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    status === "active"
+                      ? "bg-emerald-400"
+                      : status === "lead"
+                      ? "bg-sky-400"
+                      : "bg-zinc-500"
+                  }`}
+                />
+                {client.status || "Active"}
+              </span>
             </div>
+            {client.company && (
+              <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                <Building size={12} className="text-[#F55036]" />
+                {client.company}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/admin/invoices/new`}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#F55036] to-[#D93520] text-white text-sm font-semibold rounded-lg transition-all shadow-[0_4px_16px_rgba(245,80,54,0.3)] hover:scale-[1.02]"
-          >
-            <Plus size={15} />
-            Generate Invoice
-          </Link>
-          <Link
-            href={`/admin/clients/${client.id}/edit`}
-            className="flex items-center gap-2 px-4 py-2 bg-border hover:bg-[#3D4450] text-foreground text-sm font-semibold rounded-lg transition-colors"
-          >
-            <Pencil size={16} />
-            Edit Client
-          </Link>
-        </div>
+        <ClientProfileActions client={client} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Details & Notes */}
-        <div className="space-y-8 lg:col-span-1">
-          <div className="bg-card rounded-xl border border-border p-6 space-y-6">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Contact Info
+      {/* ── Main 2-Column Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Contact Channels & Notes */}
+        <div className="space-y-6 lg:col-span-1">
+          {/* Contact Details Card */}
+          <div className="bg-card rounded-2xl border border-border p-6 space-y-4 shadow-sm">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-mono">
+              Account Overview
             </h2>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-sm">
-                <Building size={16} className="text-muted-foreground" />
-                <span className="text-foreground">{client.company || "No company"}</span>
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between text-xs py-1 border-b border-border/40">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Building size={13} className="text-[#F55036]" /> Company
+                </span>
+                <span className="font-semibold text-foreground">{client.company || "Individual"}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Mail size={16} className="text-muted-foreground" />
+
+              <div className="flex items-center justify-between text-xs py-1 border-b border-border/40">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Mail size={13} className="text-[#F55036]" /> Email
+                </span>
                 {client.email ? (
-                  <a href={`mailto:${client.email}`} className="text-primary hover:underline">
+                  <a href={`mailto:${client.email}`} className="font-mono text-[#F55036] hover:underline truncate max-w-[170px]">
                     {client.email}
                   </a>
                 ) : (
-                  <span className="text-muted-foreground">No email</span>
+                  <span className="text-muted-foreground/40 font-mono">—</span>
                 )}
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Phone size={16} className="text-muted-foreground" />
+
+              <div className="flex items-center justify-between text-xs py-1 border-b border-border/40">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Phone size={13} className="text-[#F55036]" /> Phone
+                </span>
                 {client.phone ? (
-                  <a
-                    href={`tel:${client.phone}`}
-                    className="text-foreground hover:text-primary transition-colors"
-                  >
+                  <a href={`tel:${client.phone}`} className="font-mono text-foreground hover:text-[#F55036]">
                     {client.phone}
                   </a>
                 ) : (
-                  <span className="text-muted-foreground">No phone</span>
+                  <span className="text-muted-foreground/40 font-mono">—</span>
                 )}
               </div>
-            </div>
 
-            <div className="pt-4 border-t border-border">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-muted-foreground">Status</span>
-                <span
-                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    client.status === "active"
-                      ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-                      : client.status === "lead"
-                      ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
-                      : "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20"
-                  }`}
-                >
-                  {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
+              <div className="flex items-center justify-between text-xs py-1 border-b border-border/40">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Calendar size={13} className="text-[#F55036]" /> Client Since
                 </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Added</span>
-                <span className="text-sm text-foreground">
+                <span className="font-mono text-foreground">
                   {new Date(client.createdAt).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
@@ -162,116 +175,121 @@ export default async function ClientProfilePage({
             </div>
           </div>
 
-          <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <AlignLeft size={14} /> Internal Notes
+          {/* Internal Notes Card */}
+          <div className="bg-card rounded-2xl border border-border p-6 space-y-3 shadow-sm">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider font-mono flex items-center gap-1.5">
+              <AlignLeft size={13} className="text-[#F55036]" /> Internal Notes
             </h2>
-            <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-              {client.notes || <span className="text-muted-foreground italic">No notes added.</span>}
+            <div className="text-xs sm:text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed bg-background/50 p-3.5 rounded-xl border border-border/60 font-sans">
+              {client.notes || <span className="text-muted-foreground/60 italic text-xs">No account notes recorded for this client.</span>}
             </div>
           </div>
         </div>
 
         {/* Right Column: Financials & Invoices */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Revenue KPIs */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-card rounded-xl border border-border p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                  <DollarSign size={16} className="text-emerald-400" />
+          {/* Revenue KPI Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <DollarSign size={15} />
                 </div>
                 <h3 className="text-xs font-semibold text-muted-foreground">Lifetime Revenue</h3>
               </div>
-              <p className="text-2xl font-bold text-foreground font-mono">
+              <p className="text-2xl font-extrabold text-foreground font-mono">
                 ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
 
-            <div className="bg-card rounded-xl border border-border p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                  <Receipt size={16} className="text-blue-400" />
+            <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+                  <Receipt size={15} />
                 </div>
                 <h3 className="text-xs font-semibold text-muted-foreground">Invoices Issued</h3>
               </div>
-              <p className="text-2xl font-bold text-foreground font-mono">{client.invoices.length}</p>
+              <p className="text-2xl font-extrabold text-foreground font-mono">{client.invoices.length}</p>
             </div>
 
-            <div className="bg-card rounded-xl border border-border p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                  <Clock size={16} className="text-purple-400" />
+            <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                  <CreditCard size={15} />
                 </div>
-                <h3 className="text-xs font-semibold text-muted-foreground">Transactions</h3>
+                <h3 className="text-xs font-semibold text-muted-foreground">Transactions Logged</h3>
               </div>
-              <p className="text-2xl font-bold text-foreground font-mono">{client.transactions.length}</p>
+              <p className="text-2xl font-extrabold text-foreground font-mono">{client.transactions.length}</p>
             </div>
           </div>
 
-          {/* Invoices List for This Client */}
-          <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-            <div className="flex items-center justify-between">
+          {/* Client Invoices Card */}
+          <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-border bg-muted/20 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Receipt size={16} className="text-primary" />
-                <h2 className="text-base font-bold text-foreground">Client Invoices</h2>
+                <Receipt size={15} className="text-[#F55036]" />
+                <h3 className="text-sm font-bold text-foreground">Client Invoices</h3>
               </div>
-              <span className="text-xs text-muted-foreground">{client.invoices.length} total</span>
+              <span className="text-xs font-mono text-muted-foreground">
+                {client.invoices.length} {client.invoices.length === 1 ? "invoice" : "invoices"}
+              </span>
             </div>
 
             {client.invoices.length === 0 ? (
-              <div className="py-8 text-center border border-dashed border-border rounded-xl">
-                <p className="text-sm text-muted-foreground">No invoices generated for this client yet.</p>
+              <div className="py-12 text-center">
+                <p className="text-xs text-muted-foreground">No invoices generated for this client yet.</p>
                 <Link
                   href="/admin/invoices/new"
-                  className="text-xs text-primary hover:underline mt-1 inline-block"
+                  className="text-xs text-[#F55036] hover:underline mt-2 inline-block font-semibold"
                 >
                   + Generate first invoice
                 </Link>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-border text-[11px] font-mono uppercase text-muted-foreground">
-                      <th className="pb-2">Invoice #</th>
-                      <th className="pb-2">Date</th>
-                      <th className="pb-2">Amount</th>
-                      <th className="pb-2">Status</th>
-                      <th className="pb-2 text-right">Actions</th>
+                    <tr className="border-b border-border bg-muted/10 text-[11px] font-mono font-bold uppercase text-muted-foreground">
+                      <th className="py-3 px-5">Invoice #</th>
+                      <th className="py-3 px-5">Date</th>
+                      <th className="py-3 px-5">Amount</th>
+                      <th className="py-3 px-5">Status</th>
+                      <th className="py-3 px-5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border">
+                  <tbody className="divide-y divide-border/60">
                     {client.invoices.map((inv) => (
                       <tr key={inv.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-3 font-semibold text-foreground">{inv.invoiceNumber}</td>
-                        <td className="py-3 text-xs text-muted-foreground">
+                        <td className="py-3 px-5 font-mono font-bold text-xs sm:text-sm text-foreground">
+                          {inv.invoiceNumber}
+                        </td>
+                        <td className="py-3 px-5 text-xs text-muted-foreground font-mono">
                           {new Date(inv.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="py-3 font-mono font-medium text-foreground">
+                        <td className="py-3 px-5 font-mono font-bold text-xs sm:text-sm text-foreground">
                           {inv.currency === "USD" ? "$" : "Rs "}
                           {inv.total.toLocaleString()}
                         </td>
-                        <td className="py-3">
+                        <td className="py-3 px-5">
                           <span
-                            className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                            className={`inline-flex items-center text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
                               inv.status === "paid"
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
                                 : inv.status === "viewed"
-                                ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                                ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
                                 : inv.status === "sent"
-                                ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                                : "bg-white/5 text-muted-foreground border-border"
+                                ? "bg-sky-500/10 text-sky-400 border-sky-500/25"
+                                : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
                             }`}
                           >
                             {inv.status.toUpperCase()}
                           </span>
                         </td>
-                        <td className="py-3 text-right">
+                        <td className="py-3 px-5 text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <Link
                               href={`/admin/invoices/${inv.id}`}
-                              className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all"
+                              className="p-1.5 rounded-lg border border-border bg-background hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all"
                               title="View Invoice"
                             >
                               <Eye size={13} />
@@ -280,8 +298,8 @@ export default async function ClientProfilePage({
                               href={`/invoice/${inv.shareToken}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all"
-                              title="Public Link"
+                              className="p-1.5 rounded-lg border border-border bg-background hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all"
+                              title="Public Invoice Link"
                             >
                               <ExternalLink size={13} />
                             </a>
@@ -295,7 +313,7 @@ export default async function ClientProfilePage({
             )}
           </div>
 
-          {/* Revenue Table Client Component */}
+          {/* Revenue Ledger Component */}
           <ClientRevenueTable clientId={client.id} initialTransactions={client.transactions} />
         </div>
       </div>

@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import ExecutiveDashboardClient, { DashboardDataProps } from "@/components/admin/ExecutiveDashboardClient";
-import { RevenuePoint, DayInquiry, StackCapability } from "@/components/admin/AnalyticsCharts";
+import { RevenuePoint, DayInquiry } from "@/components/admin/AnalyticsCharts";
 
 async function getDashboardData(): Promise<Omit<DashboardDataProps, "userName" | "isSuperAdmin">> {
   const [
@@ -120,57 +120,6 @@ async function getDashboardData(): Promise<Omit<DashboardDataProps, "userName" |
     });
   }
 
-  // ── 4. Real Stack & Practice Distribution ───────────────────────────────────
-  let aiCount = 0;
-  let webCount = 0;
-  let ragCount = 0;
-  let apiCount = 0;
-
-  allProjects.forEach((p) => {
-    const tagStr = (p.tags || []).join(" ").toLowerCase();
-    if (tagStr.includes("ai") || tagStr.includes("agent") || tagStr.includes("autonomous")) {
-      aiCount++;
-    }
-    if (tagStr.includes("web") || tagStr.includes("next") || tagStr.includes("saas") || tagStr.includes("app")) {
-      webCount++;
-    }
-    if (tagStr.includes("rag") || tagStr.includes("vector") || tagStr.includes("embedding")) {
-      ragCount++;
-    }
-    if (tagStr.includes("api") || tagStr.includes("automation") || tagStr.includes("n8n") || tagStr.includes("zapier")) {
-      apiCount++;
-    }
-  });
-
-  const totalTagItems = aiCount + webCount + ragCount + apiCount || 1;
-
-  const practiceDistribution: StackCapability[] = [
-    {
-      label: "AI Agents & Autonomous Workflows",
-      count: aiCount,
-      pct: totalTagItems > 0 && aiCount > 0 ? Math.round((aiCount / totalTagItems) * 100) : 35,
-      color: "#F55036",
-    },
-    {
-      label: "Next.js SaaS Platforms & Web Apps",
-      count: webCount,
-      pct: totalTagItems > 0 && webCount > 0 ? Math.round((webCount / totalTagItems) * 100) : 30,
-      color: "#38BDF8",
-    },
-    {
-      label: "RAG Systems & Vector Embeddings",
-      count: ragCount,
-      pct: totalTagItems > 0 && ragCount > 0 ? Math.round((ragCount / totalTagItems) * 100) : 20,
-      color: "#A855F7",
-    },
-    {
-      label: "Custom API & Enterprise Pipelines",
-      count: apiCount,
-      pct: totalTagItems > 0 && apiCount > 0 ? Math.round((apiCount / totalTagItems) * 100) : 15,
-      color: "#10B981",
-    },
-  ];
-
   return {
     projectsCount,
     postsCount,
@@ -185,7 +134,6 @@ async function getDashboardData(): Promise<Omit<DashboardDataProps, "userName" |
     monthlyRevenue,
     weeklyInquiries,
     inquiriesThisWeek,
-    practiceDistribution,
     recentMessages: allMessages.slice(0, 4),
     recentProjects: allProjects.slice(0, 4),
   };

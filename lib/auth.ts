@@ -8,6 +8,10 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
+  baseURL:
+    process.env.BETTER_AUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
+
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // keep simple for internal admin panel
@@ -25,10 +29,39 @@ export const auth = betterAuth({
     admin(),
   ],
 
-  trustedOrigins: [
-    process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
-    "http://192.168.100.36:3000", // Allow local network testing
-  ],
+  trustedOrigins: async (request) => {
+    const origin = request?.headers?.get("origin");
+    const origins = [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3001",
+      "http://127.0.0.1:3002",
+      "http://192.168.100.36:3000",
+      "https://*.vercel.app",
+    ];
+    if (process.env.BETTER_AUTH_URL) origins.push(process.env.BETTER_AUTH_URL);
+    if (process.env.VERCEL_URL) origins.push(`https://${process.env.VERCEL_URL}`);
+    if (process.env.NEXT_PUBLIC_SITE_URL) origins.push(process.env.NEXT_PUBLIC_SITE_URL);
+
+    if (origin) {
+      try {
+        const u = new URL(origin);
+        if (
+          u.hostname === "localhost" ||
+          u.hostname === "127.0.0.1" ||
+          u.hostname.startsWith("192.168.") ||
+          u.hostname.startsWith("10.") ||
+          u.hostname.endsWith(".vercel.app") ||
+          u.hostname.includes("anthrix")
+        ) {
+          origins.push(origin);
+        }
+      } catch {}
+    }
+    return origins;
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;

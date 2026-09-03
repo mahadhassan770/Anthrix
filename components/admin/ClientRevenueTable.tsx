@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Transaction } from "@prisma/client";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, DollarSign } from "lucide-react";
 import TransactionFormModal from "./TransactionFormModal";
 
 type ExtendedTransaction = Transaction & {
@@ -28,7 +28,7 @@ export default function ClientRevenueTable({
   const isPKR = viewCurrency === "PKR";
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this transaction?")) return;
+    if (!confirm("Are you sure you want to delete this transaction record?")) return;
 
     setDeleting(id);
     try {
@@ -64,32 +64,34 @@ export default function ClientRevenueTable({
 
   return (
     <>
-      <div className="bg-[#080B12] rounded-2xl border border-white/10 overflow-hidden">
-        <div className="p-5 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+        <div className="p-5 border-b border-border bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="font-bold text-white text-base">Transaction History</h2>
-            <p className="text-xs font-mono text-white/40">Multi-currency client billing records</p>
+            <h3 className="font-bold text-foreground text-sm">Transaction Ledger</h3>
+            <p className="text-xs text-muted-foreground">Direct financial entries and billing records</p>
           </div>
 
           <div className="flex items-center gap-2">
             {/* Currency toggle */}
-            <div className="flex items-center gap-1 bg-white/[0.04] p-0.5 rounded-lg border border-white/10 text-xs font-mono">
+            <div className="flex items-center gap-1 bg-background p-1 rounded-xl border border-border text-xs font-mono">
               <button
+                type="button"
                 onClick={() => setViewCurrency("USD")}
-                className={`px-2.5 py-1 rounded-md transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   viewCurrency === "USD"
-                    ? "bg-[#F55036] text-white font-bold"
-                    : "text-white/50 hover:text-white"
+                    ? "bg-[#F55036] text-white font-bold shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 USD ($)
               </button>
               <button
+                type="button"
                 onClick={() => setViewCurrency("PKR")}
-                className={`px-2.5 py-1 rounded-md transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   viewCurrency === "PKR"
-                    ? "bg-[#F55036] text-white font-bold"
-                    : "text-white/50 hover:text-white"
+                    ? "bg-[#F55036] text-white font-bold shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 PKR (Rs)
@@ -97,35 +99,32 @@ export default function ClientRevenueTable({
             </div>
 
             <button
+              type="button"
               onClick={openNewModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#F55036] to-[#D93520] hover:scale-[1.02] active:scale-[0.98] text-white text-xs font-semibold rounded-xl transition-all shadow-[0_2px_12px_rgba(245,80,54,0.3)]"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F55036] hover:bg-[#F55036]/90 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_12px_rgba(245,80,54,0.25)] cursor-pointer"
             >
-              <Plus size={14} /> Add Revenue
+              <Plus size={13} /> Add Revenue
             </button>
           </div>
         </div>
 
         {transactions.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-xs font-mono text-white/40">
-              No transactions recorded for this client yet.
-            </p>
+          <div className="p-10 text-center">
+            <p className="text-xs text-muted-foreground">No transactions recorded for this client yet.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5 bg-white/[0.02]">
-                  <th className="py-3.5 px-5 text-xs font-mono text-white/40 uppercase tracking-wider">Date</th>
-                  <th className="py-3.5 px-5 text-xs font-mono text-white/40 uppercase tracking-wider">Description</th>
-                  <th className="py-3.5 px-5 text-xs font-mono text-white/40 uppercase tracking-wider text-right">
-                    Amount ({viewCurrency})
-                  </th>
-                  <th className="py-3.5 px-5 text-xs font-mono text-white/40 uppercase tracking-wider">Status</th>
-                  <th className="py-3.5 px-5 text-xs font-mono text-white/40 uppercase tracking-wider text-right">Actions</th>
+                <tr className="border-b border-border bg-muted/10 text-[11px] font-mono font-bold uppercase text-muted-foreground">
+                  <th className="py-3 px-5">Date</th>
+                  <th className="py-3 px-5">Description</th>
+                  <th className="py-3 px-5 text-right">Amount ({viewCurrency})</th>
+                  <th className="py-3 px-5">Status</th>
+                  <th className="py-3 px-5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border/60">
                 {transactions.map((t) => {
                   const txUSD = t.amount;
                   const txPKR = t.amountPKR ? t.amountPKR : t.amount * (t.exchangeRate || rate);
@@ -139,47 +138,49 @@ export default function ClientRevenueTable({
                     : `≈ Rs ${txPKR.toLocaleString(undefined, { maximumFractionDigits: 0 })} PKR`;
 
                   return (
-                    <tr key={t.id} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="py-3.5 px-5 text-xs font-mono text-white/50 whitespace-nowrap">
+                    <tr key={t.id} className="hover:bg-muted/30 transition-colors group">
+                      <td className="py-3.5 px-5 text-xs font-mono text-muted-foreground whitespace-nowrap">
                         {new Date(t.date).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
                         })}
                       </td>
-                      <td className="py-3.5 px-5 text-sm text-white/90 font-medium">
+                      <td className="py-3.5 px-5 text-xs sm:text-sm text-foreground/90 font-medium">
                         {t.description}
                       </td>
                       <td className="py-3.5 px-5 text-right font-mono whitespace-nowrap">
-                        <p className="font-bold text-white text-sm">{mainAmount}</p>
-                        <p className="text-[10px] text-white/40">{secondaryAmount}</p>
+                        <p className="font-bold text-foreground text-xs sm:text-sm">{mainAmount}</p>
+                        <p className="text-[10px] text-muted-foreground">{secondaryAmount}</p>
                       </td>
                       <td className="py-3.5 px-5">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-medium ${
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border capitalize ${
                             t.status === "paid"
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
                               : t.status === "pending"
-                              ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                              : "bg-red-500/10 text-red-400 border border-red-500/20"
+                              ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
+                              : "bg-rose-500/10 text-rose-400 border-rose-500/25"
                           }`}
                         >
-                          {t.status.toUpperCase()}
+                          {t.status}
                         </span>
                       </td>
                       <td className="py-3.5 px-5 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
+                            type="button"
                             onClick={() => openEditModal(t)}
-                            className="p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors cursor-pointer"
                             title="Edit"
                           >
                             <Pencil size={13} />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDelete(t.id)}
                             disabled={deleting === t.id}
-                            className="p-1.5 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                            className="p-1.5 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                             title="Delete"
                           >
                             {deleting === t.id ? (

@@ -24,16 +24,31 @@ export default function AdminLoginPage() {
         password,
       });
       if (signInError) {
-        console.error("SignIn Error:", signInError);
-        setError(signInError.message || signInError.statusText || "Invalid email or password.");
+        console.error("SignIn Error:", {
+          message: signInError.message,
+          status: signInError.status,
+          statusText: signInError.statusText,
+          code: (signInError as any).code,
+        });
+
+        let msg = signInError.message || signInError.statusText;
+        if (!msg || msg === "Internal Server Error" || signInError.status === 500) {
+          msg = "Database connection error or server timeout. Please try again.";
+        } else if (msg === "Invalid origin" || (signInError as any).code === "INVALID_ORIGIN") {
+          msg = "Untrusted origin. Please ensure you are logging in from an authorized domain.";
+        } else if (msg === "Invalid email or password" || signInError.status === 401) {
+          msg = "Invalid email or password. Please double-check your credentials.";
+        }
+
+        setError(msg);
         setLoading(false);
         return;
       }
       router.push("/admin");
       router.refresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login failed:", err);
-      setError("An unexpected error occurred during login.");
+      setError(err?.message || "An unexpected error occurred during login.");
       setLoading(false);
     }
   }
