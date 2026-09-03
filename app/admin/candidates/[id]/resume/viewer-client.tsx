@@ -87,6 +87,14 @@ export default function CandidateResumeViewerClient({ id }: { id: string }) {
     );
   }
 
+  const isWordResume = Boolean(
+    candidate?.resumeUrl &&
+    (candidate.resumeUrl.toLowerCase().includes(".docx") ||
+     candidate.resumeUrl.toLowerCase().includes(".doc") ||
+     candidate.resumePublicId?.toLowerCase().includes(".docx") ||
+     candidate.resumePublicId?.toLowerCase().includes(".doc"))
+  );
+
   const validPages = pages.filter((p) => !failedPages.has(p));
 
   return (
@@ -104,7 +112,7 @@ export default function CandidateResumeViewerClient({ id }: { id: string }) {
           <div className="min-w-0">
             <h1 className="text-sm font-bold text-white truncate">{candidate.name}&apos;s Resume</h1>
             <p className="text-[11px] font-mono text-zinc-400 truncate">
-              {candidate.job?.title || "Applicant"} · {validPages.length} {validPages.length === 1 ? "Page" : "Pages"}
+              {candidate.job?.title || "Applicant"} · {isWordResume ? "Word Document (.docx)" : `${validPages.length} ${validPages.length === 1 ? "Page" : "Pages"}`}
             </p>
           </div>
         </div>
@@ -147,8 +155,8 @@ export default function CandidateResumeViewerClient({ id }: { id: string }) {
             <span className="hidden sm:inline">Print</span>
           </button>
           <a
-            href={getPageUrl(candidate.resumeUrl, 1)}
-            download={`${candidate.name.replace(/\s+/g, "_")}_Resume.png`}
+            href={isWordResume ? candidate.resumeUrl : getPageUrl(candidate.resumeUrl, 1)}
+            download={`${candidate.name.replace(/\s+/g, "_")}_Resume.${isWordResume ? "docx" : "png"}`}
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#F55036] text-white text-xs font-bold hover:bg-[#F55036]/90 transition-all shadow-[0_0_15px_rgba(245,80,54,0.3)]"
@@ -161,36 +169,66 @@ export default function CandidateResumeViewerClient({ id }: { id: string }) {
 
       {/* Main Multi-Page Canvas */}
       <main className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center gap-6 bg-[#080B12]">
-        {pages.map((pageNum) => {
-          if (failedPages.has(pageNum)) return null;
-          const pageUrl = getPageUrl(candidate.resumeUrl, pageNum);
-
-          return (
-            <div
-              key={pageNum}
-              style={{ width: `${zoom}%`, maxWidth: `${Math.round(850 * (zoom / 100))}px` }}
-              className="relative transition-all duration-150 flex flex-col items-center"
-            >
-              {/* Page Number Label */}
-              <div className="w-full flex items-center justify-between pb-2 text-xs font-mono text-zinc-400">
-                <span>Page {pageNum}</span>
-                <span className="text-[10px] text-zinc-500 uppercase font-bold">100% High-Fidelity Render</span>
-              </div>
-
-              {/* Page Container */}
-              <div className="w-full bg-white rounded-xl shadow-2xl overflow-hidden border border-zinc-700/50">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={pageUrl}
-                  alt={`${candidate.name}'s Resume - Page ${pageNum}`}
-                  onError={() => handleImageError(pageNum)}
-                  className="w-full h-auto block select-none"
-                  loading="eager"
-                />
-              </div>
+        {isWordResume ? (
+          /* Word Document A4 Canvas */
+          <div
+            style={{ width: `${zoom}%`, maxWidth: `${Math.round(850 * (zoom / 100))}px` }}
+            className="relative transition-all duration-150 flex flex-col items-center"
+          >
+            <div className="w-full flex items-center justify-between pb-2 text-xs font-mono text-zinc-400">
+              <span className="text-blue-400 font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                Word Document (.docx)
+              </span>
+              <span className="text-[10px] text-zinc-500 uppercase font-bold">100% Fidelity Document View</span>
             </div>
-          );
-        })}
+
+            <div className="w-full bg-white text-zinc-900 rounded-xl shadow-2xl overflow-hidden border border-zinc-300 p-8 sm:p-14 font-sans min-h-[900px]">
+              {candidate.resumeHtml ? (
+                <div
+                  className="text-zinc-900 text-sm leading-relaxed space-y-4 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-zinc-900 [&_h1]:border-b [&_h1]:border-zinc-300 [&_h1]:pb-2 [&_h1]:mb-4 [&_h1]:mt-8 [&_h1:first-child]:mt-0 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-zinc-800 [&_h2]:mt-5 [&_h2]:mb-2 [&_p]:mb-3 [&_p]:text-zinc-800 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_li]:mb-1.5 [&_li]:text-zinc-800 [&_strong]:font-bold [&_strong]:text-zinc-900 [&_a]:text-blue-600 [&_a]:underline font-sans"
+                  dangerouslySetInnerHTML={{ __html: candidate.resumeHtml }}
+                />
+              ) : (
+                <div className="whitespace-pre-wrap font-sans text-sm text-zinc-800 leading-relaxed">
+                  {candidate.resumeText}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* PDF Multi-Page Images Canvas */
+          pages.map((pageNum) => {
+            if (failedPages.has(pageNum)) return null;
+            const pageUrl = getPageUrl(candidate.resumeUrl, pageNum);
+
+            return (
+              <div
+                key={pageNum}
+                style={{ width: `${zoom}%`, maxWidth: `${Math.round(850 * (zoom / 100))}px` }}
+                className="relative transition-all duration-150 flex flex-col items-center"
+              >
+                {/* Page Number Label */}
+                <div className="w-full flex items-center justify-between pb-2 text-xs font-mono text-zinc-400">
+                  <span>Page {pageNum}</span>
+                  <span className="text-[10px] text-zinc-500 uppercase font-bold">100% High-Fidelity Render</span>
+                </div>
+
+                {/* Page Container */}
+                <div className="w-full bg-white rounded-xl shadow-2xl overflow-hidden border border-zinc-700/50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={pageUrl}
+                    alt={`${candidate.name}'s Resume - Page ${pageNum}`}
+                    onError={() => handleImageError(pageNum)}
+                    className="w-full h-auto block select-none"
+                    loading="eager"
+                  />
+                </div>
+              </div>
+            );
+          })
+        )}
 
         {/* Bottom Raw Text Panel (if available) */}
         {candidate.resumeText && (

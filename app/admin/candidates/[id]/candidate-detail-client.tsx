@@ -831,93 +831,155 @@ export default function CandidateDetailClient({ id }: { id: string }) {
                 </div>
               </div>
 
-              {candidate.resumeUrl && (
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/admin/candidates/${id}/resume`}
-                    target="_blank"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-primary/90 transition-all"
-                  >
-                    <ExternalLink size={13} />
-                    View Resume
-                  </Link>
-                  <a
-                    href={getResumePageUrl(candidate.resumeUrl, 1)}
-                    download={`${candidate.name.replace(/\s+/g, "_")}_Resume.png`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all"
-                  >
-                    <Download size={13} />
-                    Download
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {candidate.resumeUrl ? (
-              <div className="space-y-4">
-                {/* Embedded Multi-Page Visual Resume Render */}
-                <div className="relative bg-background border border-border rounded-2xl overflow-hidden group shadow-inner">
-                  <div className="max-h-[700px] overflow-y-auto p-4 space-y-4 bg-zinc-950/40">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((pageNum) => {
-                      if (failedResumePages.has(pageNum)) return null;
-                      const pageUrl = getResumePageUrl(candidate.resumeUrl, pageNum);
-
-                      return (
-                        <div key={pageNum} className="space-y-1.5">
-                          <div className="flex items-center justify-between px-1 text-[11px] font-mono text-muted-foreground">
-                            <span>Page {pageNum}</span>
-                          </div>
-                          <div className="w-full bg-white rounded-xl shadow-lg overflow-hidden border border-zinc-700/40">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={pageUrl}
-                              alt={`${candidate.name}'s Resume - Page ${pageNum}`}
-                              onError={() => {
-                                setFailedResumePages((prev) => {
-                                  const next = new Set(prev);
-                                  next.add(pageNum);
-                                  return next;
-                                });
-                              }}
-                              className="w-full h-auto object-contain block mx-auto select-none"
-                              loading="eager"
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Overlay footer to open dedicated full reader in new tab */}
-                  <div className="p-3 bg-background/95 border-t border-border flex items-center justify-between">
-                    <div className="text-xs font-mono text-muted-foreground truncate">
-                      {candidate.resumeUrl.split("/").pop()?.split("?")[0] || "resume.pdf"}
-                    </div>
+              {candidate.resumeUrl && (() => {
+                const isWordResume = Boolean(
+                  candidate.resumeUrl.toLowerCase().includes(".docx") ||
+                  candidate.resumeUrl.toLowerCase().includes(".doc") ||
+                  candidate.resumePublicId?.toLowerCase().includes(".docx") ||
+                  candidate.resumePublicId?.toLowerCase().includes(".doc")
+                );
+                return (
+                  <div className="flex items-center gap-2">
                     <Link
                       href={`/admin/candidates/${id}/resume`}
                       target="_blank"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold shadow-[0_0_15px_rgba(245,80,54,0.3)] hover:bg-primary/90 transition-all"
                     >
-                      Open Full Multi-Page Reader <ExternalLink size={12} />
+                      <ExternalLink size={13} />
+                      View Resume
                     </Link>
+                    <a
+                      href={isWordResume ? candidate.resumeUrl : getResumePageUrl(candidate.resumeUrl, 1)}
+                      download={`${candidate.name.replace(/\s+/g, "_")}_Resume.${isWordResume ? "docx" : "png"}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-all"
+                    >
+                      <Download size={13} />
+                      Download
+                    </a>
                   </div>
-                </div>
+                );
+              })()}
+            </div>
 
-                {/* Raw extracted text fallback */}
-                {candidate.resumeText && (
-                  <div className="bg-background border border-border rounded-xl p-4 space-y-2">
-                    <p className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
-                      Extracted Resume Text
-                    </p>
-                    <div className="max-h-48 overflow-y-auto font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                      {candidate.resumeText}
+            {candidate.resumeUrl ? (() => {
+              const isWordResume = Boolean(
+                candidate.resumeUrl.toLowerCase().includes(".docx") ||
+                candidate.resumeUrl.toLowerCase().includes(".doc") ||
+                candidate.resumePublicId?.toLowerCase().includes(".docx") ||
+                candidate.resumePublicId?.toLowerCase().includes(".doc")
+              );
+
+              return (
+                <div className="space-y-4">
+                  {isWordResume ? (
+                    /* Word Document (.docx) Visual Document Sheet */
+                    <div className="relative bg-background border border-border rounded-2xl overflow-hidden group shadow-inner">
+                      <div className="max-h-[700px] overflow-y-auto p-4 sm:p-6 space-y-4 bg-zinc-950/40">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between px-1 text-[11px] font-mono text-muted-foreground">
+                            <span className="flex items-center gap-1.5 text-blue-400 font-semibold">
+                              <span className="w-2 h-2 rounded-full bg-blue-500" />
+                              Word Document (.docx)
+                            </span>
+                            <span>Interactive Document View</span>
+                          </div>
+
+                          {/* White Paper Canvas */}
+                          <div className="w-full bg-white text-zinc-900 rounded-xl shadow-2xl overflow-hidden border border-zinc-300 p-6 sm:p-10 font-sans min-h-[600px]">
+                            {candidate.resumeHtml ? (
+                              <div
+                                className="text-zinc-900 text-sm leading-relaxed space-y-4 [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-zinc-900 [&_h1]:border-b [&_h1]:border-zinc-300 [&_h1]:pb-2 [&_h1]:mb-3 [&_h1]:mt-6 [&_h1:first-child]:mt-0 [&_h2]:text-base [&_h2]:font-bold [&_h2]:text-zinc-800 [&_h2]:mt-4 [&_h2]:mb-1 [&_p]:mb-2.5 [&_p]:text-zinc-800 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_li]:mb-1 [&_li]:text-zinc-800 [&_strong]:font-bold [&_strong]:text-zinc-900 [&_a]:text-blue-600 [&_a]:underline"
+                                dangerouslySetInnerHTML={{ __html: candidate.resumeHtml }}
+                              />
+                            ) : (
+                              <div className="whitespace-pre-wrap font-sans text-sm text-zinc-800 leading-relaxed">
+                                {candidate.resumeText}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Overlay footer */}
+                      <div className="p-3 bg-background/95 border-t border-border flex items-center justify-between">
+                        <div className="text-xs font-mono text-muted-foreground truncate max-w-[240px]">
+                          {candidate.resumeUrl.split("/").pop()?.split("?")[0] || "resume.docx"}
+                        </div>
+                        <Link
+                          href={`/admin/candidates/${id}/resume`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                        >
+                          Open Full Reader <ExternalLink size={12} />
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ) : (
+                  ) : (
+                    /* Embedded Multi-Page Visual Resume Render for PDF */
+                    <div className="relative bg-background border border-border rounded-2xl overflow-hidden group shadow-inner">
+                      <div className="max-h-[700px] overflow-y-auto p-4 space-y-4 bg-zinc-950/40">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((pageNum) => {
+                          if (failedResumePages.has(pageNum)) return null;
+                          const pageUrl = getResumePageUrl(candidate.resumeUrl, pageNum);
+
+                          return (
+                            <div key={pageNum} className="space-y-1.5">
+                              <div className="flex items-center justify-between px-1 text-[11px] font-mono text-muted-foreground">
+                                <span>Page {pageNum}</span>
+                              </div>
+                              <div className="w-full bg-white rounded-xl shadow-lg overflow-hidden border border-zinc-700/40">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={pageUrl}
+                                  alt={`${candidate.name}'s Resume - Page ${pageNum}`}
+                                  onError={() => {
+                                    setFailedResumePages((prev) => {
+                                      const next = new Set(prev);
+                                      next.add(pageNum);
+                                      return next;
+                                    });
+                                  }}
+                                  className="w-full h-auto object-contain block mx-auto select-none"
+                                  loading="eager"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Overlay footer to open dedicated full reader in new tab */}
+                      <div className="p-3 bg-background/95 border-t border-border flex items-center justify-between">
+                        <div className="text-xs font-mono text-muted-foreground truncate">
+                          {candidate.resumeUrl.split("/").pop()?.split("?")[0] || "resume.pdf"}
+                        </div>
+                        <Link
+                          href={`/admin/candidates/${id}/resume`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                        >
+                          Open Full Multi-Page Reader <ExternalLink size={12} />
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Raw extracted text fallback */}
+                  {candidate.resumeText && (
+                    <div className="bg-background border border-border rounded-xl p-4 space-y-2">
+                      <p className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider">
+                        Extracted Resume Text
+                      </p>
+                      <div className="max-h-48 overflow-y-auto font-mono text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                        {candidate.resumeText}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })() : (
               <div className="flex flex-col items-center justify-center gap-4 py-16 bg-background border border-dashed border-border rounded-2xl text-center">
                 <FileText size={32} className="text-muted-foreground/40" />
                 <div>

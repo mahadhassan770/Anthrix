@@ -70,7 +70,30 @@ export async function GET(
       return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
     }
 
-    return NextResponse.json(candidate);
+    let resumeHtml: string | null = null;
+    const lowerUrl = (candidate.resumeUrl || "").toLowerCase();
+    const isDocx = lowerUrl.includes(".docx");
+    const isDoc = lowerUrl.includes(".doc") && !isDocx;
+
+    if ((isDocx || isDoc) && candidate.resumeUrl) {
+      try {
+        const docRes = await fetch(candidate.resumeUrl);
+        if (docRes.ok) {
+          const docBuf = Buffer.from(await docRes.arrayBuffer());
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const mammoth = require("mammoth");
+          const htmlRes = await mammoth.convertToHtml({ buffer: docBuf });
+          resumeHtml = htmlRes?.value || null;
+        }
+      } catch (err) {
+        console.warn("Could not convert docx resume to HTML:", err);
+      }
+    }
+
+    return NextResponse.json({
+      ...candidate,
+      resumeHtml,
+    });
   } catch (error: any) {
     console.error("Failed to fetch candidate:", error);
     return NextResponse.json({ error: error?.message || "Failed to fetch candidate" }, { status: 500 });
