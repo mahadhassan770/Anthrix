@@ -109,11 +109,16 @@ export default function OfferLetterModal({
   const LetterContent = () => (
     <>
       <div style={{ borderBottom: "2px solid #F55036", paddingBottom: "20px", marginBottom: "40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <img
-          src="/logo.png"
-          alt="Anthrix Logo"
-          style={{ height: "48px", objectFit: "contain" }}
-        />
+        <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+          <img
+            src="/logo.png"
+            alt="Anthrix Logo"
+            style={{ height: "44px", objectFit: "contain" }}
+          />
+          <span style={{ fontSize: "28px", fontWeight: "800", color: "#0d1117", letterSpacing: "-1px", lineHeight: 1 }}>
+            NTHRIX
+          </span>
+        </div>
         <p style={{ margin: 0, fontSize: "13px", color: "#666", textAlign: "right" }}>Anthrix Technologies</p>
       </div>
 
