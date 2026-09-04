@@ -108,11 +108,13 @@ export default function OfferLetterModal({
   // ─── Letter Template (shared between hidden PDF capture & inline preview) ───
   const LetterContent = () => (
     <>
-      <div style={{ borderBottom: "2px solid #F55036", paddingBottom: "20px", marginBottom: "40px" }}>
-        <h1 style={{ fontSize: "28px", fontWeight: "800", margin: 0, color: "#0d1117" }}>
-          Anthrix<span style={{ color: "#F55036" }}>.</span>
-        </h1>
-        <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>123 Innovation Drive, Tech City, TX 75001</p>
+      <div style={{ borderBottom: "2px solid #F55036", paddingBottom: "20px", marginBottom: "40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <img
+          src="/logo.png"
+          alt="Anthrix Logo"
+          style={{ height: "48px", objectFit: "contain" }}
+        />
+        <p style={{ margin: 0, fontSize: "13px", color: "#666", textAlign: "right" }}>Anthrix Technologies</p>
       </div>
 
       <p><strong>Date:</strong> {today}</p>
@@ -228,14 +230,15 @@ export default function OfferLetterModal({
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1">Annual Salary / Compensation</label>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1">Compensation</label>
                     <input
                       type="text"
-                      placeholder="e.g. $120,000 / PKR 2,000,000"
+                      placeholder="e.g. $5,000 / project, PKR 120,000/month, Equity-based…"
                       value={salary}
                       onChange={(e) => setSalary(e.target.value)}
                       className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-[#F55036]/50 transition-colors"
                     />
+                    <p className="mt-1 text-[11px] text-muted-foreground">Can be fixed, hourly, project-based, or any custom arrangement.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground mb-1">Start Date</label>
