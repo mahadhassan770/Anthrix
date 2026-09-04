@@ -109,13 +109,13 @@ export default function OfferLetterModal({
   const LetterContent = () => (
     <>
       <div style={{ borderBottom: "2px solid #F55036", paddingBottom: "20px", marginBottom: "40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <img
             src="/logo.png"
             alt="Anthrix Logo"
             style={{ height: "44px", objectFit: "contain" }}
           />
-          <span style={{ fontSize: "28px", fontWeight: "800", color: "#0d1117", letterSpacing: "-1px", lineHeight: 1 }}>
+          <span style={{ fontSize: "28px", fontWeight: "800", color: "#0d1117", letterSpacing: "-1px", lineHeight: 1, verticalAlign: "middle" }}>
             NTHRIX
           </span>
         </div>
@@ -144,26 +144,30 @@ export default function OfferLetterModal({
 
       <p>Sincerely,</p>
 
-      <div style={{ display: "flex", gap: "80px", marginTop: "40px" }}>
-        <div style={{ marginLeft: "-20px" }}>
-          <img
-            src="/signatures/founder1.png"
-            alt="Mahad Hassan Signature"
-            style={{ height: "90px", marginBottom: "10px", display: "block" }}
-            onError={(e) => { e.currentTarget.style.display = "none"; e.currentTarget.insertAdjacentHTML("afterend", '<div style="height:90px;display:flex;align-items:center;font-family:\'Brush Script MT\',cursive;font-size:30px;">Mahad Hassan</div>'); }}
-          />
-          <div style={{ borderTop: "1px solid #000", width: "220px", paddingTop: "5px", fontWeight: "bold" }}>Mahad Hassan</div>
-          <div style={{ fontSize: "12px", color: "#666" }}>Co-Founder &amp; CEO</div>
+      <div style={{ display: "flex", gap: "80px", marginTop: "40px", alignItems: "flex-end" }}>
+        <div>
+          <div style={{ height: "130px", display: "flex", alignItems: "flex-end", marginLeft: "-20px" }}>
+            <img
+              src="/signatures/founder1.png"
+              alt="Mahad Hassan Signature"
+              style={{ maxHeight: "130px", maxWidth: "220px", objectFit: "contain", objectPosition: "left bottom", display: "block" }}
+              onError={(e) => { e.currentTarget.style.display = "none"; e.currentTarget.insertAdjacentHTML("afterend", '<div style="height:130px;display:flex;align-items:flex-end;font-family:\'Brush Script MT\',cursive;font-size:30px;">Mahad Hassan</div>'); }}
+            />
+          </div>
+          <div style={{ borderTop: "1px solid #000", width: "220px", paddingTop: "5px", fontWeight: "bold", marginTop: "8px" }}>Mahad Hassan</div>
+          <div style={{ fontSize: "12px", color: "#666" }}>Co-Founder</div>
         </div>
         <div>
-          <img
-            src="/signatures/founder2.png"
-            alt="Abdul Haseeb Signature"
-            style={{ height: "130px", width: "220px", objectFit: "contain", objectPosition: "left bottom", marginBottom: "10px", display: "block" }}
-            onError={(e) => { e.currentTarget.style.display = "none"; e.currentTarget.insertAdjacentHTML("afterend", '<div style="height:130px;display:flex;align-items:center;font-family:\'Brush Script MT\',cursive;font-size:30px;">Abdul Haseeb</div>'); }}
-          />
-          <div style={{ borderTop: "1px solid #000", width: "220px", paddingTop: "5px", fontWeight: "bold" }}>Abdul Haseeb</div>
-          <div style={{ fontSize: "12px", color: "#666" }}>Co-Founder &amp; COO</div>
+          <div style={{ height: "130px", display: "flex", alignItems: "flex-end" }}>
+            <img
+              src="/signatures/founder2.png"
+              alt="Abdul Haseeb Signature"
+              style={{ maxHeight: "130px", maxWidth: "220px", objectFit: "contain", objectPosition: "left bottom", display: "block" }}
+              onError={(e) => { e.currentTarget.style.display = "none"; e.currentTarget.insertAdjacentHTML("afterend", '<div style="height:130px;display:flex;align-items:flex-end;font-family:\'Brush Script MT\',cursive;font-size:30px;">Abdul Haseeb</div>'); }}
+            />
+          </div>
+          <div style={{ borderTop: "1px solid #000", width: "220px", paddingTop: "5px", fontWeight: "bold", marginTop: "8px" }}>Abdul Haseeb</div>
+          <div style={{ fontSize: "12px", color: "#666" }}>Co-Founder</div>
         </div>
       </div>
     </>
