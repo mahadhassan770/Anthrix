@@ -7,6 +7,7 @@ export interface SendEmailOptions {
   body: string;
   fromName?: string;
   fromEmail?: string;
+  attachments?: { filename: string; content: Buffer | string; contentType?: string }[];
 }
 
 function renderHtmlEmail(title: string, bodyText: string): string {
@@ -59,6 +60,7 @@ export async function sendEmail({
   body,
   fromName = "Anthrix Hiring Team",
   fromEmail = "careers@anthrix.com",
+  attachments,
 }: SendEmailOptions): Promise<{ success: boolean; error?: string; messageId?: string; simulated?: boolean }> {
   try {
     // 1. Fetch SMTP settings from DB (with fallback to process.env)
@@ -85,28 +87,43 @@ export async function sendEmail({
     const html = renderHtmlEmail(subject, body);
 
     if (smtpHost && smtpUser && smtpPass) {
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpSecure,
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-      });
+      const createTransporter = (port: number) =>
+        nodemailer.createTransport({
+          host: smtpHost,
+          port,
+          secure: port === 465,
+          auth: { user: smtpUser, pass: smtpPass },
+        });
 
-      const info = await transporter.sendMail({
+      const mailOptions = {
         from: fromAddress || `"${fromName}" <${smtpUser}>`,
         to,
         replyTo: smtpUser,
         subject,
         text: body,
         html,
+        attachments,
         headers: {
           "X-Entity-Ref-ID": `anthrix-ats-${Date.now()}`,
           "Auto-Submitted": "auto-generated",
         },
-      });
+      };
+
+      // Try configured port first, then automatically fall back to 465
+      let info: any;
+      try {
+        info = await createTransporter(smtpPort).sendMail(mailOptions);
+      } catch (firstErr: any) {
+        if (
+          smtpPort !== 465 &&
+          (firstErr.code === "ETIMEDOUT" || firstErr.code === "ESOCKET" || firstErr.code === "ECONNREFUSED")
+        ) {
+          console.warn(`[email-service] Port ${smtpPort} failed (${firstErr.code}), retrying on port 465...`);
+          info = await createTransporter(465).sendMail(mailOptions);
+        } else {
+          throw firstErr;
+        }
+      }
 
       return { success: true, messageId: info.messageId };
     }
@@ -128,6 +145,11 @@ export async function sendEmail({
           subject,
           text: body,
           html,
+          attachments: attachments?.map(a => ({
+            filename: a.filename,
+            content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
+            content_type: a.contentType
+          })),
         }),
       });
 

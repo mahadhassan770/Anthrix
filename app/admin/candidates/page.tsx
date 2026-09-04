@@ -31,6 +31,7 @@ import {
   Eye,
   ArrowUpDown,
 } from "lucide-react";
+import OfferLetterModal from "@/components/admin/OfferLetterModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -460,6 +461,7 @@ function CandidatesAdminInner() {
   const [atsAiEnabled, setAtsAiEnabled] = useState(true);
   const [togglingAi, setTogglingAi] = useState(false);
   const [interviewCandidate, setInterviewCandidate] = useState<any>(null);
+  const [offerCandidate, setOfferCandidate] = useState<any>(null);
 
   const fetchData = async () => {
     try {
@@ -570,8 +572,12 @@ function CandidatesAdminInner() {
       await sendAutoEmail(candidateId, candidate, "REJECTED");
       return;
     }
-    if (newStage === "OFFER" || newStage === "HIRED") {
-      alert("Offer and Hire stages are not yet active.");
+    if (newStage === "OFFER") {
+      setOfferCandidate(candidate);
+      return;
+    }
+    if (newStage === "HIRED") {
+      alert("Hire stage is not yet active.");
       return;
     }
     await doStageUpdate(candidateId, newStage);
@@ -953,6 +959,14 @@ function CandidatesAdminInner() {
           })}
         </div>
       )}
+
+      {/* Offer Letter Modal */}
+      <OfferLetterModal
+        isOpen={!!offerCandidate}
+        onClose={() => setOfferCandidate(null)}
+        candidate={offerCandidate}
+        onSuccess={fetchData}
+      />
     </div>
   );
 }
