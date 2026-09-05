@@ -25,6 +25,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Client } from "@prisma/client";
+import { useModal } from "@/components/admin/ui/modals";
 
 // ─── Reusable Dropdown with Smart Collision Detection ─────────────────────────
 function Dropdown({
@@ -401,6 +402,7 @@ function ClientModal({ client, onClose, onSaved }: ClientModalProps) {
 
 // ─── Clients Page Inner Component ─────────────────────────────────────────────
 function ClientsPageInner() {
+  const { confirm, alert } = useModal();
   const searchParams = useSearchParams();
   const openNewParam = searchParams.get("new") === "true";
 
@@ -437,7 +439,13 @@ function ClientsPageInner() {
   }, [openNewParam]);
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete client "${name}"? This action cannot be undone.`)) return;
+    const confirmed = await confirm({
+      title: "Delete Client",
+      message: `Are you sure you want to delete client "${name}"? This action cannot be undone.`,
+      confirmText: "Delete Client",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setDeleting(id);
     try {
@@ -447,8 +455,17 @@ function ClientsPageInner() {
       if (!res.ok) throw new Error("Failed to delete client");
 
       setClients((prev) => prev.filter((c) => c.id !== id));
+      await alert({
+        title: "Client Deleted",
+        message: `Client "${name}" was deleted successfully.`,
+        variant: "success",
+      });
     } catch (err: any) {
-      alert(err.message || "Failed to delete client");
+      await alert({
+        title: "Delete Failed",
+        message: err.message || "Failed to delete client",
+        variant: "danger",
+      });
     } finally {
       setDeleting(null);
     }

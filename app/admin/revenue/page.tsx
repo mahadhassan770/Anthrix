@@ -25,6 +25,7 @@ import {
 import { Transaction } from "@prisma/client";
 import TransactionFormModal from "@/components/admin/TransactionFormModal";
 import { RevenueTrendChart, FinancialDonutChart } from "@/components/admin/AnalyticsCharts";
+import { useModal } from "@/components/admin/ui/modals";
 
 type TransactionWithClient = Transaction & {
   amountPKR?: number | null;
@@ -114,6 +115,7 @@ function DropdownSeparator() {
 
 // ─── Main Revenue Page ────────────────────────────────────────────────────────
 export default function RevenuePage() {
+  const { confirm, alert } = useModal();
   const [transactions, setTransactions] = useState<TransactionWithClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -181,7 +183,13 @@ export default function RevenuePage() {
   });
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this revenue entry?")) return;
+    const confirmed = await confirm({
+      title: "Delete Revenue Entry",
+      message: "Are you sure you want to delete this revenue entry? This action cannot be undone.",
+      confirmText: "Delete Entry",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setDeleting(id);
     try {
@@ -189,8 +197,17 @@ export default function RevenuePage() {
       if (!res.ok) throw new Error("Failed to delete transaction");
 
       setTransactions((prev) => prev.filter((t) => t.id !== id));
+      await alert({
+        title: "Entry Deleted",
+        message: "Revenue transaction deleted successfully.",
+        variant: "success",
+      });
     } catch (err: any) {
-      alert(err.message || "Failed to delete transaction");
+      await alert({
+        title: "Delete Failed",
+        message: err.message || "Failed to delete transaction",
+        variant: "danger",
+      });
     } finally {
       setDeleting(null);
     }

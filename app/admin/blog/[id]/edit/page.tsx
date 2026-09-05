@@ -11,9 +11,11 @@ import {
   Trash2,
   ExternalLink
 } from "lucide-react";
+import { useModal } from "@/components/admin/ui/modals";
 
 export default function EditBlogPostPage() {
   const router = useRouter();
+  const { confirm, alert } = useModal();
   const params = useParams();
   const id = params?.id as string;
 
@@ -112,7 +114,13 @@ export default function EditBlogPostPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this article? This action cannot be undone.")) return;
+    const confirmed = await confirm({
+      title: "Delete Article",
+      message: "Are you sure you want to delete this article? This action cannot be undone.",
+      confirmText: "Delete Article",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setDeleting(true);
     try {
@@ -120,9 +128,18 @@ export default function EditBlogPostPage() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete post");
+      await alert({
+        title: "Article Deleted",
+        message: "The article has been deleted successfully.",
+        variant: "success",
+      });
       router.push("/admin/blog");
     } catch (err: any) {
-      alert(err.message || "Failed to delete");
+      await alert({
+        title: "Delete Failed",
+        message: err.message || "Failed to delete",
+        variant: "danger",
+      });
       setDeleting(false);
     }
   };

@@ -43,6 +43,7 @@ import {
   Bookmark,
   MessageSquare,
 } from "lucide-react";
+import { useModal } from "@/components/admin/ui/modals";
 import {
   DEFAULT_STORED_TEMPLATES,
   StoredEmailTemplate,
@@ -152,6 +153,7 @@ function InterviewModal({
   onClose: () => void;
   onConfirm: (d: InterviewDetails) => Promise<void>;
 }) {
+  const { alert } = useModal();
   const [details, setDetails] = useState<InterviewDetails>({
     dateTime: "",
     type: "video",
@@ -162,9 +164,18 @@ function InterviewModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!details.dateTime) { alert("Please select a date and time."); return; }
-    if (details.type === "video" && !details.meetingLink) { alert("Please provide a meeting link."); return; }
-    if (details.type === "in-person" && !details.location) { alert("Please provide the interview location."); return; }
+    if (!details.dateTime) {
+      await alert({ title: "Validation Error", message: "Please select a date and time.", variant: "warning" });
+      return;
+    }
+    if (details.type === "video" && !details.meetingLink) {
+      await alert({ title: "Validation Error", message: "Please provide a meeting link.", variant: "warning" });
+      return;
+    }
+    if (details.type === "in-person" && !details.location) {
+      await alert({ title: "Validation Error", message: "Please provide the interview location.", variant: "warning" });
+      return;
+    }
     setSending(true);
     await onConfirm(details);
     setSending(false);
@@ -283,6 +294,7 @@ function InterviewModal({
 
 export default function CandidateDetailClient({ id }: { id: string }) {
   const router = useRouter();
+  const { confirm, alert } = useModal();
 
   const [candidate, setCandidate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -398,7 +410,11 @@ export default function CandidateDetailClient({ id }: { id: string }) {
       if (!res.ok) throw new Error("Failed to update stage");
       setCandidate((prev: any) => ({ ...prev, stage: newStage }));
     } catch {
-      alert("Failed to update stage");
+      await alert({
+        title: "Stage Update Failed",
+        message: "Failed to update stage. Please try again.",
+        variant: "danger",
+      });
     }
   };
 
@@ -444,13 +460,23 @@ export default function CandidateDetailClient({ id }: { id: string }) {
       return;
     }
     if (newStage === "REJECTED") {
-      if (!confirm(`Are you sure you want to reject ${candidate?.name}?\n\nA polite rejection email will automatically be sent to them.`)) return;
+      const confirmed = await confirm({
+        title: "Reject Candidate",
+        message: `Are you sure you want to reject ${candidate?.name}?\n\nA polite rejection email will automatically be sent to them.`,
+        confirmText: "Reject & Email",
+        variant: "danger",
+      });
+      if (!confirmed) return;
       await doStageUpdate("REJECTED");
       await sendAutoEmail("REJECTED");
       return;
     }
     if (newStage === "OFFER" || newStage === "HIRED") {
-      alert("Offer and Hire automated workflows are currently in preview.");
+      await alert({
+        title: "Workflow Notice",
+        message: "Offer and Hire automated workflows are currently in preview.",
+        variant: "info",
+      });
       return;
     }
     await doStageUpdate(newStage);
@@ -471,9 +497,17 @@ export default function CandidateDetailClient({ id }: { id: string }) {
         body: JSON.stringify({ adminNotes, rating }),
       });
       if (!res.ok) throw new Error("Failed to save");
-      alert("Notes & Rating saved successfully!");
+      await alert({
+        title: "Saved",
+        message: "Notes & Rating saved successfully!",
+        variant: "success",
+      });
     } catch {
-      alert("Failed to save notes");
+      await alert({
+        title: "Save Failed",
+        message: "Failed to save notes. Please try again.",
+        variant: "danger",
+      });
     } finally {
       setSavingNotes(false);
     }
@@ -490,9 +524,17 @@ export default function CandidateDetailClient({ id }: { id: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to re-score");
       setCandidate((prev: any) => ({ ...prev, evaluation: data.evaluation }));
-      alert("AI Evaluation refreshed successfully!");
+      await alert({
+        title: "Evaluation Refreshed",
+        message: "AI Evaluation refreshed successfully!",
+        variant: "success",
+      });
     } catch (err: any) {
-      alert(err.message || "Failed to re-score candidate");
+      await alert({
+        title: "Re-Score Failed",
+        message: err.message || "Failed to re-score candidate",
+        variant: "danger",
+      });
     } finally {
       setRescoring(false);
     }
@@ -500,7 +542,13 @@ export default function CandidateDetailClient({ id }: { id: string }) {
 
   const handleDeleteCandidate = async () => {
     if (!candidate) return;
-    if (!confirm(`Are you sure you want to permanently delete ${candidate.name}'s application? This action cannot be undone.`)) return;
+    const confirmed = await confirm({
+      title: "Delete Candidate Application",
+      message: `Are you sure you want to permanently delete ${candidate.name}'s application? This action cannot be undone.`,
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/careers/candidates/${id}`, { method: "DELETE" });
@@ -508,17 +556,29 @@ export default function CandidateDetailClient({ id }: { id: string }) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "Failed to delete candidate application");
       }
-      alert("Candidate application deleted successfully.");
+      await alert({
+        title: "Application Deleted",
+        message: "Candidate application deleted successfully.",
+        variant: "success",
+      });
       router.push("/admin/candidates");
     } catch (err: any) {
-      alert(err.message || "Failed to delete candidate");
+      await alert({
+        title: "Delete Failed",
+        message: err.message || "Failed to delete candidate",
+        variant: "danger",
+      });
       setDeleting(false);
     }
   };
 
   const handleSendEmail = async () => {
     if (!emailSubject.trim() || !emailBody.trim()) {
-      alert("Subject and Body are required.");
+      await alert({
+        title: "Validation Error",
+        message: "Subject and Body are required.",
+        variant: "warning",
+      });
       return;
     }
     setSendingEmail(true);
@@ -542,7 +602,11 @@ export default function CandidateDetailClient({ id }: { id: string }) {
         setEmailSuccess(null);
       }, 2000);
     } catch (err: any) {
-      alert(err.message || "Failed to send email");
+      await alert({
+        title: "Email Dispatch Failed",
+        message: err.message || "Failed to send email",
+        variant: "danger",
+      });
     } finally {
       setSendingEmail(false);
     }

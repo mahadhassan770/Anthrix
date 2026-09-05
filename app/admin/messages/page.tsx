@@ -33,6 +33,7 @@ import {
   Share2,
 } from "lucide-react";
 import MarkdownMessage from "@/components/copilot/markdown-message";
+import { useModal } from "@/components/admin/ui/modals";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 type Message = {
@@ -191,6 +192,7 @@ function DropdownSeparator() {
 
 // ─── Main Messages Page ───────────────────────────────────────────────────────
 export default function MessagesPage() {
+  const { confirm, alert } = useModal();
   const [messages, setMessages] = useState<Message[]>([]);
   const [counts, setCounts] = useState<Counts>({ total: 0, unread: 0, leads: 0, contact: 0 });
   const [loading, setLoading] = useState(true);
@@ -280,7 +282,13 @@ export default function MessagesPage() {
   // Delete single message
   const handleDelete = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this message?")) return;
+    const confirmed = await confirm({
+      title: "Delete Message",
+      message: "Are you sure you want to delete this message? This action cannot be undone.",
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setDeletingId(id);
     try {
@@ -303,9 +311,19 @@ export default function MessagesPage() {
       } else {
         setSelectedId(null);
       }
-    } catch (err) {
+      await alert({
+        title: "Message Deleted",
+        message: "Message has been deleted.",
+        variant: "success",
+      });
+    } catch (err: any) {
       console.error("Delete error:", err);
       fetchMessages();
+      await alert({
+        title: "Delete Failed",
+        message: err.message || "Failed to delete message",
+        variant: "danger",
+      });
     } finally {
       setDeletingId(null);
     }
@@ -356,7 +374,13 @@ export default function MessagesPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Are you sure you want to delete ${selectedIds.size} selected message(s)?`)) return;
+    const confirmed = await confirm({
+      title: "Bulk Delete Messages",
+      message: `Are you sure you want to delete ${selectedIds.size} selected message(s)? This cannot be undone.`,
+      confirmText: `Delete ${selectedIds.size} Messages`,
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setBulkProcessing(true);
     try {

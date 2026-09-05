@@ -28,6 +28,7 @@ import {
   ArrowRight,
   Filter,
 } from "lucide-react";
+import { useModal } from "@/components/admin/ui/modals";
 
 // ─── Separator for Overview vs Responsibilities ───────────────────────────────
 const SEPARATOR = "\n\n---RESPONSIBILITIES---\n\n";
@@ -453,6 +454,7 @@ function JobModal({ job, onClose, onSaved }: JobModalProps) {
 // ─── Main Careers Page ────────────────────────────────────────────────────────
 
 function AdminCareersInner() {
+  const { confirm, alert } = useModal();
   const searchParams = useSearchParams();
   const openNewParam = searchParams.get("new") === "true";
 
@@ -487,7 +489,13 @@ function AdminCareersInner() {
   }, [openNewParam]);
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? All associated candidate evaluations will also be removed.`)) return;
+    const confirmed = await confirm({
+      title: "Delete Job Opening",
+      message: `Are you sure you want to delete "${title}"? All associated candidate evaluations will also be removed.`,
+      confirmText: "Delete Opening",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       const res = await fetch(`/api/admin/careers/jobs/${id}`, {
@@ -495,8 +503,17 @@ function AdminCareersInner() {
       });
       if (!res.ok) throw new Error("Failed to delete job");
       setJobs((prev) => prev.filter((j) => j.id !== id));
+      await alert({
+        title: "Job Deleted",
+        message: `"${title}" has been deleted.`,
+        variant: "success",
+      });
     } catch (err: any) {
-      alert(err.message || "Failed to delete");
+      await alert({
+        title: "Delete Failed",
+        message: err.message || "Failed to delete job",
+        variant: "danger",
+      });
     }
   };
 
@@ -513,7 +530,11 @@ function AdminCareersInner() {
       const updated = await res.json();
       setJobs((prev) => prev.map((j) => (j.id === job.id ? updated : j)));
     } catch (err: any) {
-      alert(err.message || "Failed to toggle status");
+      await alert({
+        title: "Status Update Failed",
+        message: err.message || "Failed to toggle status",
+        variant: "danger",
+      });
     } finally {
       setTogglingId(null);
     }

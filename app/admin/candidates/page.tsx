@@ -32,6 +32,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import OfferLetterModal from "@/components/admin/OfferLetterModal";
+import { useModal } from "@/components/admin/ui/modals";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -151,6 +152,7 @@ function InterviewModal({
   onClose: () => void;
   onConfirm: (details: InterviewDetails) => Promise<void>;
 }) {
+  const { alert } = useModal();
   const [details, setDetails] = useState<InterviewDetails>({
     dateTime: "",
     type: "video",
@@ -161,9 +163,18 @@ function InterviewModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!details.dateTime) { alert("Please select a date and time."); return; }
-    if (details.type === "video" && !details.meetingLink) { alert("Please provide a meeting link."); return; }
-    if (details.type === "in-person" && !details.location) { alert("Please provide the interview location."); return; }
+    if (!details.dateTime) {
+      await alert({ title: "Validation Error", message: "Please select a date and time.", variant: "warning" });
+      return;
+    }
+    if (details.type === "video" && !details.meetingLink) {
+      await alert({ title: "Validation Error", message: "Please provide a meeting link.", variant: "warning" });
+      return;
+    }
+    if (details.type === "in-person" && !details.location) {
+      await alert({ title: "Validation Error", message: "Please provide the interview location.", variant: "warning" });
+      return;
+    }
     setSending(true);
     await onConfirm(details);
     setSending(false);
@@ -445,6 +456,7 @@ function CandidateCard({
 // ─── Main Inner Component ─────────────────────────────────────────────────────
 
 function CandidatesAdminInner() {
+  const { confirm, alert } = useModal();
   const searchParams = useSearchParams();
   const initialJobId = searchParams.get("jobId") || "all";
 
@@ -492,10 +504,21 @@ function CandidatesAdminInner() {
         body: JSON.stringify({ atsAiEnabled: nextVal }),
       });
       const data = await res.json();
-      if (res.ok && data.success) setAtsAiEnabled(nextVal);
-      else alert(data.error || "Failed to toggle AI scoring.");
+      if (res.ok && data.success) {
+        setAtsAiEnabled(nextVal);
+      } else {
+        await alert({
+          title: "AI Processing",
+          message: data.error || "Failed to toggle AI scoring.",
+          variant: "danger",
+        });
+      }
     } catch (err: any) {
-      alert("Network error: " + err.message);
+      await alert({
+        title: "Network Error",
+        message: "Network error: " + err.message,
+        variant: "danger",
+      });
     } finally {
       setTogglingAi(false);
     }
@@ -513,7 +536,11 @@ function CandidatesAdminInner() {
       if (!res.ok) throw new Error("Failed to update stage");
       setCandidates((prev) => prev.map((c) => (c.id === candidateId ? { ...c, stage: newStage } : c)));
     } catch {
-      alert("Failed to update stage");
+      await alert({
+        title: "Stage Update Failed",
+        message: "Failed to update candidate stage. Please try again.",
+        variant: "danger",
+      });
     }
   };
 
@@ -567,7 +594,13 @@ function CandidatesAdminInner() {
   const handleStageChange = async (candidateId: string, newStage: string, candidate: any) => {
     if (newStage === "INTERVIEW") { setInterviewCandidate(candidate); return; }
     if (newStage === "REJECTED") {
-      if (!confirm(`Reject ${candidate.name}? A rejection email will be sent automatically.`)) return;
+      const confirmed = await confirm({
+        title: "Reject Candidate",
+        message: `Reject ${candidate.name}? A rejection email will be sent automatically.`,
+        confirmText: "Reject & Email",
+        variant: "danger",
+      });
+      if (!confirmed) return;
       await doStageUpdate(candidateId, "REJECTED");
       await sendAutoEmail(candidateId, candidate, "REJECTED");
       return;
@@ -577,7 +610,11 @@ function CandidatesAdminInner() {
       return;
     }
     if (newStage === "HIRED") {
-      alert("Hire stage is not yet active.");
+      await alert({
+        title: "Hire Workflow",
+        message: "Hire stage is not yet active.",
+        variant: "info",
+      });
       return;
     }
     await doStageUpdate(candidateId, newStage);
@@ -593,7 +630,13 @@ function CandidatesAdminInner() {
   const handleDeleteCandidate = async (e: React.MouseEvent, candidateId: string, candidateName: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!confirm(`Permanently delete ${candidateName}'s application? This cannot be undone.`)) return;
+    const confirmed = await confirm({
+      title: "Delete Application",
+      message: `Permanently delete ${candidateName}'s application? This cannot be undone.`,
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`/api/admin/careers/candidates/${candidateId}`, { method: "DELETE" });
       if (!res.ok) {
@@ -602,7 +645,11 @@ function CandidatesAdminInner() {
       }
       setCandidates((prev) => prev.filter((c) => c.id !== candidateId));
     } catch (err: any) {
-      alert(err.message || "Failed to delete candidate");
+      await alert({
+        title: "Delete Failed",
+        message: err.message || "Failed to delete candidate",
+        variant: "danger",
+      });
     }
   };
 

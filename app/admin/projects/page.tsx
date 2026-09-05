@@ -24,6 +24,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { Project } from "@prisma/client";
+import { useModal } from "@/components/admin/ui/modals";
 
 // ─── Reusable Dropdown with Smart Collision Detection ─────────────────────────
 function Dropdown({
@@ -122,6 +123,7 @@ function DropdownSeparator() {
 
 // ─── Projects Page Component ──────────────────────────────────────────────────
 export default function ProjectsPage() {
+  const { confirm, alert } = useModal();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -148,7 +150,13 @@ export default function ProjectsPage() {
   }, []);
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete project "${title}"? This action cannot be undone.`)) return;
+    const confirmed = await confirm({
+      title: "Delete Project",
+      message: `Are you sure you want to delete project "${title}"? This action cannot be undone.`,
+      confirmText: "Delete Project",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setDeleting(id);
     try {
@@ -158,8 +166,17 @@ export default function ProjectsPage() {
       if (!res.ok) throw new Error("Failed to delete project");
 
       setProjects((prev) => prev.filter((p) => p.id !== id));
+      await alert({
+        title: "Project Deleted",
+        message: `Project "${title}" has been deleted.`,
+        variant: "success",
+      });
     } catch (err: any) {
-      alert(err.message || "Failed to delete project");
+      await alert({
+        title: "Delete Failed",
+        message: err.message || "Failed to delete project",
+        variant: "danger",
+      });
     } finally {
       setDeleting(null);
     }
@@ -180,7 +197,11 @@ export default function ProjectsPage() {
         prev.map((p) => (p.id === project.id ? { ...p, published: newStatus } : p))
       );
     } catch (err: any) {
-      alert(err.message || "Failed to update project");
+      await alert({
+        title: "Update Failed",
+        message: err.message || "Failed to update project",
+        variant: "danger",
+      });
     } finally {
       setUpdatingId(null);
     }
@@ -201,7 +222,11 @@ export default function ProjectsPage() {
         prev.map((p) => (p.id === project.id ? { ...p, featured: newFeatured } : p))
       );
     } catch (err: any) {
-      alert(err.message || "Failed to update project");
+      await alert({
+        title: "Update Failed",
+        message: err.message || "Failed to update project",
+        variant: "danger",
+      });
     } finally {
       setUpdatingId(null);
     }

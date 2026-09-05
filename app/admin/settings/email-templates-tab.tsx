@@ -24,6 +24,7 @@ import {
   TemplateCategory,
   renderTemplateText,
 } from "@/lib/ats-email-templates";
+import { useModal } from "@/components/admin/ui/modals";
 
 const CATEGORY_COLORS: Record<TemplateCategory, { bg: string; text: string; border: string }> = {
   interview: { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/25" },
@@ -42,6 +43,7 @@ const SAMPLE_VARS = {
 };
 
 export function EmailTemplatesTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+  const { confirm, alert } = useModal();
   const [templates, setTemplates] = useState<StoredEmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -213,7 +215,13 @@ https://anthrix.com`,
   };
 
   const handleReset = async () => {
-    if (!confirm("Are you sure you want to reset all email templates to system defaults? Any custom templates will be replaced.")) {
+    const confirmed = await confirm({
+      title: "Reset Email Templates",
+      message: "Are you sure you want to reset all email templates to system defaults? Any custom templates will be replaced.",
+      confirmText: "Reset Templates",
+      variant: "warning",
+    });
+    if (!confirmed) {
       return;
     }
     setResetting(true);

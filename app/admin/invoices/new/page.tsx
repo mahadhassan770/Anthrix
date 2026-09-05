@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Loader2, ArrowLeft } from "lucide-react";
+import { useModal } from "@/components/admin/ui/modals";
 
 type BankAccount = { id: string; bankName: string; accountTitle: string; currency: string; type: string; isDefault: boolean };
 type Client = { id: string; name: string; email?: string; phone?: string };
@@ -10,6 +11,7 @@ type LineItem = { description: string; quantity: number; rate: number; amount: n
 
 export default function NewInvoicePage() {
   const router = useRouter();
+  const { alert } = useModal();
   const [saving, setSaving] = useState(false);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -67,8 +69,22 @@ export default function NewInvoicePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientName.trim()) return alert("Client name is required.");
-    if (items.some((i) => !i.description.trim())) return alert("All line items need a description.");
+    if (!clientName.trim()) {
+      await alert({
+        title: "Validation Error",
+        message: "Client name is required.",
+        variant: "warning",
+      });
+      return;
+    }
+    if (items.some((i) => !i.description.trim())) {
+      await alert({
+        title: "Validation Error",
+        message: "All line items need a description.",
+        variant: "warning",
+      });
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch("/api/admin/invoices", {
@@ -85,7 +101,11 @@ export default function NewInvoicePage() {
       const inv = await res.json();
       router.push(`/admin/invoices/${inv.id}`);
     } catch (err: any) {
-      alert("Error: " + err.message);
+      await alert({
+        title: "Invoice Creation Failed",
+        message: "Error: " + err.message,
+        variant: "danger",
+      });
     } finally {
       setSaving(false);
     }

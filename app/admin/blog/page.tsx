@@ -28,6 +28,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { Post } from "@prisma/client";
+import { useModal } from "@/components/admin/ui/modals";
 
 // ─── Smart Dropdown ────────────────────────────────────────────────────────────
 function Dropdown({
@@ -305,6 +306,7 @@ function BlogModal({ post, onClose, onSaved }: BlogModalProps) {
 
 // ─── Blog Page Inner ──────────────────────────────────────────────────────────
 function BlogPageInner() {
+  const { confirm, alert } = useModal();
   const searchParams = useSearchParams();
   const openNewParam = searchParams.get("new") === "true";
   const editId = searchParams.get("edit");
@@ -340,14 +342,30 @@ function BlogPageInner() {
   }, [openNewParam]);
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete article "${title}"? This action cannot be undone.`)) return;
+    const confirmed = await confirm({
+      title: "Delete Article",
+      message: `Are you sure you want to delete article "${title}"? This action cannot be undone.`,
+      confirmText: "Delete Article",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+
     setDeletingId(id);
     try {
       const res = await fetch(`/api/admin/posts/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete post");
       setPosts((prev) => prev.filter((p) => p.id !== id));
+      await alert({
+        title: "Article Deleted",
+        message: `"${title}" was deleted successfully.`,
+        variant: "success",
+      });
     } catch (err: any) {
-      alert(err.message || "Failed to delete post");
+      await alert({
+        title: "Delete Failed",
+        message: err.message || "Failed to delete post",
+        variant: "danger",
+      });
     } finally {
       setDeletingId(null);
     }
@@ -366,7 +384,11 @@ function BlogPageInner() {
       const updated = await res.json();
       setPosts((prev) => prev.map((p) => (p.id === post.id ? updated : p)));
     } catch (err: any) {
-      alert(err.message || "Failed to toggle publish status");
+      await alert({
+        title: "Update Failed",
+        message: err.message || "Failed to toggle publish status",
+        variant: "danger",
+      });
     } finally {
       setTogglingId(null);
     }

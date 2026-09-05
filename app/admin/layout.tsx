@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { ModalProvider } from "@/components/admin/ui/modals";
 
 // ─── Organized Navigation Sections ────────────────────────────────────────────
 interface NavItem {
@@ -264,57 +265,59 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-30">
-        <Sidebar />
-      </div>
-
-      {/* Mobile Sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden animate-in fade-in duration-200">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <div className="relative w-64 h-full animate-in slide-in-from-left duration-200">
-            <Sidebar onClose={() => setSidebarOpen(false)} />
-          </div>
+    <ModalProvider>
+      <div className="min-h-screen flex bg-background">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-30">
+          <Sidebar />
         </div>
-      )}
 
-      {/* Main content area */}
-      <div className="flex-1 lg:pl-64 flex flex-col min-h-screen">
-        {/* Top bar (mobile only) */}
-        <header className="lg:hidden sticky top-0 z-20 flex items-center justify-between px-4 h-14 backdrop-blur-md bg-background/85 border-b border-border">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-xl hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-          >
-            <Menu size={18} />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold bg-[#F55036] text-white">
-              A
+        {/* Mobile Sidebar overlay */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-40 lg:hidden animate-in fade-in duration-200">
+            <div
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <div className="relative w-64 h-full animate-in slide-in-from-left duration-200">
+              <Sidebar onClose={() => setSidebarOpen(false)} />
             </div>
-            <span className="text-xs font-bold text-foreground font-[family-name:var(--font-orbitron)] tracking-wider">
-              ANTHRIX
-            </span>
           </div>
-          <Link
-            href="/admin/settings"
-            className="p-2 rounded-xl hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all"
-          >
-            <Settings size={16} />
-          </Link>
-        </header>
+        )}
 
-        {/* Page content */}
-        <main className="flex-1 p-6 lg:p-8">
-          {children}
-        </main>
+        {/* Main content area */}
+        <div className="flex-1 lg:pl-64 flex flex-col min-h-screen">
+          {/* Top bar (mobile only) */}
+          <header className="lg:hidden sticky top-0 z-20 flex items-center justify-between px-4 h-14 backdrop-blur-md bg-background/85 border-b border-border">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-xl hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+            >
+              <Menu size={18} />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold bg-[#F55036] text-white">
+                A
+              </div>
+              <span className="text-xs font-bold text-foreground font-[family-name:var(--font-orbitron)] tracking-wider">
+                ANTHRIX
+              </span>
+            </div>
+            <Link
+              href="/admin/settings"
+              className="p-2 rounded-xl hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all"
+            >
+              <Settings size={16} />
+            </Link>
+          </header>
+
+          {/* Page content */}
+          <main className="flex-1 p-6 lg:p-8">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ModalProvider>
   );
 }

@@ -26,6 +26,7 @@ import {
   ArrowUpRight,
   ShieldAlert,
 } from "lucide-react";
+import { useModal } from "@/components/admin/ui/modals";
 
 type Invoice = {
   id: string;
@@ -168,6 +169,7 @@ function DropdownSeparator() {
 
 // ─── Main Invoices Page ───────────────────────────────────────────────────────
 export default function InvoicesPage() {
+  const { confirm, alert } = useModal();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -199,13 +201,30 @@ export default function InvoicesPage() {
   };
 
   const deleteInvoice = async (id: string, invoiceNumber: string) => {
-    if (!confirm(`Are you sure you want to delete invoice "${invoiceNumber}"? This cannot be undone.`)) return;
+    const confirmed = await confirm({
+      title: "Delete Invoice",
+      message: `Are you sure you want to delete invoice "${invoiceNumber}"? This cannot be undone.`,
+      confirmText: "Delete Invoice",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+
     setDeleting(id);
     try {
-      await fetch(`/api/admin/invoices/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/invoices/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete invoice");
       setInvoices((prev) => prev.filter((i) => i.id !== id));
+      await alert({
+        title: "Invoice Deleted",
+        message: `Invoice "${invoiceNumber}" was deleted successfully.`,
+        variant: "success",
+      });
     } catch (err) {
-      alert("Failed to delete invoice.");
+      await alert({
+        title: "Delete Failed",
+        message: "Failed to delete invoice. Please try again.",
+        variant: "danger",
+      });
     } finally {
       setDeleting(null);
     }
@@ -221,9 +240,20 @@ export default function InvoicesPage() {
       });
       if (res.ok) {
         setInvoices((prev) => prev.map((i) => (i.id === id ? { ...i, status: "paid" } : i)));
+        await alert({
+          title: "Invoice Paid",
+          message: "Invoice has been marked as paid.",
+          variant: "success",
+        });
+      } else {
+        throw new Error("Failed to update status");
       }
     } catch (err) {
-      alert("Failed to update status.");
+      await alert({
+        title: "Update Failed",
+        message: "Failed to update status.",
+        variant: "danger",
+      });
     } finally {
       setMarkingPaidId(null);
     }

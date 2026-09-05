@@ -24,6 +24,7 @@ import {
   Eye,
 } from "lucide-react";
 import { Service } from "@prisma/client";
+import { useModal } from "@/components/admin/ui/modals";
 
 type ServiceWithCounts = Service & {
   _count?: {
@@ -386,6 +387,7 @@ function ServiceModal({ service, onClose, onSaved }: ServiceModalProps) {
 
 // ─── Services Page Inner Component ────────────────────────────────────────────
 function ServicesPageInner() {
+  const { confirm, alert } = useModal();
   const searchParams = useSearchParams();
   const openNewParam = searchParams.get("new") === "true";
 
@@ -421,7 +423,13 @@ function ServicesPageInner() {
   }, [openNewParam]);
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? All related offerings will also be removed.`)) return;
+    const confirmed = await confirm({
+      title: "Delete Service",
+      message: `Are you sure you want to delete "${title}"? All related offerings will also be removed.`,
+      confirmText: "Delete Service",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     setDeleting(id);
     try {
@@ -431,8 +439,17 @@ function ServicesPageInner() {
       if (!res.ok) throw new Error("Failed to delete service");
 
       setServices((prev) => prev.filter((p) => p.id !== id));
+      await alert({
+        title: "Service Deleted",
+        message: `"${title}" has been deleted.`,
+        variant: "success",
+      });
     } catch (err: any) {
-      alert(err.message || "Failed to delete service");
+      await alert({
+        title: "Delete Failed",
+        message: err.message || "Failed to delete service",
+        variant: "danger",
+      });
     } finally {
       setDeleting(null);
     }

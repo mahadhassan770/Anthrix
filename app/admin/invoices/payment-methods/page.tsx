@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Loader2, Pencil, Check, X, Building2, Smartphone, Globe, AlertCircle, Info } from "lucide-react";
+import { useModal } from "@/components/admin/ui/modals";
 
 type BankAccount = {
   id: string;
@@ -74,6 +75,7 @@ const emptyForm = (type: "bank" | "wallet" | "international" = "bank") => ({
 });
 
 export default function PaymentMethodsPage() {
+  const { confirm, alert } = useModal();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -118,9 +120,21 @@ export default function PaymentMethodsPage() {
   };
 
   const handleSave = async () => {
-    if (!form.accountTitle.trim()) return alert("Account / Beneficiary Title is required.");
+    if (!form.accountTitle.trim()) {
+      await alert({
+        title: "Validation Error",
+        message: "Account / Beneficiary Title is required.",
+        variant: "warning",
+      });
+      return;
+    }
     if (form.type !== "international" && !form.accountNumber.trim()) {
-      return alert("Account number / phone is required.");
+      await alert({
+        title: "Validation Error",
+        message: "Account number / phone is required.",
+        variant: "warning",
+      });
+      return;
     }
     setSaving(true);
     const url = editing ? `/api/admin/bank-accounts/${editing.id}` : "/api/admin/bank-accounts";
@@ -133,18 +147,38 @@ export default function PaymentMethodsPage() {
     if (res.ok) {
       setShowForm(false);
       fetchAccounts();
+      await alert({
+        title: "Saved",
+        message: "Payment method saved successfully.",
+        variant: "success",
+      });
     } else {
-      alert("Failed to save payment method.");
+      await alert({
+        title: "Save Failed",
+        message: "Failed to save payment method.",
+        variant: "danger",
+      });
     }
     setSaving(false);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this payment method?")) return;
+    const confirmed = await confirm({
+      title: "Delete Payment Method",
+      message: "Are you sure you want to delete this payment method? Invoices referencing it may need updating.",
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!confirmed) return;
     setDeleting(id);
     await fetch(`/api/admin/bank-accounts/${id}`, { method: "DELETE" });
     setAccounts((prev) => prev.filter((a) => a.id !== id));
     setDeleting(null);
+    await alert({
+      title: "Deleted",
+      message: "Payment method deleted successfully.",
+      variant: "success",
+    });
   };
 
   const f = (k: string, v: string | boolean) => setForm((prev) => ({ ...prev, [k]: v }));
