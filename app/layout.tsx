@@ -31,14 +31,23 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   keywords: [
+    "Anthrix Technologies",
+    "Anthrix",
     "software development agency",
-    "AI automation",
-    "Next.js development",
+    "AI automation agency",
+    "AI engineering studio",
+    "Next.js development company",
     "RAG system development",
     "n8n workflow automation",
-    "AI agents",
-    "SaaS development",
+    "AI agents development",
+    "SaaS development company",
     "WhatsApp automation",
+    "web application development",
+    "custom software development",
+    "Mahad Hassan",
+    "Abdul Haseeb",
+    "AI software studio",
+    "autonomous AI systems",
   ],
   authors: [{ name: siteConfig.name, url: siteConfig.url }],
   creator: siteConfig.name,
@@ -63,6 +72,9 @@ export const metadata: Metadata = {
     apple: "/logo.png",
   },
   robots: { index: true, follow: true },
+  verification: {
+    google: "momJrePHQ2ETD1NguNQM4fYBCooArFn4gQWxgc-bQfc",
+  },
 };
 
 export default function RootLayout({
@@ -74,8 +86,8 @@ export default function RootLayout({
       {
         "@type": "Organization",
         "@id": `${siteConfig.url}/#organization`,
-        name: "Anthrix",
-        alternateName: ["Anthrix Studio", "Anthrix Agency"],
+        name: "Anthrix Technologies",
+        alternateName: ["Anthrix", "Anthrix Studio", "Anthrix Agency"],
         url: siteConfig.url,
         logo: {
           "@type": "ImageObject",
@@ -84,9 +96,13 @@ export default function RootLayout({
           height: 512,
         },
         description:
-          "Anthrix is a software and AI studio that builds high-performance web applications, SaaS platforms, AI agents, RAG systems, and workflow automations for businesses worldwide.",
+          "Anthrix Technologies is a software and AI engineering studio that builds high-performance web applications, SaaS platforms, AI agents, RAG systems, and workflow automations for businesses worldwide.",
         slogan: "Software & AI Studio",
         foundingDate: "2024",
+        founders: [
+          { "@type": "Person", name: "Mahad Hassan", jobTitle: "Co-Founder" },
+          { "@type": "Person", name: "Abdul Haseeb", jobTitle: "Co-Founder" },
+        ],
         knowsAbout: [
           "Web Application Development",
           "SaaS Platform Development",
@@ -98,6 +114,9 @@ export default function RootLayout({
           "WhatsApp Automation",
           "Next.js Development",
           "Software Engineering",
+          "Cloud Infrastructure",
+          "TypeScript",
+          "React",
         ],
         serviceArea: {
           "@type": "AdministrativeArea",
@@ -105,7 +124,7 @@ export default function RootLayout({
         },
         contactPoint: {
           "@type": "ContactPoint",
-          email: "hello@anthrix.com",
+          email: "hello@anthrixtechnologies.com",
           contactType: "customer service",
           availableLanguage: "English",
         },
@@ -120,7 +139,7 @@ export default function RootLayout({
         "@type": "WebSite",
         "@id": `${siteConfig.url}/#website`,
         url: siteConfig.url,
-        name: "Anthrix",
+        name: "Anthrix Technologies",
         description: siteConfig.description,
         publisher: { "@id": `${siteConfig.url}/#organization` },
         inLanguage: "en-US",
@@ -136,14 +155,14 @@ export default function RootLayout({
       {
         "@type": "ProfessionalService",
         "@id": `${siteConfig.url}/#service`,
-        name: "Anthrix",
+        name: "Anthrix Technologies",
         url: siteConfig.url,
         image: `${siteConfig.url}/logo.png`,
         description: siteConfig.description,
         priceRange: "$$",
         hasOfferCatalog: {
           "@type": "OfferCatalog",
-          name: "Anthrix Services",
+          name: "Anthrix Technologies Services",
           itemListElement: [
             { "@type": "Offer", itemOffered: { "@type": "Service", name: "Web Application Development" } },
             { "@type": "Offer", itemOffered: { "@type": "Service", name: "SaaS Platform Development" } },
@@ -151,8 +170,38 @@ export default function RootLayout({
             { "@type": "Offer", itemOffered: { "@type": "Service", name: "RAG System Development" } },
             { "@type": "Offer", itemOffered: { "@type": "Service", name: "Workflow Automation (n8n)" } },
             { "@type": "Offer", itemOffered: { "@type": "Service", name: "WhatsApp Business Automation" } },
+            { "@type": "Offer", itemOffered: { "@type": "Service", name: "Technical Consulting" } },
           ],
         },
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "What does Anthrix Technologies do?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Anthrix Technologies builds high-performance web applications, SaaS platforms, AI agents, RAG systems, and workflow automations for businesses that need serious technical infrastructure.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Who founded Anthrix Technologies?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Anthrix Technologies was co-founded by Mahad Hassan and Abdul Haseeb.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "How can I contact Anthrix Technologies?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "You can contact Anthrix Technologies via email at hello@anthrixtechnologies.com or through the website at https://anthrixtechnologies.com",
+            },
+          },
+        ],
       },
     ],
   };

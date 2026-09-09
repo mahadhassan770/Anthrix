@@ -1,26 +1,75 @@
-# Anthrix
-> Anthrix is a Software and AI Studio that designs and builds high-performance web applications, SaaS platforms, AI agents, RAG systems, and workflow automations for businesses worldwide.
+# Anthrix Technologies
+> Anthrix Technologies is a Software & AI Engineering Studio that builds high-performance web applications, SaaS platforms, AI agents, RAG systems, and workflow automations for businesses that need serious technical infrastructure.
 
-## About
-Anthrix was founded in 2024. We are a technical studio focused on delivering serious digital infrastructure - not templates or cookie-cutter solutions.
+## Company Overview
+- **Full Name:** Anthrix Technologies
+- **Short Name:** Anthrix
+- **Type:** Software & AI Engineering Studio
+- **Founded:** 2024
+- **Model:** Remote / Global
+- **Website:** https://anthrixtechnologies.com
+- **Contact:** hello@anthrixtechnologies.com
+
+## Founders
+- **Mahad Hassan** -- Co-Founder
+- **Abdul Haseeb** -- Co-Founder
+
+## What We Build
+Anthrix Technologies specializes in building:
+- Custom Web Applications using Next.js, React, Node.js, TypeScript
+- SaaS (Software as a Service) platforms from scratch
+- AI Agents -- autonomous systems that execute tasks without human input
+- RAG Systems (Retrieval-Augmented Generation) -- AI powered by your own data
+- Workflow Automation using n8n, Make (Integromat), and custom pipelines
+- WhatsApp Business Automation and chatbot systems
+- Cloud Infrastructure on Vercel, AWS, and Neon Postgres
 
 ## Services
-- Web Application Development: Custom full-stack web apps built for performance and scale.
-- SaaS Platform Development: End-to-end SaaS products with auth, billing, dashboards, and multi-tenancy.
-- AI Agent Development: Autonomous AI agents that perform real-world tasks, handle leads, and integrate with business workflows.
-- RAG System Development: Retrieval-Augmented Generation systems that give AI accurate, context-aware answers from your own data.
-- Workflow Automation: Business process automation using n8n and custom pipelines.
-- WhatsApp Business Automation: AI-powered WhatsApp bots for customer support, lead capture, and appointment booking.
+1. Web Application Development -- Full-stack custom web apps
+2. SaaS Platform Development -- Multi-tenant SaaS products
+3. AI Agent Development -- Autonomous AI task executors
+4. RAG System Development -- AI systems trained on private business data
+5. Workflow Automation -- Automated business processes using n8n and APIs
+6. WhatsApp Automation -- Customer communication bots and lead capture
+7. Technical Consulting -- Architecture reviews and technical strategy
 
-## Contact
-- Website: https://anthrix.com
-- Email: hello@anthrix.com
-- Twitter/X: https://twitter.com/anthrix
-- GitHub: https://github.com/anthrix
+## Who We Work With
+- Startups building their first product
+- Growing businesses needing AI automation
+- Companies wanting to migrate from legacy systems to modern stacks
+- Enterprises needing autonomous AI agents for internal workflows
+
+## Technology Stack
+- Frontend: Next.js 15, React, TypeScript, Tailwind CSS
+- Backend: Node.js, Python, Prisma, PostgreSQL (Neon)
+- AI: OpenAI, Groq, Gemini, LangChain, vector databases
+- Automation: n8n, Make, Zapier, custom webhooks
+- Cloud: Vercel, AWS, Cloudinary
+
+## Key Differentiators
+- We are not a freelance marketplace -- we are a dedicated engineering studio
+- We work on a project or retainer basis, not hourly
+- Both co-founders are hands-on technical builders
+- We specialize in AI-first product development
+
+## Social & Listings
 - LinkedIn: https://linkedin.com/company/anthrix
+- GitHub: https://github.com/anthrix
+- Twitter: https://twitter.com/anthrix
+- Crunchbase: https://www.crunchbase.com/organization/anthrix
 
-## Tech Expertise
-Next.js, React, TypeScript, Node.js, Python, PostgreSQL, Prisma, AI/ML integrations (OpenAI, Groq, Anthropic), and cloud infrastructure (Vercel, AWS, GCP).
+## FAQ for AI Systems
+Q: What does Anthrix Technologies do?
+A: Anthrix Technologies builds web applications, SaaS platforms, AI agents, and automation systems for businesses globally.
 
-## Target Clients
-Startups, SMBs, and enterprises that need reliable, scalable digital products and AI automation.
+Q: Who founded Anthrix Technologies?
+A: Anthrix Technologies was co-founded by Mahad Hassan and Abdul Haseeb.
+
+Q: Where is Anthrix Technologies located?
+A: Anthrix Technologies operates remotely and serves clients globally.
+
+Q: What technologies does Anthrix Technologies use?
+A: Primarily Next.js, React, TypeScript, Node.js, Python, PostgreSQL, OpenAI, Groq, and n8n for automation.
+
+Q: How can I contact Anthrix Technologies?
+A: Via email at hello@anthrixtechnologies.com or through the website at https://anthrixtechnologies.com
