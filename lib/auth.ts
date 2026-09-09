@@ -40,6 +40,8 @@ export const auth = betterAuth({
       "http://127.0.0.1:3002",
       "http://192.168.100.36:3000",
       "https://*.vercel.app",
+      "https://anthrixtechnologies.com",
+      "https://www.anthrixtechnologies.com",
     ];
     if (process.env.BETTER_AUTH_URL) origins.push(process.env.BETTER_AUTH_URL);
     if (process.env.VERCEL_URL) origins.push(`https://${process.env.VERCEL_URL}`);
