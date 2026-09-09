@@ -100,7 +100,12 @@ export default function RootLayout({
         slogan: "Software & AI Studio",
         foundingDate: "2024",
         founders: [
-          { "@type": "Person", name: "Mahad Hassan", jobTitle: "Co-Founder" },
+          {
+            "@type": "Person",
+            name: "Mahad Hassan",
+            jobTitle: "Co-Founder",
+            sameAs: "https://www.wikidata.org/wiki/Q141390048",
+          },
           { "@type": "Person", name: "Abdul Haseeb", jobTitle: "Co-Founder" },
         ],
         knowsAbout: [
@@ -133,6 +138,7 @@ export default function RootLayout({
           siteConfig.links.github,
           "https://linkedin.com/company/anthrix",
           "https://www.crunchbase.com/organization/anthrix",
+          "https://www.wikidata.org/wiki/Q141389801",
         ],
       },
       {

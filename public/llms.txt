@@ -57,6 +57,7 @@ Anthrix Technologies specializes in building:
 - GitHub: https://github.com/anthrix
 - Twitter: https://twitter.com/anthrix
 - Crunchbase: https://www.crunchbase.com/organization/anthrix
+- Wikidata: https://www.wikidata.org/wiki/Q141389801
 
 ## FAQ for AI Systems
 Q: What does Anthrix Technologies do?
