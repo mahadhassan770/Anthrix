@@ -7,7 +7,7 @@ export const siteConfig = {
   ogImage: "https://anthrixtechnologies.com/og.png",
   links: {
     twitter: "https://twitter.com/anthrix",
-    github: "https://github.com/anthrix",
+    github: "https://github.com/anthrixtechnologies",
     email: "mailto:anthrixtechnologies@gmail.com",
   },
 };

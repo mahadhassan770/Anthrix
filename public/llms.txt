@@ -59,9 +59,9 @@ Anthrix Technologies specializes in building:
 - We specialize in AI-first product development
 
 ## Social & Listings
-- LinkedIn: https://linkedin.com/company/anthrix
-- GitHub: https://github.com/anthrix
-- Twitter: https://twitter.com/anthrix
+- LinkedIn: https://www.linkedin.com/company/anthrix-technologies
+- GitHub: https://github.com/anthrixtechnologies
+- Facebook: https://www.facebook.com/anthrixtechnologies
 - Crunchbase: https://www.crunchbase.com/organization/anthrix
 - Wikidata: https://www.wikidata.org/wiki/Q141389801
 

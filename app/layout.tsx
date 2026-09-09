@@ -136,7 +136,8 @@ export default function RootLayout({
         sameAs: [
           siteConfig.links.twitter,
           siteConfig.links.github,
-          "https://linkedin.com/company/anthrix",
+          "https://www.linkedin.com/company/anthrix-technologies",
+          "https://www.facebook.com/anthrixtechnologies",
           "https://www.crunchbase.com/organization/anthrix",
           "https://www.wikidata.org/wiki/Q141389801",
         ],
