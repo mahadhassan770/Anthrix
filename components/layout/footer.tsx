@@ -77,6 +77,8 @@ function GithubIcon({ size = 15, style }: { size?: number; style?: React.CSSProp
       <path d="M9 18c-4.51 2-5-2-7-2" />
     </svg>
   );
+}
+
 function FacebookIcon({ size = 15, style }: { size?: number; style?: React.CSSProperties }) {
   return (
     <svg
