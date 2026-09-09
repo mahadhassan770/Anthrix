@@ -56,7 +56,7 @@ Looking forward to speaking with you!
 
 Best regards,
 Anthrix Hiring Team
-https://anthrix.com`,
+https://anthrixtechnologies.com`,
     isSystem: true,
   },
   {
@@ -79,7 +79,7 @@ If you have any questions before getting started, please don't hesitate to reach
 
 Best of luck,
 Anthrix Hiring Team
-https://anthrix.com`,
+https://anthrixtechnologies.com`,
     isSystem: true,
   },
   {
@@ -97,7 +97,7 @@ Please let us know what time slots suit you best this week.
 
 Warm regards,
 Anthrix Hiring Team
-https://anthrix.com`,
+https://anthrixtechnologies.com`,
     isSystem: true,
   },
   {
@@ -123,7 +123,7 @@ Welcome to the team!
 
 Warm congratulations,
 Anthrix Leadership Team
-https://anthrix.com`,
+https://anthrixtechnologies.com`,
     isSystem: true,
   },
   {
@@ -143,7 +143,7 @@ We wish you every success in your ongoing job search and career endeavors.
 
 Warm regards,
 Anthrix Hiring Team
-https://anthrix.com`,
+https://anthrixtechnologies.com`,
     isSystem: true,
   },
   {
@@ -161,7 +161,7 @@ Thank you once again for your interest in Anthrix.
 
 Best regards,
 Anthrix Talent Acquisition
-https://anthrix.com`,
+https://anthrixtechnologies.com`,
     isSystem: true,
   },
   {
@@ -175,7 +175,7 @@ https://anthrix.com`,
 
 Best regards,
 Anthrix Hiring Team
-https://anthrix.com`,
+https://anthrixtechnologies.com`,
     isSystem: true,
   },
 ];

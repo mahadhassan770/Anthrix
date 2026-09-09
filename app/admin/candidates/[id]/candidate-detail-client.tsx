@@ -435,12 +435,12 @@ export default function CandidateDetailClient({ id }: { id: string }) {
         : "We will call you at the phone number you provided.";
       const typeLabel = interviewDetails.type === "video" ? "Video Call Interview" : interviewDetails.type === "in-person" ? "In-Person Interview" : "Phone Interview";
       subject = `Interview Invitation: ${jobTitle} at Anthrix`;
-      body = `Hi ${name},\n\nThank you for your interest in the ${jobTitle} position at Anthrix. After reviewing your application, we are pleased to invite you for an interview.\n\nInterview Details:\n- Type: ${typeLabel}\n- Date & Time: ${dt}\n- ${locationLine}\n\nPlease confirm your attendance by replying to this email. If the time does not work for you, let us know and we will find an alternative.\n\nLooking forward to speaking with you!\n\nBest regards,\nAnthrix Hiring Team\nhttps://anthrix.com`;
+      body = `Hi ${name},\n\nThank you for your interest in the ${jobTitle} position at Anthrix. After reviewing your application, we are pleased to invite you for an interview.\n\nInterview Details:\n- Type: ${typeLabel}\n- Date & Time: ${dt}\n- ${locationLine}\n\nPlease confirm your attendance by replying to this email. If the time does not work for you, let us know and we will find an alternative.\n\nLooking forward to speaking with you!\n\nBest regards,\nAnthrix Hiring Team\nhttps://anthrixtechnologies.com`;
     }
 
     if (type === "REJECTED") {
       subject = `Update regarding your application for ${jobTitle} at Anthrix`;
-      body = `Hi ${name},\n\nThank you for taking the time to apply for the ${jobTitle} position at Anthrix and for sharing your background with us.\n\nAfter careful review, we have decided to move forward with other candidates whose experience more closely matches our immediate project requirements at this time.\n\nWe were genuinely impressed by your qualifications and will keep your profile in our talent network for future opportunities that align with your skillset.\n\nWe wish you every success in your ongoing job search and career endeavors.\n\nWarm regards,\nAnthrix Hiring Team\nhttps://anthrix.com`;
+      body = `Hi ${name},\n\nThank you for taking the time to apply for the ${jobTitle} position at Anthrix and for sharing your background with us.\n\nAfter careful review, we have decided to move forward with other candidates whose experience more closely matches our immediate project requirements at this time.\n\nWe were genuinely impressed by your qualifications and will keep your profile in our talent network for future opportunities that align with your skillset.\n\nWe wish you every success in your ongoing job search and career endeavors.\n\nWarm regards,\nAnthrix Hiring Team\nhttps://anthrixtechnologies.com`;
     }
 
     try {

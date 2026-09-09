@@ -160,7 +160,7 @@ export default function InvoiceDetailPage() {
         <div className="bg-[#0D1117] px-6 py-5 border-b border-white/5 flex items-start justify-between">
           <div>
             <p className="text-lg font-bold text-white font-mono">ANTHRIX</p>
-            <p className="text-xs text-white/30 mt-0.5">anthrix.com</p>
+            <p className="text-xs text-white/30 mt-0.5">anthrixtechnologies.com</p>
           </div>
           <div className="text-right">
             <p className="text-xs text-white/30">Invoice</p>

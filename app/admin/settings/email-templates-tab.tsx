@@ -130,7 +130,7 @@ Thank you for your interest in joining Anthrix and applying for the {jobTitle} p
 
 Best regards,
 Anthrix Hiring Team
-https://anthrix.com`,
+https://anthrixtechnologies.com`,
     });
     setEditorTab("edit");
     setEditorOpen(true);
@@ -655,7 +655,7 @@ https://anthrix.com`,
                     <div className="p-3 bg-muted/30 border-b border-border space-y-1.5 text-xs">
                       <p>
                         <strong className="text-muted-foreground font-mono">From:</strong>{" "}
-                        <span className="text-foreground">Anthrix Hiring Team &lt;careers@anthrix.com&gt;</span>
+                        <span className="text-foreground">Anthrix Hiring Team &lt;careers@anthrixtechnologies.com&gt;</span>
                       </p>
                       <p>
                         <strong className="text-muted-foreground font-mono">To:</strong>{" "}
@@ -724,7 +724,7 @@ https://anthrix.com`,
                 <div className="p-3.5 bg-muted/40 border-b border-border space-y-1 text-xs">
                   <p>
                     <strong className="text-muted-foreground font-mono">From:</strong>{" "}
-                    <span className="text-foreground">Anthrix Hiring Team &lt;careers@anthrix.com&gt;</span>
+                    <span className="text-foreground">Anthrix Hiring Team &lt;careers@anthrixtechnologies.com&gt;</span>
                   </p>
                   <p>
                     <strong className="text-muted-foreground font-mono">To:</strong>{" "}

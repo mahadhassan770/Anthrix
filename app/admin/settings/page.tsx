@@ -741,7 +741,7 @@ export default function SettingsPage() {
                       type="email"
                       value={contactForm.supportEmail}
                       onChange={(e) => setContactForm({ ...contactForm, supportEmail: e.target.value })}
-                      placeholder="billing@anthrix.com"
+                      placeholder="billing@anthrixtechnologies.com"
                       className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none"
                     />
                   </div>
@@ -928,7 +928,7 @@ export default function SettingsPage() {
                     required
                     value={smtpSettings.smtpUser}
                     onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpUser: e.target.value })}
-                    placeholder="hiring@anthrix.com"
+                    placeholder="hiring@anthrixtechnologies.com"
                     className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none font-mono"
                   />
                 </div>
@@ -965,7 +965,7 @@ export default function SettingsPage() {
                     required
                     value={smtpSettings.smtpFrom}
                     onChange={(e) => setSmtpSettings({ ...smtpSettings, smtpFrom: e.target.value })}
-                    placeholder="Anthrix Technologies <hiring@anthrix.com>"
+                    placeholder="Anthrix Technologies <hiring@anthrixtechnologies.com>"
                     className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none"
                   />
                 </div>

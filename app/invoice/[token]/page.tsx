@@ -180,7 +180,7 @@ export default function PublicInvoicePage() {
             {error || "This invoice link may be invalid, expired, or has been removed."}
           </p>
           <a
-            href="https://anthrix.com"
+            href="https://anthrixtechnologies.com"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-medium border border-white/10 transition-all"
           >
             Visit Anthrix Homepage
@@ -263,7 +263,7 @@ export default function PublicInvoicePage() {
                   <p className="font-semibold text-white/80">Anthrix Systems & Engineering</p>
                   <p>Autonomous AI Systems · SaaS · Cloud Infrastructure</p>
                   <p className="font-mono text-white/40">
-                    {invoice?.contactSettings?.supportEmail || invoice?.contactSettings?.email || "contact@anthrix.com"} · anthrix.com
+                    {invoice?.contactSettings?.supportEmail || invoice?.contactSettings?.email || "contact@anthrixtechnologies.com"} · anthrixtechnologies.com
                   </p>
                 </div>
               </div>
@@ -680,10 +680,10 @@ export default function PublicInvoicePage() {
           <p className="text-[11px] text-white/20">
             For questions or billing support, contact{" "}
             <a
-              href={`mailto:${invoice?.contactSettings?.supportEmail || invoice?.contactSettings?.email || "contact@anthrix.com"}`}
+              href={`mailto:${invoice?.contactSettings?.supportEmail || invoice?.contactSettings?.email || "contact@anthrixtechnologies.com"}`}
               className="text-white/40 hover:underline"
             >
-              {invoice?.contactSettings?.supportEmail || invoice?.contactSettings?.email || "contact@anthrix.com"}
+              {invoice?.contactSettings?.supportEmail || invoice?.contactSettings?.email || "contact@anthrixtechnologies.com"}
             </a>
           </p>
         </footer>

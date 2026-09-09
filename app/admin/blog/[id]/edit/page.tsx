@@ -229,7 +229,7 @@ export default function EditBlogPostPage() {
                 URL Slug <span className="text-primary">*</span>
               </label>
               <span className="text-[11px] font-mono text-muted-foreground">
-                Live URL: anthrix.com/blog/{form.slug || "your-slug"}
+                Live URL: anthrixtechnologies.com/blog/{form.slug || "your-slug"}
               </span>
             </div>
             <div className="relative">

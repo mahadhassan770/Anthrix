@@ -10,11 +10,11 @@ export interface ContactSettings {
 }
 
 export const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
-  email: "hello@anthrix.dev",
+  email: "hello@anthrixtechnologies.com",
   phone: "+1 (415) 123-4567",
   secondaryPhone: "",
   location: "San Francisco, CA",
-  supportEmail: "contact@anthrix.com",
+  supportEmail: "contact@anthrixtechnologies.com",
   workingHours: "Mon - Fri: 9:00 AM - 6:00 PM",
 };
 

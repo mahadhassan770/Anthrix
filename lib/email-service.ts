@@ -59,7 +59,7 @@ export async function sendEmail({
   subject,
   body,
   fromName = "Anthrix Hiring Team",
-  fromEmail = "careers@anthrix.com",
+  fromEmail = "careers@anthrixtechnologies.com",
   attachments,
 }: SendEmailOptions): Promise<{ success: boolean; error?: string; messageId?: string; simulated?: boolean }> {
   try {

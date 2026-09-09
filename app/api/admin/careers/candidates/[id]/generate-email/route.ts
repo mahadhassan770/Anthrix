@@ -61,7 +61,7 @@ Please let us know your availability over the coming days, or share a preferred 
 
 Best regards,
 Anthrix Hiring Team
-https://anthrix.com`,
+https://anthrixtechnologies.com`,
         });
       } else {
         return NextResponse.json({
@@ -76,7 +76,7 @@ We will keep your profile in our talent network for future openings that match y
 
 Warm regards,
 Anthrix Hiring Team
-https://anthrix.com`,
+https://anthrixtechnologies.com`,
         });
       }
     }

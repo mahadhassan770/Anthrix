@@ -572,12 +572,12 @@ function CandidatesAdminInner() {
         : "Phone Interview";
 
       subject = `Interview Invitation: ${jobTitle} at Anthrix`;
-      body = `Hi ${name},\n\nThank you for your interest in the ${jobTitle} position at Anthrix. After reviewing your application, we are pleased to invite you for an interview.\n\nInterview Details:\n- Type: ${typeLabel}\n- Date & Time: ${dt}\n- ${locationLine}\n\nPlease confirm your attendance by replying to this email.\n\nLooking forward to speaking with you!\n\nBest regards,\nAnthrix Hiring Team\nhttps://anthrix.com`;
+      body = `Hi ${name},\n\nThank you for your interest in the ${jobTitle} position at Anthrix. After reviewing your application, we are pleased to invite you for an interview.\n\nInterview Details:\n- Type: ${typeLabel}\n- Date & Time: ${dt}\n- ${locationLine}\n\nPlease confirm your attendance by replying to this email.\n\nLooking forward to speaking with you!\n\nBest regards,\nAnthrix Hiring Team\nhttps://anthrixtechnologies.com`;
     }
 
     if (type === "REJECTED") {
       subject = `Update regarding your application for ${jobTitle} at Anthrix`;
-      body = `Hi ${name},\n\nThank you for applying for the ${jobTitle} position at Anthrix and sharing your background with us.\n\nAfter careful review, we have decided to move forward with other candidates whose experience more closely matches our current requirements.\n\nWe were genuinely impressed by your qualifications and will keep your profile for future opportunities.\n\nWe wish you every success in your career.\n\nWarm regards,\nAnthrix Hiring Team\nhttps://anthrix.com`;
+      body = `Hi ${name},\n\nThank you for applying for the ${jobTitle} position at Anthrix and sharing your background with us.\n\nAfter careful review, we have decided to move forward with other candidates whose experience more closely matches our current requirements.\n\nWe were genuinely impressed by your qualifications and will keep your profile for future opportunities.\n\nWe wish you every success in your career.\n\nWarm regards,\nAnthrix Hiring Team\nhttps://anthrixtechnologies.com`;
     }
 
     try {
