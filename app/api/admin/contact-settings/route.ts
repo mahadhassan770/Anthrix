@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getContactSettings } from "@/lib/contact-settings";
@@ -67,6 +68,12 @@ export async function POST(req: NextRequest) {
         create: { key: item.key, value: item.value },
       });
     }
+
+    try {
+      revalidatePath("/", "layout");
+      revalidatePath("/contact");
+      revalidatePath("/about");
+    } catch {}
 
     const updatedSettings = await getContactSettings();
     return NextResponse.json({

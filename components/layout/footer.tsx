@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, MapPin, Phone, PhoneCall } from "lucide-react";
+import { Mail, MapPin, Phone, PhoneCall, Clock } from "lucide-react";
 import { siteConfig } from "@/lib/site-config";
 import { DEFAULT_CONTACT_SETTINGS } from "@/lib/contact-settings";
 
@@ -256,6 +256,17 @@ export function Footer() {
                   {contact.location}
                 </span>
               </li>
+              {contact.workingHours && (
+                <li>
+                  <span
+                    className="text-sm flex items-center gap-2 cursor-default"
+                    style={{ color: "#6B7280" }}
+                  >
+                    <Clock size={13} style={{ color: "#F55036", flexShrink: 0 }} />
+                    {contact.workingHours}
+                  </span>
+                </li>
+              )}
             </ul>
           </div>
 

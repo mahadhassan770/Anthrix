@@ -728,7 +728,7 @@ export default function SettingsPage() {
                       required
                       value={contactForm.email}
                       onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                      placeholder="hello@anthrix.dev"
+                      placeholder="anthrixtechnologies@gmail.com"
                       className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none"
                     />
                   </div>
@@ -741,7 +741,7 @@ export default function SettingsPage() {
                       type="email"
                       value={contactForm.supportEmail}
                       onChange={(e) => setContactForm({ ...contactForm, supportEmail: e.target.value })}
-                      placeholder="billing@anthrixtechnologies.com"
+                      placeholder="mahadhassan095@gmail.com"
                       className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none"
                     />
                   </div>
@@ -790,13 +790,13 @@ export default function SettingsPage() {
                 </p>
                 <div className="flex flex-wrap gap-2 text-xs">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-card border border-border font-medium">
-                    <Mail size={12} className="text-[#F55036]" /> {contactForm.email || "hello@anthrix.dev"}
+                    <Mail size={12} className="text-[#F55036]" /> {contactForm.email || "anthrixtechnologies@gmail.com"}
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-card border border-border font-medium">
-                    <Phone size={12} className="text-[#F55036]" /> {contactForm.phone || "+1 (415) 123-4567"}
+                    <Phone size={12} className="text-[#F55036]" /> {contactForm.phone || "+92 336 5561164"}
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-card border border-border font-medium">
-                    <MapPin size={12} className="text-[#F55036]" /> {contactForm.location || "San Francisco, CA"}
+                    <MapPin size={12} className="text-[#F55036]" /> {contactForm.location || "Islamabad, Pakistan"}
                   </span>
                 </div>
               </div>

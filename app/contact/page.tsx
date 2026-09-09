@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, Phone, MapPin, ArrowUpRight, Zap, Phone as PhoneIcon, FileText, Rocket, PhoneCall } from "lucide-react";
+import { Mail, Phone, MapPin, ArrowUpRight, Zap, Phone as PhoneIcon, FileText, Rocket, PhoneCall, Clock } from "lucide-react";
 import { ContactForm } from "@/components/contact/contact-form";
 import { getContactSettings } from "@/lib/contact-settings";
 
@@ -22,7 +22,10 @@ export default async function ContactPage() {
     ...(contact.secondaryPhone
       ? [{ icon: PhoneCall, label: "Secondary Line", value: contact.secondaryPhone, href: `tel:${contact.secondaryPhone.replace(/[^+\d]/g, "")}` }]
       : []),
-    { icon: MapPin, label: "Visit Us", value: contact.location, href: "#" },
+    { icon: MapPin, label: "Location", value: contact.location, href: "#" },
+    ...(contact.workingHours
+      ? [{ icon: Clock, label: "Working Hours", value: contact.workingHours, href: "#" }]
+      : []),
   ];
   return (
     <div style={{ background: "#05080D", minHeight: "100vh" }}>
