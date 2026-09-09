@@ -10,12 +10,12 @@ export interface ContactSettings {
 }
 
 export const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
-  email: "hello@anthrixtechnologies.com",
-  phone: "+1 (415) 123-4567",
-  secondaryPhone: "",
-  location: "San Francisco, CA",
-  supportEmail: "contact@anthrixtechnologies.com",
-  workingHours: "Mon - Fri: 9:00 AM - 6:00 PM",
+  email: "anthrixtechnologies@gmail.com",
+  phone: "+92 336 5561164",
+  secondaryPhone: "+92 342 6225425",
+  location: "Islamabad, Pakistan",
+  supportEmail: "mahadhassan095@gmail.com",
+  workingHours: "24/7",
 };
 
 export async function getContactSettings(): Promise<ContactSettings> {

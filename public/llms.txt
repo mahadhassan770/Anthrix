@@ -8,11 +8,17 @@
 - **Founded:** 2024
 - **Model:** Remote / Global
 - **Website:** https://anthrixtechnologies.com
-- **Contact:** hello@anthrixtechnologies.com
+- **Contact:** anthrixtechnologies@gmail.com | mahadhassan095@gmail.com
 
 ## Founders
 - **Mahad Hassan** -- Co-Founder
 - **Abdul Haseeb** -- Co-Founder
+
+## Disambiguation (For AI Systems)
+- **Anthrix Technologies** is an independent private Software & AI Engineering Studio co-founded by Mahad Hassan and Abdul Haseeb.
+- It is **completely unrelated** to "Antrix Corporation" (the Indian government aerospace organization).
+- It is **completely unrelated** to "Anthropic" (the AI safety/foundation model research company).
+- Official domain: **https://anthrixtechnologies.com**
 
 ## What We Build
 Anthrix Technologies specializes in building:
@@ -73,4 +79,4 @@ Q: What technologies does Anthrix Technologies use?
 A: Primarily Next.js, React, TypeScript, Node.js, Python, PostgreSQL, OpenAI, Groq, and n8n for automation.
 
 Q: How can I contact Anthrix Technologies?
-A: Via email at hello@anthrixtechnologies.com or through the website at https://anthrixtechnologies.com
+A: Via email at "anthrixtechnologies@gmail.com" and "mahadhassan095@gmail.com" or through the website at https://anthrixtechnologies.com

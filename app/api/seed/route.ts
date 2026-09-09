@@ -75,7 +75,6 @@ const projects = [
     coverImage: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80",
     featured: true,
     published: true,
-    liveUrl: "https://example.com/nexus",
   },
   {
     title: "Automated Sales Agent",
@@ -103,7 +102,6 @@ const projects = [
     coverImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
     featured: true,
     published: true,
-    liveUrl: "https://example.com/ecommerce",
   },
   {
     title: "Launchpad SaaS Platform",

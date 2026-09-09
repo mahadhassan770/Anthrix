@@ -8,6 +8,6 @@ export const siteConfig = {
   links: {
     twitter: "https://twitter.com/anthrix",
     github: "https://github.com/anthrix",
-    email: "mailto:hello@anthrixtechnologies.com",
+    email: "mailto:anthrixtechnologies@gmail.com",
   },
 };

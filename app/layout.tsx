@@ -129,7 +129,7 @@ export default function RootLayout({
         },
         contactPoint: {
           "@type": "ContactPoint",
-          email: "hello@anthrixtechnologies.com",
+          email: "anthrixtechnologies@gmail.com",
           contactType: "customer service",
           availableLanguage: "English",
         },
@@ -204,7 +204,7 @@ export default function RootLayout({
             name: "How can I contact Anthrix Technologies?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "You can contact Anthrix Technologies via email at hello@anthrixtechnologies.com or through the website at https://anthrixtechnologies.com",
+              text: "You can contact Anthrix Technologies via email at anthrixtechnologies@gmail.com or mahadhassan095@gmail.com, or through the website at https://anthrixtechnologies.com",
             },
           },
         ],
