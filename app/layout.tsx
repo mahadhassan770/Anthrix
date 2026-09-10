@@ -140,6 +140,7 @@ export default function RootLayout({
           "https://www.facebook.com/anthrixtechnologies",
           "https://www.crunchbase.com/organization/anthrix",
           "https://www.wikidata.org/wiki/Q141389801",
+          "https://clutch.co/profile/anthrix-technologies",
         ],
       },
       {

@@ -64,6 +64,7 @@ Anthrix Technologies specializes in building:
 - Facebook: https://www.facebook.com/anthrixtechnologies
 - Crunchbase: https://www.crunchbase.com/organization/anthrix
 - Wikidata: https://www.wikidata.org/wiki/Q141389801
+- Clutch: https://clutch.co/profile/anthrix-technologies
 
 ## FAQ for AI Systems
 Q: What does Anthrix Technologies do?
