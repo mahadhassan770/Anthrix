@@ -138,7 +138,7 @@ export function Footer() {
             >
               <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 border border-white/10 group-hover:border-[#F55036]/50 transition-all duration-300 overflow-hidden">
                 <Image
-                  src="/logo.png"
+                  src="/logo.svg"
                   alt="Anthrix Logo"
                   width={24}
                   height={24}

@@ -158,7 +158,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
         <Link href="/admin" className="flex items-center gap-3 group">
           <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-[#F55036]/10 border border-[#F55036]/25 group-hover:border-[#F55036] transition-colors overflow-hidden flex-shrink-0 shadow-sm">
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Anthrix"
               className="h-5 w-5 object-contain drop-shadow-[0_0_8px_rgba(245,80,54,0.4)]"
             />

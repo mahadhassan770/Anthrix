@@ -65,7 +65,7 @@ export function Navbar() {
           >
             <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 border border-white/10 group-hover:border-[#F55036]/50 transition-all duration-300 overflow-hidden">
               <img
-                src="/logo.png"
+                src="/logo.svg"
                 alt="Anthrix Logo"
                 className="h-6 w-6 object-contain group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(245,80,54,0.5)]"
               />

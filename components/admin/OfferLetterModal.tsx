@@ -111,7 +111,7 @@ export default function OfferLetterModal({
       <div style={{ borderBottom: "2px solid #F55036", paddingBottom: "20px", marginBottom: "40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <img
-            src="/logo.png"
+            src="/logo.svg"
             alt="Anthrix Logo"
             style={{ height: "44px", objectFit: "contain" }}
           />

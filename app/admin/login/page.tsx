@@ -103,7 +103,7 @@ export default function AdminLoginPage() {
             }}
           >
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Anthrix Logo"
               className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(245,80,54,0.5)]"
             />
@@ -227,7 +227,7 @@ export default function AdminLoginPage() {
             }}
           >
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Anthrix Logo"
               className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(245,80,54,0.5)]"
             />

@@ -158,7 +158,7 @@ export default function PublicInvoicePage() {
     return (
       <div className="min-h-screen bg-[#05080D] flex flex-col items-center justify-center space-y-4">
         <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-card border border-white/10 overflow-hidden shadow-[0_0_24px_rgba(245,80,54,0.2)]">
-          <img src="/logo.png" alt="Anthrix" className="h-7 w-7 object-contain" />
+          <img src="/logo.svg" alt="Anthrix" className="h-7 w-7 object-contain" />
         </div>
         <div className="flex items-center gap-2 text-white/50 text-sm">
           <Loader2 className="animate-spin text-[#F55036]" size={16} />
@@ -203,7 +203,7 @@ export default function PublicInvoicePage() {
         {/* Brand */}
         <div className="flex items-center gap-3">
           <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 overflow-hidden shadow-[0_0_16px_rgba(245,80,54,0.25)]">
-            <img src="/logo.png" alt="Anthrix Logo" className="h-6 w-6 object-contain" />
+            <img src="/logo.svg" alt="Anthrix Logo" className="h-6 w-6 object-contain" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5 font-[family-name:var(--font-orbitron)] font-extrabold text-sm tracking-[0.18em] uppercase text-white">
@@ -253,7 +253,7 @@ export default function PublicInvoicePage() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center">
-                    <img src="/logo.png" alt="Anthrix Logo" className="h-5 w-5 object-contain" />
+                    <img src="/logo.svg" alt="Anthrix Logo" className="h-5 w-5 object-contain" />
                   </div>
                   <span className="font-[family-name:var(--font-orbitron)] font-extrabold text-base tracking-[0.16em] uppercase text-white">
                     ANTHRIX

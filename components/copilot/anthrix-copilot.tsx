@@ -264,7 +264,7 @@ export default function AnthrixCopilot() {
               <div className="relative w-8 h-8 flex-shrink-0">
                 <div className="absolute inset-0 rounded-full bg-[#F55036]/15 animate-pulse" style={{ animationDuration: "3s" }} />
                 <div className="relative w-8 h-8 rounded-full bg-[#F55036]/10 border border-[#F55036]/30 flex items-center justify-center overflow-hidden">
-                  <img src="/logo.png" alt="Anthrix" className="w-5 h-5 object-contain" />
+                  <img src="/logo.svg" alt="Anthrix" className="w-5 h-5 object-contain" />
                 </div>
               </div>
               <div>
