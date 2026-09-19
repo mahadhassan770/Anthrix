@@ -139,12 +139,14 @@ export default async function BlogPage() {
               Talk directly with our technical team about your product requirements.
             </p>
           </div>
-          <Link
-            href="/contact"
+          <a
+            href="https://calendly.com/mahadhassan085/30min"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex-shrink-0 px-6 py-3 rounded-full bg-gradient-to-r from-[#F55036] to-[#D93520] text-white font-semibold text-xs tracking-wide shadow-[0_0_20px_rgba(245,80,54,0.35)] hover:shadow-[0_0_30px_rgba(245,80,54,0.6)] transition-all hover:scale-[1.02]"
           >
             Book a Technical Call
-          </Link>
+          </a>
         </div>
       </div>
     </div>

@@ -36,6 +36,7 @@ import {
   ChevronRight,
   Clock,
   Info,
+  Calendar,
 } from "lucide-react";
 import { EmailTemplatesTab } from "./email-templates-tab";
 
@@ -111,6 +112,7 @@ export default function SettingsPage() {
     location: "",
     supportEmail: "",
     workingHours: "",
+    bookingUrl: "",
   });
   const [contactSaving, setContactSaving] = useState(false);
   const [contactMsg, setContactMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -227,6 +229,7 @@ export default function SettingsPage() {
             location: data.location || "",
             supportEmail: data.supportEmail || "",
             workingHours: data.workingHours || "",
+            bookingUrl: data.bookingUrl || "",
           });
           setContactLoaded(true);
         }
@@ -783,6 +786,28 @@ export default function SettingsPage() {
                 </div>
               </div>
 
+              {/* Booking / Calendly URL */}
+              <div className="space-y-3 pt-3 border-t border-border/60">
+                <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Calendar size={13} className="text-[#F55036]" /> Meeting &amp; Call Booking
+                </p>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Calendly / Booking URL
+                  </label>
+                  <input
+                    type="url"
+                    value={contactForm.bookingUrl}
+                    onChange={(e) => setContactForm({ ...contactForm, bookingUrl: e.target.value })}
+                    placeholder="https://calendly.com/mahadhassan085/30min"
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:border-[#F55036] outline-none"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Directs visitors straight to your scheduling calendar whenever they click &quot;Book a Call&quot; across the website.
+                  </p>
+                </div>
+              </div>
+
               {/* Visitor Chips Preview */}
               <div className="p-3.5 rounded-xl bg-background/60 border border-border space-y-2">
                 <p className="text-[10px] font-mono uppercase font-bold text-muted-foreground tracking-wider">
@@ -798,6 +823,11 @@ export default function SettingsPage() {
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-card border border-border font-medium">
                     <MapPin size={12} className="text-[#F55036]" /> {contactForm.location || "Islamabad, Pakistan"}
                   </span>
+                  {contactForm.bookingUrl && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-card border border-border font-medium text-emerald-400">
+                      <Calendar size={12} className="text-emerald-400" /> Calendly Active
+                    </span>
+                  )}
                 </div>
               </div>
 

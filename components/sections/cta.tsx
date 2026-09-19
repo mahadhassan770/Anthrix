@@ -43,13 +43,15 @@ export function CTA() {
 
             {/* Right Content / Buttons */}
             <div className="relative z-10 flex flex-col sm:w-auto gap-4 shrink-0">
-              <Link
-                href="/contact"
+              <a
+                href="https://calendly.com/mahadhassan085/30min"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-[#F55036] hover:bg-[#D93520] text-white font-semibold text-[15px] transition-all duration-300 shadow-[0_0_20px_rgba(245,80,54,0.25)] hover:shadow-[0_0_30px_rgba(245,80,54,0.4)] hover:scale-[1.02] active:scale-[0.98]"
               >
                 <span>Book a Call</span>
                 <ArrowUpRight size={18} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
+              </a>
               
               <Link
                 href="/contact"

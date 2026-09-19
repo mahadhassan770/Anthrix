@@ -7,6 +7,7 @@ export interface ContactSettings {
   location: string;
   supportEmail: string;
   workingHours: string;
+  bookingUrl: string;
 }
 
 export const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
@@ -16,6 +17,7 @@ export const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
   location: "Islamabad, Pakistan",
   supportEmail: "mahadhassan095@gmail.com",
   workingHours: "24/7",
+  bookingUrl: "https://calendly.com/mahadhassan085/30min",
 };
 
 export async function getContactSettings(): Promise<ContactSettings> {
@@ -27,6 +29,7 @@ export async function getContactSettings(): Promise<ContactSettings> {
       "contact_location",
       "contact_support_email",
       "contact_working_hours",
+      "contact_booking_url",
     ];
 
     const settings = await db.systemSetting.findMany({
@@ -47,6 +50,7 @@ export async function getContactSettings(): Promise<ContactSettings> {
       location: map["contact_location"] || DEFAULT_CONTACT_SETTINGS.location,
       supportEmail: map["contact_support_email"] || DEFAULT_CONTACT_SETTINGS.supportEmail,
       workingHours: map["contact_working_hours"] || DEFAULT_CONTACT_SETTINGS.workingHours,
+      bookingUrl: map["contact_booking_url"] || DEFAULT_CONTACT_SETTINGS.bookingUrl,
     };
   } catch (error) {
     console.error("Failed to fetch contact settings:", error);

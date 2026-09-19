@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { email, phone, secondaryPhone, location, supportEmail, workingHours } = body;
+    const { email, phone, secondaryPhone, location, supportEmail, workingHours, bookingUrl } = body;
 
     const updates: { key: string; value: string }[] = [];
 
@@ -59,6 +59,9 @@ export async function POST(req: NextRequest) {
     }
     if (typeof workingHours === "string") {
       updates.push({ key: "contact_working_hours", value: workingHours.trim() });
+    }
+    if (typeof bookingUrl === "string") {
+      updates.push({ key: "contact_booking_url", value: bookingUrl.trim() });
     }
 
     for (const item of updates) {

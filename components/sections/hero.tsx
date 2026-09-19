@@ -313,13 +313,15 @@ export function Hero() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <Link
-                  href="/contact"
+                <a
+                  href="https://calendly.com/mahadhassan085/30min"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="hero-btn-primary inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-white font-semibold text-sm"
                 >
                   Book a Call
                   <ArrowUpRight size={15} />
-                </Link>
+                </a>
 
                 <Link
                   href="/work"

@@ -195,13 +195,15 @@ export default async function WorkPage() {
               Let&apos;s build something extraordinary together. We&apos;re ready when you are.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link
-                href="/contact"
+              <a
+                href="https://calendly.com/mahadhassan085/30min"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-[#F55036] hover:bg-[#D93520] text-white font-semibold text-sm transition-all duration-300 shadow-[0_0_20px_rgba(245,80,54,0.3)] hover:shadow-[0_0_32px_rgba(245,80,54,0.45)] hover:scale-[1.02] active:scale-[0.98]"
               >
                 Book a Call
                 <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
+              </a>
               <Link
                 href="/contact"
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white/70 hover:text-white font-semibold text-sm transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"

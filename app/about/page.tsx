@@ -261,8 +261,10 @@ export default async function AboutPage() {
             We take on a limited number of projects at a time. Reach out and let&apos;s see if we&apos;re a fit.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link
-              href="/contact"
+            <a
+              href={contact.bookingUrl || "https://calendly.com/mahadhassan085/30min"}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white font-semibold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               style={{
                 background: "linear-gradient(135deg, #F55036 0%, #D93520 100%)",
@@ -271,7 +273,7 @@ export default async function AboutPage() {
             >
               Book a Call
               <ArrowUpRight size={15} />
-            </Link>
+            </a>
             <Link
               href={`mailto:${contact.email}`}
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-white/70 hover:text-white font-medium text-sm transition-all duration-200"

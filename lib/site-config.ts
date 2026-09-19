@@ -9,5 +9,6 @@ export const siteConfig = {
     twitter: "https://twitter.com/anthrix",
     github: "https://github.com/anthrixtechnologies",
     email: "mailto:anthrixtechnologies@gmail.com",
+    calendly: "https://calendly.com/mahadhassan085/30min",
   },
 };

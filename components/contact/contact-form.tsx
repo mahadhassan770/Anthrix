@@ -213,9 +213,10 @@ export function ContactForm() {
               )}
             </button>
 
-            <Link
-              href="https://cal.com"
+            <a
+              href="https://calendly.com/mahadhassan085/30min"
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white/70 hover:text-white font-medium text-sm transition-all duration-200"
               style={{
                 background: "rgba(255,255,255,0.04)",
@@ -225,7 +226,7 @@ export function ContactForm() {
               <Phone size={13} />
               Book a Call
               <ArrowUpRight size={13} />
-            </Link>
+            </a>
           </div>
         </motion.form>
       )}

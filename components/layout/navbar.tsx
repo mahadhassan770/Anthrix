@@ -110,8 +110,10 @@ export function Navbar() {
 
           {/* Right Action CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Link
-              href="/contact"
+            <a
+              href="https://calendly.com/mahadhassan085/30min"
+              target="_blank"
+              rel="noopener noreferrer"
               className="relative group overflow-hidden px-5 py-2 rounded-full bg-gradient-to-r from-[#F55036] to-[#D93520] text-white font-semibold text-xs tracking-wide shadow-[0_0_20px_rgba(245,80,54,0.35)] hover:shadow-[0_0_30px_rgba(245,80,54,0.6)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             >
               <span className="relative z-10 flex items-center gap-1.5">
@@ -119,7 +121,7 @@ export function Navbar() {
                 <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            </Link>
+            </a>
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -191,13 +193,16 @@ export function Navbar() {
               transition={{ delay: 0.2 }}
               className="pt-2"
             >
-              <Link
-                href="/contact"
+              <a
+                href="https://calendly.com/mahadhassan085/30min"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-gradient-to-r from-[#F55036] to-[#D93520] text-white font-semibold text-base shadow-[0_0_25px_rgba(245,80,54,0.4)]"
               >
                 Book a Call
                 <ArrowUpRight size={18} />
-              </Link>
+              </a>
             </motion.div>
           </motion.div>
         )}
